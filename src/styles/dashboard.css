@@ -1,0 +1,377 @@
+/* =============================================
+   DASHBOARD LAYOUT
+   ============================================= */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    padding-bottom: 2.5rem;
+}
+
+/* Header */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+    }
+}
+
+.header-welcome h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.15rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.header-date {
+    display: flex;
+    align-items: center;
+    color: var(--neutral-500);
+    font-size: 0.875rem;
+    gap: 0.35rem;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* =============================================
+   STAT CARDS — Elevated, premium
+   ============================================= */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.35rem;
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--neutral-100);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.stat-info p {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--neutral-500);
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.stat-info h3 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.stat-icon-wrapper {
+    padding: 0.7rem;
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-icon-wrapper svg {
+    width: 1.35rem;
+    height: 1.35rem;
+}
+
+.stat-trend {
+    margin-top: 0.85rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    gap: 0.25rem;
+}
+
+/* =============================================
+   MAIN DASHBOARD CONTENT
+   ============================================= */
+.dashboard-main {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-main {
+        grid-template-columns: 1fr;
+    }
+}
+
+.section-card {
+    background: white;
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--neutral-100);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1.15rem 1.5rem;
+    border-bottom: 1px solid var(--neutral-100);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, #fafbfc, #f8f9fa);
+}
+
+/* =============================================
+   APPOINTMENT LIST
+   ============================================= */
+.appointment-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.appointment-item {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1.5rem;
+    border-bottom: 1px solid var(--neutral-50);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.appointment-item:hover {
+    background-color: var(--primary-50);
+}
+
+.appointment-item:last-child {
+    border-bottom: none;
+}
+
+.apt-time {
+    width: 72px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--neutral-400);
+    flex-shrink: 0;
+}
+
+.apt-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.apt-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--neutral-900);
+}
+
+.apt-type {
+    font-size: 0.75rem;
+    color: var(--neutral-500);
+}
+
+/* =============================================
+   QUICK ACTIONS
+   ============================================= */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.75rem;
+}
+
+.action-btn {
+    background: white;
+    padding: 1.15rem;
+    border-radius: var(--radius-xl);
+    border: 1.5px solid var(--neutral-200);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition-base);
+    cursor: pointer;
+    text-align: center;
+}
+
+.action-btn:hover {
+    border-color: var(--primary-300);
+    box-shadow: var(--shadow-md), var(--shadow-glow);
+    transform: translateY(-3px);
+}
+
+.action-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-xl);
+    background: var(--neutral-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--neutral-400);
+    transition: all var(--transition-base);
+}
+
+.action-btn:hover .action-icon {
+    background: var(--primary-50);
+    color: var(--primary-600);
+    transform: scale(1.1);
+}
+
+/* =============================================
+   SIDEBAR WIDGETS — Activity Pulse
+   ============================================= */
+.pulse-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.pulse-item {
+    display: flex;
+    gap: 0.85rem;
+}
+
+.pulse-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 0.25rem;
+}
+
+.dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dot-blue {
+    background: var(--info);
+}
+
+.dot-green {
+    background: var(--success);
+}
+
+.dot-purple {
+    background: #a855f7;
+}
+
+.pulse-line {
+    width: 2px;
+    flex: 1;
+    background: var(--neutral-100);
+    margin-top: 0.25rem;
+}
+
+.pulse-content h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.pulse-content p {
+    font-size: 0.75rem;
+    color: var(--neutral-500);
+    margin-top: 0.15rem;
+}
+
+.pulse-time {
+    font-size: 0.7rem;
+    color: var(--neutral-400);
+    margin-top: 0.35rem;
+}
+
+/* =============================================
+   RECALL CARD — Gradient hero
+   ============================================= */
+.recall-card {
+    background: var(--gradient-hero);
+    border-radius: var(--radius-2xl);
+    padding: 1.5rem;
+    color: white;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.recall-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 60%;
+    height: 150%;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.recall-card h3 {
+    font-size: 1.5rem;
+    color: white;
+    margin: 0.25rem 0;
+    font-weight: 800;
+}
+
+.btn-white {
+    background: white;
+    color: var(--primary-700);
+    font-weight: 700;
+}
+
+.btn-white:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+.btn-ghost {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(4px);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
