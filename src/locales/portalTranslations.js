@@ -1,6 +1,6 @@
 export const PORTAL_TRANS = {
     EN: {
-        "ciki_dental": "บ้านหมอฟัน",
+        "ciki_dental": "Baan More Fun Dental",
         "exp_future": "Experience the future of dentistry",
         "phone_label": "Your Phone Number",
         "phone_placeholder": "08x-xxx-xxxx",

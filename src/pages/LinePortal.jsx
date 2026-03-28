@@ -683,7 +683,7 @@ const LinePortal = () => {
                                 </div>
                             </div>
                             <div className="lp-pill" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                {currentUser?.tier || 'Gold Member'}
+                                {pt('tier_' + (currentUser?.tier?.toLowerCase() || 'standard'))}
                             </div>
                         </div>
                         
