@@ -11,24 +11,26 @@ import { useData } from "../context/DataContext";
 import { useLanguage } from "../context/LanguageContext";
 import { sendOTP, verifyOTP, formatPhoneNumber, isValidThaiPhone } from "../services/notificationService";
 import { supabase } from "../supabase";
+import { PORTAL_TRANS } from "../locales/portalTranslations";
 
 // ข้อมูลบริการคลินิกทันตกรรม
-const DENTAL_SERVICES = [
-    { id: 'checkup', name: 'Dental Checkup', price: 500, icon: Stethoscope, duration: '30 min' },
-    { id: 'cleaning', name: 'Teeth Cleaning / Airflow', price: 1200, icon: Sparkles, duration: '45 min' },
-    { id: 'filling', name: 'Composite Filling', price: 800, icon: Check, duration: '30-45 min' },
-    { id: 'rootcanal', name: 'Root Canal Treatment', price: 4500, icon: Heart, duration: '60-90 min' },
-    { id: 'crown', name: 'Porcelain Crown', price: 8500, icon: Star, duration: '2 visits' },
-    { id: 'implant', name: 'Dental Implant', price: 35000, icon: CheckCircle2, duration: '3-6 months' },
-    { id: 'whitening', name: 'Professional Whitening', price: 6500, icon: Sparkles, duration: '60 min' },
-    { id: 'extraction', name: 'Tooth Extraction', price: 1500, icon: XCircle, duration: '30 min' },
+const getDentalServices = (pt) => [
+    { id: 'checkup', name: pt('srv_checkup'), price: 500, icon: Stethoscope, duration: `30 ${pt('min')}` },
+    { id: 'cleaning', name: pt('srv_cleaning'), price: 1200, icon: Sparkles, duration: `45 ${pt('min')}` },
+    { id: 'filling', name: pt('srv_filling'), price: 800, icon: Check, duration: `30-45 ${pt('min')}` },
+    { id: 'rootcanal', name: pt('srv_rootcanal'), price: 4500, icon: Heart, duration: `60-90 ${pt('min')}` },
+    { id: 'crown', name: pt('srv_crown'), price: 8500, icon: Star, duration: `2 ${pt('visits')}` },
+    { id: 'implant', name: pt('srv_implant'), price: 35000, icon: CheckCircle2, duration: `3-6 ${pt('month')}` },
+    { id: 'whitening', name: pt('srv_whitening'), price: 6500, icon: Sparkles, duration: `60 ${pt('min')}` },
+    { id: 'extraction', name: pt('srv_extraction'), price: 1500, icon: XCircle, duration: `30 ${pt('min')}` },
 ];
 
 const TIME_SLOTS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-const BRANCHES = ['Sukhumvit Branch', 'Siam Square', 'Ladprao'];
+const getBranches = (pt) => [pt('branch_sukhumvit'), pt('branch_siam'), pt('branch_ladprao')];
 
 const LinePortal = () => {
     const { language, setLanguage } = useLanguage();
+    const pt = (key) => PORTAL_TRANS[language]?.[key] || PORTAL_TRANS["EN"]?.[key] || key;
     const { patients, appointments, addAppointment } = useData();
     const [dbPatients, setDbPatients] = useState([]);
     
@@ -46,7 +48,7 @@ const LinePortal = () => {
 
     // Booking state
     const [bookingService, setBookingService] = useState('');
-    const [bookingBranch, setBookingBranch] = useState(BRANCHES[0]);
+    const [bookingBranch, setBookingBranch] = useState(getBranches(pt)[0]);
     const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
     const [bookingTime, setBookingTime] = useState('');
     const [userAppointments, setUserAppointments] = useState([]);
@@ -168,7 +170,7 @@ const LinePortal = () => {
         const formattedPhone = formatPhoneNumber(phoneNum);
         
         if (!isValidThaiPhone(formattedPhone)) {
-            alert('กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (เช่น 0812345678)');
+            alert(pt('err_phone'));
             return;
         }
 
@@ -187,16 +189,16 @@ const LinePortal = () => {
             if (result.demo || result.results?.sms?.note?.includes('Demo')) {
                 alert(`🧪 Demo Mode - รหัส OTP: ${result.otp}\n\nใช้รหัสนี้เพื่อทดสอบการเข้าสู่ระบบ`);
             } else {
-                alert('ส่งรหัส OTP ไปยังเบอร์มือถือของคุณแล้ว');
+                alert(pt('otp_sent'));
             }
         } else {
-            alert('เกิดข้อผิดพลาดในการส่ง OTP');
+            alert(pt('err_otp_send'));
         }
     };
 
     const handleVerifyOtp = async () => {
         if (otpCode.length < 6) {
-            alert('กรุณากรอกรหัส OTP 6 หลัก');
+            alert(pt('err_otp_len'));
             return;
         }
 
@@ -238,7 +240,7 @@ const LinePortal = () => {
                     alert(`❌ บันทึกข้อมูล LINE ไม่สำเร็จ: ${updateError.message}`);
                 } else {
                     console.log('✅ LINE info updated successfully');
-                    alert('✅ เชื่อมต่อข้อมูล LINE สำเร็จแล้ว!');
+                    alert(pt('sync_success'));
                 }
             }
 
@@ -247,7 +249,7 @@ const LinePortal = () => {
             setCurrentUser(user);
             loadUserAppointments(user);
             setPage('home');
-            alert(`ยินดีต้อนรับคุณ ${user.name}`);
+            alert(`${pt('welcome')} ${user.name}`);
         } else {
             // ไปหน้าสมัครสมาชิก
             setPage('register');
@@ -258,7 +260,7 @@ const LinePortal = () => {
         if (e) e.preventDefault();
         
         if (!firstName.trim() || !lastName.trim()) {
-            alert('กรุณากรอกชื่อและนามสกุล');
+            alert(pt('err_name'));
             return;
         }
 
@@ -296,7 +298,7 @@ const LinePortal = () => {
             await fetchPatientsFromDB();
             
             setPage('home');
-            alert(`ยินดีต้อนรับคุณ ${user.name} สมัครสมาชิกสำเร็จ!`);
+            alert(`${pt('welcome')} ${user.name} ${pt('reg_success')}`);
         } catch (error) {
             console.error('❌ Error creating patient:', error);
             alert('เกิดข้อผิดพลาดในการลงทะเบียน กรุณาลองใหม่อีกครั้ง');
@@ -311,16 +313,16 @@ const LinePortal = () => {
         setPage('login');
         setPhoneNum('');
         setOtpCode('');
-        alert('ออกจากระบบเรียบร้อยแล้ว');
+        alert(pt('logout_success'));
     };
 
     const handleBooking = async () => {
         if (!bookingService || !bookingTime) {
-            alert('กรุณาเลือกบริการและเวลา');
+            alert(pt('err_sel_service'));
             return;
         }
 
-        const service = DENTAL_SERVICES.find(s => s.id === bookingService);
+        const service = getDentalServices(pt).find(s => s.id === bookingService);
         
         const newAppointment = {
             patientId: currentUser?.id,
@@ -337,7 +339,7 @@ const LinePortal = () => {
 
         await addAppointment(newAppointment);
         
-        alert(`จองนัดหมายสำเร็จ! ${service?.name} วันที่ ${bookingDate} เวลา ${bookingTime}`);
+        alert(`${pt('book_success_alert')} ${service?.name} ${bookingDate} ${bookingTime}`);
 
         loadUserAppointments(currentUser);
         setPage('booking-confirm');
@@ -439,11 +441,11 @@ const LinePortal = () => {
                     </div>
                     
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)' }}>บ้านหมอฟัน</h1>
-                    <p style={{ color: 'var(--lp-text-muted)', marginBottom: '2.5rem', fontSize: '0.95rem' }}>Experience the future of dentistry</p>
+                    <p style={{ color: 'var(--lp-text-muted)', marginBottom: '2.5rem', fontSize: '0.95rem' }}>{pt('exp_future')}</p>
 
                     <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
                         <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'block', marginLeft: '0.5rem' }}>
-                            Your Phone Number
+                            {pt('phone_label')}
                         </label>
                         <div style={{ position: 'relative' }}>
                             <div style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--lp-primary)' }}>
@@ -452,7 +454,7 @@ const LinePortal = () => {
                             <input 
                                 className="lp-input"
                                 type="text"
-                                placeholder="08x-xxx-xxxx" 
+                                placeholder={pt('phone_placeholder')} 
                                 value={phoneNum} 
                                 onChange={e => setPhoneNum(e.target.value)} 
                                 maxLength={10}
@@ -461,17 +463,17 @@ const LinePortal = () => {
                     </div>
                     
                     <button className="lp-btn-primary" onClick={handleLogin} disabled={authLoading}>
-                        {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : 'Send OTP'}
+                        {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : pt('send_otp')}
                     </button>
                     
                     <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1.5rem', color: 'var(--lp-text-muted)' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
                             <ShieldCheck size={18} />
-                            <span style={{ fontSize: '0.65rem' }}>Secure</span>
+                            <span style={{ fontSize: '0.65rem' }}>{pt('secure')}</span>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
                             <Sparkles size={18} />
-                            <span style={{ fontSize: '0.65rem' }}>Premium</span>
+                            <span style={{ fontSize: '0.65rem' }}>{pt('premium')}</span>
                         </div>
                     </div>
                 </div>
@@ -626,7 +628,7 @@ const LinePortal = () => {
                     </div>
 
                     <button className="lp-btn-primary" onClick={handleRegister} disabled={registerLoading}>
-                        {registerLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : 'Create Account'}
+                        {registerLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : pt('create_account')}
                     </button>
                     
                     <button 
@@ -646,7 +648,7 @@ const LinePortal = () => {
 
         return (
             <div className="lp-container">
-                <LineHeader title="Dashboard" showProfile={true} />
+                <LineHeader title={pt('dashboard')} showProfile={true} />
                 
                 <div className="lp-content">
                     {/* Premium Member Card */}
@@ -672,11 +674,11 @@ const LinePortal = () => {
                                 </div>
                                 <div style={{ color: 'white' }}>
                                     <h3 style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.1rem', letterSpacing: '-0.02em' }}>
-                                        {currentUser?.name || 'Guest User'}
+                                        {currentUser?.name || pt('guest_user')}
                                     </h3>
                                     <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: 0.9, fontSize: '0.75rem' }}>
                                         <ShieldCheck size={12} color="#10b981" />
-                                        <span style={{ color: 'white' }}>Verified Patient</span>
+                                        <span style={{ color: 'white' }}>{pt('verified_patient')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -687,10 +689,10 @@ const LinePortal = () => {
                         
                         <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative', zIndex: 1 }}>
                             <div>
-                                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.6, marginBottom: '0.25rem' }}>Reward Points</p>
+                                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.6, marginBottom: '0.25rem' }}>{pt('reward_points')}</p>
                                 <p style={{ fontSize: '2.25rem', fontWeight: 900, display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
                                     {(currentUser?.points || 0).toLocaleString()} 
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8 }}>PTS</span>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8 }}>{pt('pts')}</span>
                                 </p>
                             </div>
                             <div style={{ textAlign: 'right' }}>
@@ -702,9 +704,9 @@ const LinePortal = () => {
                     {/* Quick Actions Grid */}
                     <div className="lp-grid-actions">
                         {[
-                            { label: 'Booking', icon: Calendar, pg: 'booking' },
-                            { label: 'Services', icon: Stethoscope, pg: 'services' },
-                            { label: 'Timeline', icon: History, pg: 'appointments' },
+                            { label: pt('booking'), icon: Calendar, pg: 'booking' },
+                            { label: pt('services'), icon: Stethoscope, pg: 'services' },
+                            { label: pt('timeline'), icon: History, pg: 'appointments' },
                         ].map(item => (
                             <button key={item.label} onClick={() => setPage(item.pg)} className="lp-action-btn" style={{ border: 'none' }}>
                                 <div className="lp-icon-circle">
@@ -781,7 +783,7 @@ const LinePortal = () => {
                 
                 <div className="lp-content">
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        {DENTAL_SERVICES.map(service => (
+                        {getDentalServices(pt).map(service => (
                             <div key={service.id} onClick={() => { setBookingService(service.id); setPage('booking'); }} className="lp-service-card" style={{ padding: '1.25rem', cursor: 'pointer' }}>
                                 <div style={{ 
                                     width: '56px', 
@@ -819,7 +821,7 @@ const LinePortal = () => {
     if (page === 'booking') {
         return (
             <div className="lp-container">
-                <LineHeader title="Book Appointment" onBack={() => setPage('home')} />
+                <LineHeader title={pt('book_apt')} onBack={() => setPage('home')} />
                 
                 <div className="lp-content">
                     <div className="lp-glass" style={{ borderRadius: '2rem', padding: '1.5rem', marginBottom: '1.5rem' }}>
@@ -836,7 +838,7 @@ const LinePortal = () => {
                                 style={{ paddingLeft: '1.25rem' }}
                             >
                                 <option value="">Choose a treatment...</option>
-                                {DENTAL_SERVICES.map(service => (
+                                {getDentalServices(pt).map(service => (
                                     <option key={service.id} value={service.id}>
                                         {service.name} (฿{service.price.toLocaleString()})
                                     </option>
@@ -851,7 +853,7 @@ const LinePortal = () => {
                                 SELECT BRANCH
                             </label>
                             <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-                                {BRANCHES.map(branch => (
+                                {getBranches(pt).map(branch => (
                                     <button
                                         key={branch}
                                         onClick={() => setBookingBranch(branch)}
@@ -938,7 +940,7 @@ const LinePortal = () => {
 
     // ===== BOOKING CONFIRM PAGE =====
     if (page === 'booking-confirm') {
-        const service = DENTAL_SERVICES.find(s => s.id === bookingService);
+        const service = getDentalServices(pt).find(s => s.id === bookingService);
         
         return (
             <div className="lp-container" style={{ justifyContent: 'center', padding: '2rem' }}>
@@ -957,7 +959,7 @@ const LinePortal = () => {
                         <CheckCircle2 size={40} color="#10b981" />
                     </div>
                     
-                    <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.75rem' }}>Booking Success!</h2>
+                    <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.75rem' }}>{pt('booking_success')}</h2>
                     <p style={{ color: 'var(--lp-text-muted)', textAlign: 'center', marginBottom: '2.5rem', fontSize: '0.9rem' }}>
                         Your appointment has been scheduled. Our team will contact you shortly.
                     </p>
@@ -971,15 +973,15 @@ const LinePortal = () => {
                     }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
-                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.8rem' }}>Service</span>
+                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.8rem' }}>{pt('service')}</span>
                                 <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{service?.name}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
-                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.8rem' }}>Date & Time</span>
+                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.8rem' }}>{pt('datetime')}</span>
                                 <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{bookingDate} @ {bookingTime}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.8rem' }}>Branch</span>
+                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.8rem' }}>{pt('branch')}</span>
                                 <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{bookingBranch}</span>
                             </div>
                         </div>
@@ -997,7 +999,7 @@ const LinePortal = () => {
     if (page === 'appointments') {
         return (
             <div className="lp-container">
-                <LineHeader title="My Appointments" onBack={() => setPage('home')} />
+                <LineHeader title={pt('my_apts')} onBack={() => setPage('home')} />
                 
                 <div className="lp-content">
                     {userAppointments.length === 0 ? (
@@ -1015,7 +1017,7 @@ const LinePortal = () => {
                             }}>
                                 <Calendar size={32} />
                             </div>
-                            <p style={{ color: 'var(--lp-text-muted)', fontWeight: 600 }}>No upcoming appointments found.</p>
+                            <p style={{ color: 'var(--lp-text-muted)', fontWeight: 600 }}>{pt('no_apts')}</p>
                             <button 
                                 className="lp-btn-accent"
                                 onClick={() => setPage('booking')}
@@ -1066,7 +1068,7 @@ const LinePortal = () => {
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--lp-text-muted)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
                                                 <MapPin size={12} />
-                                                <span>{apt.branch || 'Main Clinic'}</span>
+                                                <span>{apt.branch || pt('main_clinic')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1081,5 +1083,7 @@ const LinePortal = () => {
 
     return null;
 };
+
+
 
 export default LinePortal;
