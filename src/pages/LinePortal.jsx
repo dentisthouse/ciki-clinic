@@ -26,7 +26,7 @@ const getDentalServices = (pt) => [
 ];
 
 const TIME_SLOTS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-const getBranches = (pt) => [pt('branch_sukhumvit'), pt('branch_siam'), pt('branch_ladprao')];
+const getBranches = (pt) => [pt('branch_prachinburi')];
 
 const LinePortal = () => {
     const { language, setLanguage } = useLanguage();
@@ -354,8 +354,8 @@ const LinePortal = () => {
                     </button>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <img src="/logo.png" className="lp-logo" alt="บ้านหมอฟัน" />
-                    <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.015em' }}>บ้านหมอฟัน</span>
+                    <img src="/logo.png" className="lp-logo" alt={pt("ciki_dental")} />
+                    <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.015em' }}>{pt("ciki_dental")}</span>
                 </div>
             </div>
             
@@ -437,10 +437,10 @@ const LinePortal = () => {
                         margin: '0 auto 1.5rem',
                         boxShadow: 'var(--lp-shadow-md)'
                     }}>
-                        <img src="/logo.png" style={{ width: '70%', height: '70%', objectFit: 'contain' }} alt="บ้านหมอฟัน" />
+                        <img src="/logo.png" style={{ width: '70%', height: '70%', objectFit: 'contain' }} alt={pt("ciki_dental")} />
                     </div>
                     
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)' }}>บ้านหมอฟัน</h1>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)' }}>{pt("ciki_dental")}</h1>
                     <p style={{ color: 'var(--lp-text-muted)', marginBottom: '2.5rem', fontSize: '0.95rem' }}>{pt('exp_future')}</p>
 
                     <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
@@ -745,9 +745,9 @@ const LinePortal = () => {
                     {/* Services Preview */}
                     <div style={{ marginTop: '2.5rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                            <h3 style={{ fontWeight: 900, fontSize: '1.1rem' }}>Premium Services</h3>
+                            <h3 style={{ fontWeight: 900, fontSize: '1.1rem' }}>{pt('premium_services')}</h3>
                             <button onClick={() => setPage('services')} style={{ fontSize: '0.85rem', color: 'var(--lp-secondary)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
-                                See All
+                                {pt('see_all')}
                             </button>
                         </div>
                         
@@ -779,7 +779,7 @@ const LinePortal = () => {
     if (page === 'services') {
         return (
             <div className="lp-container">
-                <LineHeader title="Premium Services" onBack={() => setPage('home')} />
+                <LineHeader title={pt('premium_services')} onBack={() => setPage('home')} />
                 
                 <div className="lp-content">
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -829,7 +829,7 @@ const LinePortal = () => {
                         <div style={{ marginBottom: '1.5rem' }}>
                             <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Stethoscope size={16} color="var(--lp-primary)" />
-                                SELECT SERVICE
+                                {pt('select_service_label')}
                             </label>
                             <select 
                                 value={bookingService}
@@ -850,7 +850,7 @@ const LinePortal = () => {
                         <div style={{ marginBottom: '1.5rem' }}>
                             <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <MapPin size={16} color="var(--lp-secondary)" />
-                                SELECT BRANCH
+                                {pt('select_branch_label')}
                             </label>
                             <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
                                 {getBranches(pt).map(branch => (
@@ -896,7 +896,7 @@ const LinePortal = () => {
                         <div style={{ marginBottom: '2rem' }}>
                             <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Clock size={16} color="var(--lp-secondary)" />
-                                AVAILABLE SLOTS
+                                {pt('avail_slots')}
                             </label>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.65rem' }}>
                                 {TIME_SLOTS.map(time => (
