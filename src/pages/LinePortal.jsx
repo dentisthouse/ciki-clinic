@@ -28,7 +28,7 @@ const TIME_SLOTS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00
 const BRANCHES = ['Sukhumvit Branch', 'Siam Square', 'Ladprao'];
 
 const LinePortal = () => {
-    const { language } = useLanguage();
+    const { language, setLanguage } = useLanguage();
     const { patients, appointments, addAppointment } = useData();
     const [dbPatients, setDbPatients] = useState([]);
     
@@ -352,24 +352,41 @@ const LinePortal = () => {
                     </button>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <img src="/logo.png" className="lp-logo" alt="CIKI" />
-                    <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.025em' }}>CIKI</span>
+                    <img src="/logo.png" className="lp-logo" alt="บ้านหมอฟัน" />
+                    <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.015em' }}>บ้านหมอฟัน</span>
                 </div>
             </div>
             
             {showProfile && (
-                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <button 
-                        onClick={() => setPage('home')}
-                        style={{ background: 'white', border: '1px solid #eee', cursor: 'pointer', padding: '0.5rem', borderRadius: '12px' }}
+                        onClick={() => {
+                            if (language === 'TH') setLanguage('EN');
+                            else if (language === 'EN') setLanguage('CN');
+                            else setLanguage('TH');
+                        }}
+                        style={{ 
+                            background: 'white', 
+                            border: '1px solid #eee', 
+                            cursor: 'pointer', 
+                            padding: '0.4rem 0.6rem', 
+                            borderRadius: '12px',
+                            fontWeight: 800,
+                            color: 'var(--lp-text-main)',
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: '40px'
+                        }}
                     >
-                        <User size={18} />
+                        {language === 'CN' ? '中文' : language === 'EN' ? 'EN' : 'TH'}
                     </button>
                     <button 
                         onClick={handleLogout}
-                        style={{ background: 'white', border: '1px solid #eee', cursor: 'pointer', padding: '0.5rem', borderRadius: '12px' }}
+                        style={{ background: 'white', border: '1px solid #eee', cursor: 'pointer', padding: '0.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center' }}
                     >
-                        <LogOut size={18} color="#ef4444" />
+                        <LogOut size={16} color="#ef4444" />
                     </button>
                 </div>
             )}
@@ -379,7 +396,33 @@ const LinePortal = () => {
     // ===== LOGIN PAGE =====
     if (page === 'login') {
         return (
-            <div className="lp-container" style={{ justifyContent: 'center', padding: '2rem' }}>
+            <div className="lp-container" style={{ justifyContent: 'center', padding: '2rem', position: 'relative' }}>
+                {/* Floating Language Button for Login Page */}
+                <button 
+                    onClick={() => {
+                        if (language === 'TH') setLanguage('EN');
+                        else if (language === 'EN') setLanguage('CN');
+                        else setLanguage('TH');
+                    }}
+                    style={{ 
+                        position: 'absolute',
+                        top: '1.5rem',
+                        right: '1.5rem',
+                        background: 'rgba(255,255,255,0.8)', 
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(0,0,0,0.05)', 
+                        cursor: 'pointer', 
+                        padding: '0.5rem 0.75rem', 
+                        borderRadius: '2rem',
+                        fontWeight: 800,
+                        color: 'var(--lp-text-main)',
+                        fontSize: '0.8rem',
+                        boxShadow: 'var(--lp-shadow-sm)'
+                    }}
+                >
+                    {language === 'CN' ? '🌐 中文' : language === 'EN' ? '🌐 EN' : '🌐 ภาษาไทย'}
+                </button>
+
                 <div className="lp-glass" style={{ width: '100%', borderRadius: '2.5rem', padding: '2.5rem 1.5rem', textAlign: 'center' }}>
                     <div style={{ 
                         width: '80px', 
@@ -392,10 +435,10 @@ const LinePortal = () => {
                         margin: '0 auto 1.5rem',
                         boxShadow: 'var(--lp-shadow-md)'
                     }}>
-                        <img src="/logo.png" style={{ width: '70%', height: '70%', objectFit: 'contain' }} alt="CIKI" />
+                        <img src="/logo.png" style={{ width: '70%', height: '70%', objectFit: 'contain' }} alt="บ้านหมอฟัน" />
                     </div>
                     
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)' }}>CIKI DENTAL</h1>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)' }}>บ้านหมอฟัน</h1>
                     <p style={{ color: 'var(--lp-text-muted)', marginBottom: '2.5rem', fontSize: '0.95rem' }}>Experience the future of dentistry</p>
 
                     <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
@@ -627,13 +670,13 @@ const LinePortal = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div>
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.1rem', letterSpacing: '-0.02em' }}>
+                                <div style={{ color: 'white' }}>
+                                    <h3 style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.1rem', letterSpacing: '-0.02em' }}>
                                         {currentUser?.name || 'Guest User'}
                                     </h3>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: 0.8, fontSize: '0.75rem' }}>
+                                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: 0.9, fontSize: '0.75rem' }}>
                                         <ShieldCheck size={12} color="#10b981" />
-                                        <span>Verified Patient</span>
+                                        <span style={{ color: 'white' }}>Verified Patient</span>
                                     </div>
                                 </div>
                             </div>
