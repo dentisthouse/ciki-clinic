@@ -3,8 +3,10 @@ import liff from "@line/liff";
 import {
     Calendar, CheckCircle2, Clock, Bell, User, LogOut,
     Stethoscope, Sparkles, Heart, Star, XCircle, Check,
-    Loader2, Phone, ArrowLeft
+    Loader2, Phone, ArrowLeft, ShieldCheck, Mail, MapPin,
+    CreditCard, ChevronRight, History, Settings
 } from "lucide-react";
+import "./LinePortal.css";
 import { useData } from "../context/DataContext";
 import { useLanguage } from "../context/LanguageContext";
 import { sendOTP, verifyOTP, formatPhoneNumber, isValidThaiPhone } from "../services/notificationService";
@@ -12,18 +14,18 @@ import { supabase } from "../supabase";
 
 // ข้อมูลบริการคลินิกทันตกรรม
 const DENTAL_SERVICES = [
-    { id: 'checkup', name: 'ตรวจสุขภาพช่องปาก', price: 500, icon: Stethoscope, duration: '30 นาที' },
-    { id: 'cleaning', name: 'ขูดหินปูน / Airflow', price: 1200, icon: Sparkles, duration: '45 นาที' },
-    { id: 'filling', name: 'อุดฟัน (Composite)', price: 800, icon: Check, duration: '30-45 นาที' },
-    { id: 'rootcanal', name: 'รักษารากฟัน', price: 4500, icon: Heart, duration: '60-90 นาที' },
-    { id: 'crown', name: 'ครอบฟัน (Crown)', price: 8500, icon: Star, duration: '2 นัด' },
-    { id: 'implant', name: 'รากฟันเทียม (Implant)', price: 35000, icon: CheckCircle2, duration: '3-6 เดือน' },
-    { id: 'whitening', name: 'ฟอกสีฟัน (Whitening)', price: 6500, icon: Sparkles, duration: '60 นาที' },
-    { id: 'extraction', name: 'ถอนฟัน', price: 1500, icon: XCircle, duration: '30 นาที' },
+    { id: 'checkup', name: 'Dental Checkup', price: 500, icon: Stethoscope, duration: '30 min' },
+    { id: 'cleaning', name: 'Teeth Cleaning / Airflow', price: 1200, icon: Sparkles, duration: '45 min' },
+    { id: 'filling', name: 'Composite Filling', price: 800, icon: Check, duration: '30-45 min' },
+    { id: 'rootcanal', name: 'Root Canal Treatment', price: 4500, icon: Heart, duration: '60-90 min' },
+    { id: 'crown', name: 'Porcelain Crown', price: 8500, icon: Star, duration: '2 visits' },
+    { id: 'implant', name: 'Dental Implant', price: 35000, icon: CheckCircle2, duration: '3-6 months' },
+    { id: 'whitening', name: 'Professional Whitening', price: 6500, icon: Sparkles, duration: '60 min' },
+    { id: 'extraction', name: 'Tooth Extraction', price: 1500, icon: XCircle, duration: '30 min' },
 ];
 
 const TIME_SLOTS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-const BRANCHES = ['สาขา สุขุมวิท', 'สาขา สยามสแควร์', 'สาขา ลาดพร้าว'];
+const BRANCHES = ['Sukhumvit Branch', 'Siam Square', 'Ladprao'];
 
 const LinePortal = () => {
     const { language } = useLanguage();
@@ -74,7 +76,6 @@ const LinePortal = () => {
                 }
             } catch (err) {
                 console.error("❌ LIFF Init Error:", err);
-                alert(`❌ LIFF Initialization Error: ${err.message}`);
             }
         };
 
@@ -111,13 +112,11 @@ const LinePortal = () => {
 
                     if (!error && data) {
                         console.log('✅ LINE info synced successfully');
-                        alert('✅ ซิงค์ข้อมูลโปรไฟล์ LINE สำเร็จ');
                         // Update local state and storage
                         localStorage.setItem('ciki_portal_user', JSON.stringify(data));
                         setCurrentUser(data);
                     } else if (error) {
                         console.error('❌ Error syncing LINE info:', error);
-                        alert(`❌ ข้อผิดพลาดในการซิงค์: ${error.message}`);
                     }
                 }
             }
@@ -345,53 +344,32 @@ const LinePortal = () => {
     };
 
     const LineHeader = ({ title, onBack, showProfile = true }) => (
-        <div style={{ 
-            background: 'rgba(255,255,255,0.95)', 
-            backdropFilter: 'blur(10px)',
-            padding: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            position: 'sticky',
-            top: 0,
-            zIndex: 50,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            borderBottom: '1px solid #e5e7eb'
-        }}>
+        <div className="lp-header lp-glass">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 {onBack && (
-                    <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                        <ArrowLeft size={22} />
+                    <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}>
+                        <ArrowLeft size={22} color="var(--lp-text-main)" />
                     </button>
                 )}
-                <img src="/logo.png" style={{ height: '36px' }} alt="CIKI" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <img src="/logo.png" className="lp-logo" alt="CIKI" />
+                    <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.025em' }}>CIKI</span>
+                </div>
             </div>
             
             {showProfile && (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
                     <button 
-                        onClick={() => setPage('appointments')}
-                        style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            borderRadius: '50%'
-                        }}
+                        onClick={() => setPage('home')}
+                        style={{ background: 'white', border: '1px solid #eee', cursor: 'pointer', padding: '0.5rem', borderRadius: '12px' }}
                     >
-                        <Calendar size={20} />
+                        <User size={18} />
                     </button>
                     <button 
                         onClick={handleLogout}
-                        style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            borderRadius: '50%'
-                        }}
+                        style={{ background: 'white', border: '1px solid #eee', cursor: 'pointer', padding: '0.5rem', borderRadius: '12px' }}
                     >
-                        <LogOut size={20} />
+                        <LogOut size={18} color="#ef4444" />
                     </button>
                 </div>
             )}
@@ -401,79 +379,58 @@ const LinePortal = () => {
     // ===== LOGIN PAGE =====
     if (page === 'login') {
         return (
-            <div style={{ 
-                minHeight: '100vh', 
-                background: 'linear-gradient(to bottom, #F8F9FA, white)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '2rem'
-            }}>
-                <div style={{ 
-                    width: '96px', 
-                    height: '96px', 
-                    background: 'white',
-                    borderRadius: '2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '2rem',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                    border: '2px solid #D1D5DB'
-                }}>
-                    <img src="/logo.png" style={{ width: '80%', height: '80%', objectFit: 'contain' }} alt="CIKI" />
-                </div>
-                
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>CIKI Dental Clinic</h1>
-                <p style={{ color: '#6B7280', marginBottom: '3rem' }}>เข้าสู่ระบบด้วยเบอร์มือถือ</p>
-
-                <div style={{ width: '100%', maxWidth: '320px' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', marginBottom: '0.5rem', display: 'block' }}>
-                        เบอร์โทรศัพท์
-                    </label>
-                    <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
-                        <Phone style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} size={20} />
-                        <input 
-                            type="text"
-                            placeholder="08x-xxx-xxxx" 
-                            value={phoneNum} 
-                            onChange={e => setPhoneNum(e.target.value)} 
-                            maxLength={10}
-                            style={{
-                                width: '100%',
-                                height: '3.5rem',
-                                paddingLeft: '3rem',
-                                borderRadius: '1rem',
-                                border: '2px solid #E5E7EB',
-                                fontSize: '1.125rem',
-                                fontWeight: 600
-                            }}
-                        />
+            <div className="lp-container" style={{ justifyContent: 'center', padding: '2rem' }}>
+                <div className="lp-glass" style={{ width: '100%', borderRadius: '2.5rem', padding: '2.5rem 1.5rem', textAlign: 'center' }}>
+                    <div style={{ 
+                        width: '80px', 
+                        height: '80px', 
+                        background: 'white',
+                        borderRadius: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 1.5rem',
+                        boxShadow: 'var(--lp-shadow-md)'
+                    }}>
+                        <img src="/logo.png" style={{ width: '70%', height: '70%', objectFit: 'contain' }} alt="CIKI" />
                     </div>
                     
-                    <button 
-                        onClick={handleLogin}
-                        disabled={authLoading}
-                        style={{
-                            width: '100%',
-                            height: '3.5rem',
-                            background: '#1F2937',
-                            color: 'white',
-                            borderRadius: '1rem',
-                            fontSize: '1.125rem',
-                            fontWeight: 700,
-                            border: 'none',
-                            cursor: authLoading ? 'not-allowed' : 'pointer',
-                            opacity: authLoading ? 0.7 : 1
-                        }}
-                    >
-                        {authLoading ? 'กำลังส่ง...' : 'รับรหัส OTP'}
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)' }}>CIKI DENTAL</h1>
+                    <p style={{ color: 'var(--lp-text-muted)', marginBottom: '2.5rem', fontSize: '0.95rem' }}>Experience the future of dentistry</p>
+
+                    <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+                        <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'block', marginLeft: '0.5rem' }}>
+                            Your Phone Number
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                            <div style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--lp-primary)' }}>
+                                <Phone size={20} />
+                            </div>
+                            <input 
+                                className="lp-input"
+                                type="text"
+                                placeholder="08x-xxx-xxxx" 
+                                value={phoneNum} 
+                                onChange={e => setPhoneNum(e.target.value)} 
+                                maxLength={10}
+                            />
+                        </div>
+                    </div>
+                    
+                    <button className="lp-btn-primary" onClick={handleLogin} disabled={authLoading}>
+                        {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : 'Send OTP'}
                     </button>
                     
-                    <p style={{ fontSize: '0.625rem', color: '#9CA3AF', marginTop: '1rem', textAlign: 'center' }}>
-                        การเข้าใช้ระบบถือว่าคุณยอมรับข้อเสนอและเงื่อนไขการให้บริการของคลินิก
-                    </p>
+                    <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1.5rem', color: 'var(--lp-text-muted)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                            <ShieldCheck size={18} />
+                            <span style={{ fontSize: '0.65rem' }}>Secure</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                            <Sparkles size={18} />
+                            <span style={{ fontSize: '0.65rem' }}>Premium</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -482,105 +439,77 @@ const LinePortal = () => {
     // ===== OTP PAGE =====
     if (page === 'otp') {
         return (
-            <div style={{ 
-                minHeight: '100vh', 
-                background: 'white',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '2rem'
-            }}>
-                {/* Demo Mode Badge */}
-                <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    background: '#FEF3C7',
-                    color: '#D97706',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '2rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                }}>
-                    🧪 Demo Mode
-                </div>
+            <div className="lp-container" style={{ justifyContent: 'center', padding: '2rem' }}>
+                <div className="lp-glass" style={{ width: '100%', borderRadius: '2.5rem', padding: '2.5rem 1.5rem', textAlign: 'center', position: 'relative' }}>
+                    <div style={{
+                        position: 'absolute',
+                        top: '-1rem',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#10b981',
+                        color: 'white',
+                        padding: '0.4rem 1rem',
+                        borderRadius: '1rem',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        letterSpacing: '0.05em',
+                        boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+                    }}>
+                        VERIFICATION
+                    </div>
 
-                <div style={{ 
-                    width: '80px', 
-                    height: '80px', 
-                    background: '#F3F4F6',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '2rem'
-                }}>
-                    <span style={{ fontSize: '2rem' }}>🔒</span>
-                </div>
-                
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>ยืนยันตัวตน</h1>
-                <p style={{ color: '#6B7280', marginBottom: '1rem', textAlign: 'center' }}>
-                    ป้อนรหัส 6 หลักที่ส่งไปยังเบอร์ {phoneNum}
-                </p>
-                
-                {/* Demo OTP Hint */}
-                <div style={{
-                    background: '#F0FDF4',
-                    border: '1px solid #BBF7D0',
-                    borderRadius: '0.75rem',
-                    padding: '0.75rem 1rem',
-                    marginBottom: '2rem',
-                    fontSize: '0.875rem',
-                    color: '#166534',
-                    textAlign: 'center',
-                    fontWeight: 600
-                }}>
-                    💡 Demo Mode: ใช้รหัส <span style={{ 
-                        background: '#22C55E', 
-                        color: 'white', 
-                        padding: '0.25rem 0.5rem',
-                        borderRadius: '0.25rem',
-                        fontFamily: 'monospace',
-                        fontSize: '1rem'
-                    }}>123456</span>
-                </div>
-
-                <div style={{ width: '100%', maxWidth: '320px' }}>
+                    <div style={{ 
+                        width: '64px', 
+                        height: '64px', 
+                        background: '#f8fafc', 
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '1rem auto 1.5rem',
+                        border: '1px solid #e2e8f0'
+                    }}>
+                        <ShieldCheck size={32} color="var(--lp-primary)" />
+                    </div>
+                    
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.5rem' }}>Verify Identity</h1>
+                    <p style={{ color: 'var(--lp-text-muted)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+                        OTP sent to <span style={{ color: 'var(--lp-text-main)', fontWeight: 700 }}>{phoneNum}</span>
+                    </p>
+                    
                     <div 
                         onClick={() => otpInputRef.current?.focus()}
                         style={{ 
                             display: 'flex', 
                             justifyContent: 'center', 
-                            gap: '0.5rem', 
+                            gap: '0.65rem', 
                             marginBottom: '2rem',
                             cursor: 'pointer'
                         }}
                     >
                         {[1, 2, 3, 4, 5, 6].map(i => {
                             const isActive = otpCode.length === i - 1;
+                            const isFilled = otpCode.length >= i;
                             return (
                                 <div 
                                     key={i} 
                                     style={{
-                                        width: '40px',
+                                        width: '42px',
                                         height: '56px',
-                                        border: `2px solid ${isActive ? '#2563EB' : '#E5E7EB'}`,
-                                        background: isActive ? '#EFF6FF' : 'white',
-                                        borderRadius: '0.75rem',
+                                        border: `2px solid ${isActive ? 'var(--lp-primary)' : '#e5e7eb'}`,
+                                        background: isActive ? 'rgba(16, 185, 129, 0.05)' : 'white',
+                                        borderRadius: '0.85rem',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         fontSize: '1.5rem',
                                         fontWeight: 800,
                                         transition: 'all 0.2s',
-                                        boxShadow: isActive ? '0 0 0 3px rgba(37, 99, 235, 0.1)' : 'none'
+                                        boxShadow: isActive ? '0 0 0 4px rgba(16, 185, 129, 0.1)' : 'none',
+                                        color: isFilled ? 'var(--lp-text-main)' : 'transparent'
                                     }}
                                 >
-                                    {otpCode[i - 1] || ''}
+                                    {otpCode[i - 1] || '•'}
                                 </div>
                             );
                         })}
@@ -597,49 +526,18 @@ const LinePortal = () => {
                             if (val.length <= 6) setOtpCode(val);
                         }}
                         maxLength={6}
-                        style={{ 
-                            position: 'absolute', 
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            opacity: 0, 
-                            zIndex: -1,
-                            pointerEvents: 'none'
-                        }}
+                        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
                     />
 
-                    <button 
-                        onClick={handleVerifyOtp}
-                        disabled={authLoading}
-                        style={{
-                            width: '100%',
-                            height: '3.5rem',
-                            background: '#1F2937',
-                            color: 'white',
-                            borderRadius: '1rem',
-                            fontSize: '1.125rem',
-                            fontWeight: 700,
-                            border: 'none',
-                            cursor: authLoading ? 'not-allowed' : 'pointer',
-                            marginBottom: '1rem'
-                        }}
-                    >
-                        {authLoading ? 'กำลังตรวจสอบ...' : 'ยืนยันรหัส OTP'}
+                    <button className="lp-btn-primary" onClick={handleVerifyOtp} disabled={authLoading}>
+                        {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : 'Verify & Continue'}
                     </button>
                     
                     <button 
                         onClick={() => setPage('login')}
-                        style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            color: '#1F2937',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            width: '100%'
-                        }}
+                        style={{ background: 'none', border: 'none', color: 'var(--lp-text-muted)', fontSize: '0.85rem', marginTop: '1.5rem', cursor: 'pointer', fontWeight: 600 }}
                     >
-                        ขอรหัสใหม่อีกครั้ง
+                        Resend Code
                     </button>
                 </div>
             </div>
@@ -649,100 +547,50 @@ const LinePortal = () => {
     // ===== REGISTER PAGE =====
     if (page === 'register') {
         return (
-            <div style={{ 
-                minHeight: '100vh', 
-                background: '#F8F9FA',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '2rem'
-            }}>
-                <div style={{ 
-                    width: '320px', 
-                    background: 'white',
-                    padding: '2rem',
-                    borderRadius: '1.5rem',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
-                    border: '1px solid #E5E7EB'
-                }}>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center' }}>สมัครสมาชิก</h1>
-                    <p style={{ color: '#6B7280', marginBottom: '2rem', textAlign: 'center', fontSize: '0.875rem' }}>
-                        ยินดีต้อนรับ! กรุณากรอกข้อมูลเพื่อเริ่มใช้งาน
+            <div className="lp-container" style={{ padding: '2rem', justifyContent: 'center' }}>
+                <div className="lp-glass" style={{ width: '100%', borderRadius: '2rem', padding: '2rem' }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.5rem', textAlign: 'center' }}>Create Account</h1>
+                    <p style={{ color: 'var(--lp-text-muted)', marginBottom: '2rem', textAlign: 'center', fontSize: '0.875rem' }}>
+                        Welcome! Please fill in your details to join CIKI.
                     </p>
 
                     <div style={{ marginBottom: '1.25rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', marginBottom: '0.5rem', display: 'block' }}>
-                            ชื่อ
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--lp-text-main)', marginBottom: '0.5rem', display: 'block' }}>
+                            First Name
                         </label>
                         <input 
+                            className="lp-input"
+                            style={{ paddingLeft: '1.25rem' }}
                             type="text"
-                            placeholder="กรอกชื่อ" 
+                            placeholder="Enter First Name" 
                             value={firstName} 
                             onChange={e => setFirstName(e.target.value)} 
-                            style={{
-                                width: '100%',
-                                height: '3rem',
-                                padding: '0 1rem',
-                                borderRadius: '0.75rem',
-                                border: '1px solid #E5E7EB',
-                                fontSize: '1rem'
-                            }}
                         />
                     </div>
 
                     <div style={{ marginBottom: '2rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', marginBottom: '0.5rem', display: 'block' }}>
-                            นามสกุล
+                        <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--lp-text-main)', marginBottom: '0.5rem', display: 'block' }}>
+                            Last Name
                         </label>
                         <input 
+                            className="lp-input"
+                            style={{ paddingLeft: '1.25rem' }}
                             type="text"
-                            placeholder="กรอกนามสกุล" 
+                            placeholder="Enter Last Name" 
                             value={lastName} 
                             onChange={e => setLastName(e.target.value)} 
-                            style={{
-                                width: '100%',
-                                height: '3rem',
-                                padding: '0 1rem',
-                                borderRadius: '0.75rem',
-                                border: '1px solid #E5E7EB',
-                                fontSize: '1rem'
-                            }}
                         />
                     </div>
 
-                    <button 
-                        onClick={handleRegister}
-                        disabled={registerLoading}
-                        style={{
-                            width: '100%',
-                            height: '3.5rem',
-                            background: '#2563EB',
-                            color: 'white',
-                            borderRadius: '1rem',
-                            fontSize: '1.125rem',
-                            fontWeight: 700,
-                            border: 'none',
-                            cursor: registerLoading ? 'not-allowed' : 'pointer',
-                            opacity: registerLoading ? 0.7 : 1
-                        }}
-                    >
-                        {registerLoading ? 'กำลังบันทึก...' : 'สมัครสมาชิก'}
+                    <button className="lp-btn-primary" onClick={handleRegister} disabled={registerLoading}>
+                        {registerLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : 'Create Account'}
                     </button>
                     
                     <button 
                         onClick={() => setPage('login')}
-                        style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            color: '#6B7280',
-                            fontSize: '0.875rem',
-                            cursor: 'pointer',
-                            width: '100%',
-                            marginTop: '1rem'
-                        }}
+                        style={{ background: 'none', border: 'none', color: 'var(--lp-text-muted)', fontSize: '0.85rem', cursor: 'pointer', width: '100%', marginTop: '1.25rem' }}
                     >
-                        ยกเลิก
+                        Back to Login
                     </button>
                 </div>
             </div>
@@ -751,161 +599,125 @@ const LinePortal = () => {
 
     // ===== HOME PAGE =====
     if (page === 'home') {
+        const nextAppointment = userAppointments.find(a => a.status !== 'Completed');
+
         return (
-            <div style={{ minHeight: '100vh', background: '#F3F4F6' }}>
-                <LineHeader title="CIKI Dental" showProfile={true} />
+            <div className="lp-container">
+                <LineHeader title="Dashboard" showProfile={true} />
                 
-                <div style={{ padding: '1rem' }}>
-                    {/* Member Card */}
-                    <div style={{
-                        background: 'linear-gradient(135deg, #2563EB, #1E40AF)',
-                        borderRadius: '1.5rem',
-                        padding: '1.5rem',
-                        color: 'white',
-                        marginBottom: '1.5rem',
-                        boxShadow: '0 10px 25px rgba(37, 99, 235, 0.3)'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-                            <div>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.25rem' }}>
-                                    {currentUser?.name || 'สมาชิก CIKI'}
-                                </h3>
-                                <p style={{ fontSize: '0.875rem', opacity: 0.8 }}>{currentUser?.phone || phoneNum}</p>
+                <div className="lp-content">
+                    {/* Premium Member Card */}
+                    <div className="lp-member-card">
+                        <div className="shiny-effect"></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                <div style={{ 
+                                    width: '60px', 
+                                    height: '60px', 
+                                    borderRadius: '50%', 
+                                    overflow: 'hidden',
+                                    border: '2px solid rgba(255,255,255,0.3)',
+                                    background: 'white' 
+                                }}>
+                                    {linePictureUrl ? (
+                                        <img src={linePictureUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Profile" />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--lp-primary)', color: 'white', fontWeight: 700, fontSize: '1.5rem' }}>
+                                            {currentUser?.name?.charAt(0) || 'C'}
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.1rem', letterSpacing: '-0.02em' }}>
+                                        {currentUser?.name || 'Guest User'}
+                                    </h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: 0.8, fontSize: '0.75rem' }}>
+                                        <ShieldCheck size={12} color="#10b981" />
+                                        <span>Verified Patient</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div style={{ 
-                                background: 'rgba(255,255,255,0.2)', 
-                                padding: '0.5rem 1rem', 
-                                borderRadius: '2rem',
-                                fontSize: '0.75rem',
-                                fontWeight: 700
-                            }}>
-                                {currentUser?.tier || 'Standard'}
+                            <div className="lp-pill" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                {currentUser?.tier || 'Gold Member'}
                             </div>
                         </div>
                         
-                        <div>
-                            <p style={{ fontSize: '0.75rem', opacity: 0.8, marginBottom: '0.25rem' }}>คะแนนสะสม</p>
-                            <p style={{ fontSize: '2rem', fontWeight: 800 }}>
-                                {(currentUser?.points || 0).toLocaleString()} PTS
-                            </p>
+                        <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative', zIndex: 1 }}>
+                            <div>
+                                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.6, marginBottom: '0.25rem' }}>Reward Points</p>
+                                <p style={{ fontSize: '2.25rem', fontWeight: 900, display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                                    {(currentUser?.points || 0).toLocaleString()} 
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8 }}>PTS</span>
+                                </p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <CreditCard size={24} style={{ opacity: 0.5 }} />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Upcoming Appointment */}
-                    {userAppointments.length > 0 && (
-                        <div style={{
-                            background: 'white',
-                            borderRadius: '1rem',
-                            padding: '1rem',
-                            marginBottom: '1.5rem',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                                <div style={{ 
-                                    width: '40px', 
-                                    height: '40px', 
-                                    background: '#DBEAFE', 
-                                    borderRadius: '0.75rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <Bell size={20} style={{ color: '#2563EB' }} />
-                                </div>
-                                <div>
-                                    <p style={{ fontWeight: 700 }}>นัดหมายถัดไป</p>
-                                    <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                                        {userAppointments[0].treatment} • {userAppointments[0].date}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Quick Actions */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {/* Quick Actions Grid */}
+                    <div className="lp-grid-actions">
                         {[
-                            { label: 'จองคิว', icon: Calendar, pg: 'booking' },
-                            { label: 'บริการ', icon: Stethoscope, pg: 'services' },
-                            { label: 'นัดหมาย', icon: Clock, pg: 'appointments' },
+                            { label: 'Booking', icon: Calendar, pg: 'booking' },
+                            { label: 'Services', icon: Stethoscope, pg: 'services' },
+                            { label: 'Timeline', icon: History, pg: 'appointments' },
                         ].map(item => (
-                            <button 
-                                key={item.label}
-                                onClick={() => setPage(item.pg)}
-                                style={{
-                                    background: 'white',
-                                    border: 'none',
-                                    borderRadius: '1rem',
-                                    padding: '1rem',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                                }}
-                            >
-                                <div style={{ 
-                                    width: '48px', 
-                                    height: '48px', 
-                                    background: '#F3F4F6', 
-                                    borderRadius: '0.75rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <item.icon size={24} style={{ color: '#374151' }} />
+                            <button key={item.label} onClick={() => setPage(item.pg)} className="lp-action-btn" style={{ border: 'none' }}>
+                                <div className="lp-icon-circle">
+                                    <item.icon size={24} />
                                 </div>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>{item.label}</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--lp-text-main)' }}>{item.label}</span>
                             </button>
                         ))}
                     </div>
 
+                    {/* Next Appointment Section */}
+                    {nextAppointment && (
+                        <div className="lp-card lp-glass" style={{ border: 'none', background: 'white' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <h4 style={{ fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Bell size={16} color="var(--lp-primary)" />
+                                    Next Appointment
+                                </h4>
+                                <div className="lp-pill" style={{ background: '#ecfdf5', color: '#059669', fontSize: '0.65rem' }}>
+                                    Confirmed
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--lp-background)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Clock size={20} color="var(--lp-secondary)" />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <p style={{ fontWeight: 700, fontSize: '1rem' }}>{nextAppointment.treatment}</p>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--lp-text-muted)' }}>{nextAppointment.date} at {nextAppointment.time}</p>
+                                </div>
+                                <ChevronRight size={18} style={{ color: '#ccc' }} />
+                            </div>
+                        </div>
+                    )}
+
                     {/* Services Preview */}
-                    <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h3 style={{ fontWeight: 700 }}>บริการยอดนิยม</h3>
-                            <button onClick={() => setPage('services')} style={{ fontSize: '0.875rem', color: '#2563EB', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}>
-                                ดูทั้งหมด
+                    <div style={{ marginTop: '2.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                            <h3 style={{ fontWeight: 900, fontSize: '1.1rem' }}>Premium Services</h3>
+                            <button onClick={() => setPage('services')} style={{ fontSize: '0.85rem', color: 'var(--lp-secondary)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
+                                See All
                             </button>
                         </div>
                         
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
                             {DENTAL_SERVICES.slice(0, 3).map(service => (
-                                <div 
-                                    key={service.id}
-                                    onClick={() => {
-                                        setBookingService(service.id);
-                                        setPage('booking');
-                                    }}
-                                    style={{
-                                        background: 'white',
-                                        borderRadius: '1rem',
-                                        padding: '1rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '1rem',
-                                        cursor: 'pointer',
-                                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                                    }}
-                                >
-                                    <div style={{ 
-                                        width: '48px', 
-                                        height: '48px', 
-                                        background: '#DBEAFE', 
-                                        borderRadius: '0.75rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        <service.icon size={24} style={{ color: '#2563EB' }} />
+                                <div key={service.id} onClick={() => { setBookingService(service.id); setPage('booking'); }} className="lp-service-card" style={{ cursor: 'pointer' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--lp-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <service.icon size={22} />
                                     </div>
                                     <div style={{ flex: 1 }}>
-                                        <p style={{ fontWeight: 700 }}>{service.name}</p>
-                                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>{service.duration}</p>
+                                        <p style={{ fontWeight: 800, fontSize: '0.95rem' }}>{service.name}</p>
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--lp-text-muted)' }}>{service.duration}</p>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <p style={{ fontWeight: 700, color: '#2563EB' }}>
+                                        <p style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--lp-primary)' }}>
                                             ฿{service.price.toLocaleString()}
                                         </p>
                                     </div>
@@ -921,60 +733,35 @@ const LinePortal = () => {
     // ===== SERVICES PAGE =====
     if (page === 'services') {
         return (
-            <div style={{ minHeight: '100vh', background: '#F3F4F6' }}>
-                <LineHeader title="บริการทั้งหมด" onBack={() => setPage('home')} />
+            <div className="lp-container">
+                <LineHeader title="Premium Services" onBack={() => setPage('home')} />
                 
-                <div style={{ padding: '1rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="lp-content">
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
                         {DENTAL_SERVICES.map(service => (
-                            <div 
-                                key={service.id}
-                                onClick={() => {
-                                    setBookingService(service.id);
-                                    setPage('booking');
-                                }}
-                                style={{
-                                    background: 'white',
-                                    borderRadius: '1rem',
-                                    padding: '1rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '1rem',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                                }}
-                            >
+                            <div key={service.id} onClick={() => { setBookingService(service.id); setPage('booking'); }} className="lp-service-card" style={{ padding: '1.25rem', cursor: 'pointer' }}>
                                 <div style={{ 
                                     width: '56px', 
                                     height: '56px', 
-                                    background: '#DBEAFE', 
-                                    borderRadius: '0.75rem',
+                                    background: 'rgba(59, 130, 246, 0.1)', 
+                                    borderRadius: '16px',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center'
+                                    justifyContent: 'center',
+                                    color: 'var(--lp-secondary)'
                                 }}>
-                                    <service.icon size={28} style={{ color: '#2563EB' }} />
+                                    <service.icon size={28} />
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <p style={{ fontWeight: 700 }}>{service.name}</p>
-                                    <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>{service.duration}</p>
+                                    <p style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--lp-text-main)' }}>{service.name}</p>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--lp-text-muted)', marginTop: '2px' }}>{service.duration}</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <p style={{ fontWeight: 700, fontSize: '1.125rem', color: '#2563EB' }}>
+                                    <p style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--lp-primary)' }}>
                                         ฿{service.price.toLocaleString()}
                                     </p>
-                                    <button style={{ 
-                                        background: '#2563EB', 
-                                        color: 'white',
-                                        border: 'none',
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: '0.5rem',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        marginTop: '0.5rem'
-                                    }}>
-                                        จองเลย
+                                    <button className="lp-btn-accent" style={{ marginTop: '0.75rem', padding: '0.5rem 1rem', fontSize: '0.75rem', borderRadius: '10px' }}>
+                                        Book Now
                                     </button>
                                 </div>
                             </div>
@@ -988,128 +775,119 @@ const LinePortal = () => {
     // ===== BOOKING PAGE =====
     if (page === 'booking') {
         return (
-            <div style={{ minHeight: '100vh', background: '#F3F4F6' }}>
-                <LineHeader title="จองคิว" onBack={() => setPage('home')} />
+            <div className="lp-container">
+                <LineHeader title="Book Appointment" onBack={() => setPage('home')} />
                 
-                <div style={{ padding: '1rem' }}>
-                    {/* Select Service */}
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#374151', marginBottom: '0.5rem', display: 'block' }}>
-                            เลือกบริการ
-                        </label>
-                        <select 
-                            value={bookingService}
-                            onChange={e => setBookingService(e.target.value)}
-                            style={{
-                                width: '100%',
-                                height: '3.5rem',
-                                padding: '0 1rem',
-                                borderRadius: '0.75rem',
-                                border: '1px solid #E5E7EB',
-                                fontSize: '1rem',
-                                background: 'white'
-                            }}
-                        >
-                            <option value="">เลือกบริการ</option>
-                            {DENTAL_SERVICES.map(service => (
-                                <option key={service.id} value={service.id}>
-                                    {service.name} - ฿{service.price.toLocaleString()}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Select Branch */}
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#374151', marginBottom: '0.5rem', display: 'block' }}>
-                            เลือกสาขา
-                        </label>
-                        <select 
-                            value={bookingBranch}
-                            onChange={e => setBookingBranch(e.target.value)}
-                            style={{
-                                width: '100%',
-                                height: '3.5rem',
-                                padding: '0 1rem',
-                                borderRadius: '0.75rem',
-                                border: '1px solid #E5E7EB',
-                                fontSize: '1rem',
-                                background: 'white'
-                            }}
-                        >
-                            {BRANCHES.map(branch => (
-                                <option key={branch} value={branch}>{branch}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Select Date */}
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#374151', marginBottom: '0.5rem', display: 'block' }}>
-                            เลือกวันที่
-                        </label>
-                        <input 
-                            type="date"
-                            value={bookingDate}
-                            onChange={e => setBookingDate(e.target.value)}
-                            min={new Date().toISOString().split('T')[0]}
-                            style={{
-                                width: '100%',
-                                height: '3.5rem',
-                                padding: '0 1rem',
-                                borderRadius: '0.75rem',
-                                border: '1px solid #E5E7EB',
-                                fontSize: '1rem',
-                                background: 'white'
-                            }}
-                        />
-                    </div>
-
-                    {/* Select Time */}
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#374151', marginBottom: '0.5rem', display: 'block' }}>
-                            เลือกเวลา
-                        </label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-                            {TIME_SLOTS.map(time => (
-                                <button
-                                    key={time}
-                                    onClick={() => setBookingTime(time)}
-                                    style={{
-                                        padding: '0.75rem',
-                                        borderRadius: '0.75rem',
-                                        border: 'none',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        background: bookingTime === time ? '#2563EB' : 'white',
-                                        color: bookingTime === time ? 'white' : '#374151'
-                                    }}
-                                >
-                                    {time}
-                                </button>
-                            ))}
+                <div className="lp-content">
+                    <div className="lp-glass" style={{ borderRadius: '2rem', padding: '1.5rem', marginBottom: '1.5rem' }}>
+                        {/* Select Service */}
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Stethoscope size={16} color="var(--lp-primary)" />
+                                SELECT SERVICE
+                            </label>
+                            <select 
+                                value={bookingService}
+                                onChange={e => setBookingService(e.target.value)}
+                                className="lp-input"
+                                style={{ paddingLeft: '1.25rem' }}
+                            >
+                                <option value="">Choose a treatment...</option>
+                                {DENTAL_SERVICES.map(service => (
+                                    <option key={service.id} value={service.id}>
+                                        {service.name} (฿{service.price.toLocaleString()})
+                                    </option>
+                                ))}
+                            </select>
                         </div>
-                    </div>
 
-                    {/* Submit Button */}
-                    <button
-                        onClick={handleBooking}
-                        disabled={!bookingService || !bookingTime}
-                        style={{
-                            width: '100%',
-                            height: '3.5rem',
-                            background: !bookingService || !bookingTime ? '#9CA3AF' : '#2563EB',
-                            color: 'white',
-                            borderRadius: '0.75rem',
-                            fontSize: '1.125rem',
-                            fontWeight: 700,
-                            border: 'none',
-                            cursor: !bookingService || !bookingTime ? 'not-allowed' : 'pointer'
-                        }}
-                    >
-                        ยืนยันการจอง
-                    </button>
+                        {/* Select Branch */}
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <MapPin size={16} color="var(--lp-secondary)" />
+                                SELECT BRANCH
+                            </label>
+                            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                                {BRANCHES.map(branch => (
+                                    <button
+                                        key={branch}
+                                        onClick={() => setBookingBranch(branch)}
+                                        style={{
+                                            padding: '0.75rem 1rem',
+                                            borderRadius: '12px',
+                                            border: '2px solid',
+                                            borderColor: bookingBranch === branch ? 'var(--lp-secondary)' : '#f3f4f6',
+                                            background: bookingBranch === branch ? 'rgba(59, 130, 246, 0.05)' : 'white',
+                                            color: bookingBranch === branch ? 'var(--lp-secondary)' : 'var(--lp-text-muted)',
+                                            fontWeight: 700,
+                                            fontSize: '0.85rem',
+                                            whiteSpace: 'nowrap',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {branch}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Select Date */}
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Calendar size={16} color="var(--lp-primary)" />
+                                CHOOSE DATE
+                            </label>
+                            <input 
+                                type="date"
+                                className="lp-input"
+                                style={{ paddingLeft: '1.25rem' }}
+                                value={bookingDate}
+                                onChange={e => setBookingDate(e.target.value)}
+                                min={new Date().toISOString().split('T')[0]}
+                            />
+                        </div>
+
+                        {/* Select Time */}
+                        <div style={{ marginBottom: '2rem' }}>
+                            <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Clock size={16} color="var(--lp-secondary)" />
+                                AVAILABLE SLOTS
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.65rem' }}>
+                                {TIME_SLOTS.map(time => (
+                                    <button
+                                        key={time}
+                                        onClick={() => setBookingTime(time)}
+                                        className="lp-time-slot"
+                                        style={{
+                                            border: '2px solid',
+                                            borderColor: bookingTime === time ? 'var(--lp-text-main)' : '#f3f4f6',
+                                            background: bookingTime === time ? 'var(--lp-text-main)' : 'white',
+                                            color: bookingTime === time ? 'white' : 'var(--lp-text-main)',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {time}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                            className="lp-btn-primary"
+                            onClick={handleBooking}
+                            disabled={!bookingService || !bookingTime}
+                            style={{ 
+                                background: !bookingService || !bookingTime ? '#e5e7eb' : 'var(--lp-text-main)',
+                                color: !bookingService || !bookingTime ? '#9ca3af' : 'white',
+                                cursor: !bookingService || !bookingTime ? 'not-allowed' : 'pointer',
+                                height: '3.75rem'
+                            }}
+                        >
+                            Confirm Booking
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -1120,78 +898,54 @@ const LinePortal = () => {
         const service = DENTAL_SERVICES.find(s => s.id === bookingService);
         
         return (
-            <div style={{ 
-                minHeight: '100vh', 
-                background: '#F3F4F6',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '2rem'
-            }}>
-                <div style={{ 
-                    width: '96px', 
-                    height: '96px', 
-                    background: '#D1FAE5',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '1.5rem'
-                }}>
-                    <CheckCircle2 size={48} style={{ color: '#059669' }} />
-                </div>
-                
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>จองสำเร็จ!</h2>
-                <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '2rem' }}>
-                    เจ้าหน้าที่จะติดต่อกลับเพื่อยืนยันการนัดหมาย
-                </p>
+            <div className="lp-container" style={{ justifyContent: 'center', padding: '2rem' }}>
+                <div className="lp-glass" style={{ width: '100%', borderRadius: '2.5rem', padding: '3rem 2rem', textAlign: 'center' }}>
+                    <div style={{ 
+                        width: '80px', 
+                        height: '80px', 
+                        background: '#ecfdf5',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 1.5rem',
+                        boxShadow: '0 8px 16px rgba(16, 185, 129, 0.15)'
+                    }}>
+                        <CheckCircle2 size={40} color="#10b981" />
+                    </div>
+                    
+                    <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.75rem' }}>Booking Success!</h2>
+                    <p style={{ color: 'var(--lp-text-muted)', textAlign: 'center', marginBottom: '2.5rem', fontSize: '0.9rem' }}>
+                        Your appointment has been scheduled. Our team will contact you shortly.
+                    </p>
 
-                <div style={{ 
-                    background: 'white',
-                    borderRadius: '1rem',
-                    padding: '1.5rem',
-                    width: '100%',
-                    maxWidth: '320px',
-                    marginBottom: '2rem'
-                }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#6B7280' }}>บริการ</span>
-                            <span style={{ fontWeight: 700 }}>{service?.name}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#6B7280' }}>วันที่</span>
-                            <span style={{ fontWeight: 700 }}>{bookingDate}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#6B7280' }}>เวลา</span>
-                            <span style={{ fontWeight: 700 }}>{bookingTime}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#6B7280' }}>สาขา</span>
-                            <span style={{ fontWeight: 700 }}>{bookingBranch}</span>
+                    <div style={{ 
+                        background: 'rgba(249, 250, 251, 0.8)',
+                        borderRadius: '1.5rem',
+                        padding: '1.5rem',
+                        border: '1px dashed #e2e8f0',
+                        marginBottom: '2.5rem'
+                    }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.8rem' }}>Service</span>
+                                <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{service?.name}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.8rem' }}>Date & Time</span>
+                                <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{bookingDate} @ {bookingTime}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.8rem' }}>Branch</span>
+                                <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{bookingBranch}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <button
-                    onClick={() => setPage('home')}
-                    style={{
-                        width: '100%',
-                        maxWidth: '320px',
-                        height: '3.5rem',
-                        background: '#2563EB',
-                        color: 'white',
-                        borderRadius: '0.75rem',
-                        fontSize: '1.125rem',
-                        fontWeight: 700,
-                        border: 'none',
-                        cursor: 'pointer'
-                    }}
-                >
-                    กลับหน้าหลัก
-                </button>
+                    <button className="lp-btn-primary" onClick={() => setPage('home')}>
+                        Back to Dashboard
+                    </button>
+                </div>
             </div>
         );
     }
@@ -1199,77 +953,77 @@ const LinePortal = () => {
     // ===== APPOINTMENTS PAGE =====
     if (page === 'appointments') {
         return (
-            <div style={{ minHeight: '100vh', background: '#F3F4F6' }}>
-                <LineHeader title="นัดหมายของฉัน" onBack={() => setPage('home')} />
+            <div className="lp-container">
+                <LineHeader title="My Appointments" onBack={() => setPage('home')} />
                 
-                <div style={{ padding: '1rem' }}>
+                <div className="lp-content">
                     {userAppointments.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-                            <Calendar size={48} style={{ color: '#D1D5DB', margin: '0 auto 1rem' }} />
-                            <p style={{ color: '#6B7280' }}>ยังไม่มีนัดหมาย</p>
+                        <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+                            <div style={{ 
+                                width: '80px', 
+                                height: '80px', 
+                                background: 'white', 
+                                borderRadius: '50%', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                margin: '0 auto 1.5rem',
+                                opacity: 0.5
+                            }}>
+                                <Calendar size={32} />
+                            </div>
+                            <p style={{ color: 'var(--lp-text-muted)', fontWeight: 600 }}>No upcoming appointments found.</p>
                             <button 
+                                className="lp-btn-accent"
                                 onClick={() => setPage('booking')}
-                                style={{ 
-                                    background: 'none',
-                                    border: '1px solid #2563EB',
-                                    color: '#2563EB',
-                                    padding: '0.5rem 1rem',
-                                    borderRadius: '0.5rem',
-                                    marginTop: '1rem',
-                                    cursor: 'pointer'
-                                }}
+                                style={{ marginTop: '1.5rem' }}
                             >
-                                จองคิวเลย
+                                Book Your First Slot
                             </button>
                         </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {userAppointments.map((apt, idx) => (
-                                <div 
-                                    key={idx}
-                                    style={{
-                                        background: 'white',
-                                        borderRadius: '1rem',
-                                        padding: '1rem',
-                                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                                    }}
-                                >
+                                <div key={idx} className="lp-card" style={{ padding: '1.25rem', border: '1px solid rgba(0,0,0,0.02)' }}>
                                     <div style={{ display: 'flex', gap: '1rem' }}>
                                         <div style={{ 
-                                            width: '48px', 
-                                            height: '48px', 
-                                            background: '#DBEAFE', 
-                                            borderRadius: '0.75rem',
+                                            width: '52px', 
+                                            height: '52px', 
+                                            background: 'rgba(59, 130, 246, 0.05)', 
+                                            borderRadius: '14px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             flexShrink: 0
                                         }}>
-                                            <Stethoscope size={24} style={{ color: '#2563EB' }} />
+                                            <Stethoscope size={24} color="var(--lp-secondary)" />
                                         </div>
                                         <div style={{ flex: 1 }}>
-                                            <p style={{ fontWeight: 700 }}>{apt.treatment}</p>
-                                            <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                                                {apt.date} • {apt.time}
-                                            </p>
-                                            <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                                                {apt.branch || 'สาขาหลัก'}
-                                            </p>
-                                            <div style={{ marginTop: '0.5rem' }}>
-                                                <span style={{
-                                                    display: 'inline-block',
-                                                    padding: '0.25rem 0.75rem',
-                                                    borderRadius: '1rem',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 700,
-                                                    background: apt.status === 'Confirmed' ? '#D1FAE5' : 
-                                                               apt.status === 'Pending' ? '#FEF3C7' : '#F3F4F6',
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
+                                                <p style={{ fontWeight: 800, fontSize: '1rem' }}>{apt.treatment}</p>
+                                                <div className="lp-pill" style={{
+                                                    background: apt.status === 'Confirmed' ? '#ecfdf5' : 
+                                                               apt.status === 'Pending' ? '#fffbeb' : '#f9fafb',
                                                     color: apt.status === 'Confirmed' ? '#059669' : 
-                                                          apt.status === 'Pending' ? '#D97706' : '#374151'
+                                                          apt.status === 'Pending' ? '#d97706' : '#6b7280',
+                                                    fontSize: '0.65rem'
                                                 }}>
-                                                    {apt.status === 'Confirmed' ? 'ยืนยันแล้ว' :
-                                                     apt.status === 'Pending' ? 'รอยืนยัน' : apt.status}
-                                                </span>
+                                                    {apt.status}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--lp-text-muted)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                    <Calendar size={12} />
+                                                    <span>{apt.date}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                    <Clock size={12} />
+                                                    <span>{apt.time}</span>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--lp-text-muted)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                                                <MapPin size={12} />
+                                                <span>{apt.branch || 'Main Clinic'}</span>
                                             </div>
                                         </div>
                                     </div>
