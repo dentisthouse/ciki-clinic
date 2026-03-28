@@ -224,10 +224,18 @@ const LinePortal = () => {
 
             if (Object.keys(updates).length > 0) {
                 console.log(`Updating LINE info for ${user.name}:`, updates);
-                await supabase
+                const { error: updateError } = await supabase
                     .from('patients')
                     .update(updates)
                     .eq('id', user.id);
+                
+                if (updateError) {
+                    console.error('❌ Supabase Sync Error:', updateError);
+                    alert(`❌ บันทึกข้อมูล LINE ไม่สำเร็จ: ${updateError.message}`);
+                } else {
+                    console.log('✅ LINE info updated successfully');
+                    alert('✅ เชื่อมต่อข้อมูล LINE สำเร็จแล้ว!');
+                }
             }
 
             // บันทึก session และเข้าสู่ระบบ
