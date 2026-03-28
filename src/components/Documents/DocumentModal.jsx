@@ -1,270 +1,221 @@
 import React, { useState } from 'react';
-import { FileText, CreditCard, Activity, Printer, X, Download } from 'lucide-react';
+import { X, FileText, Upload, Plus, Trash2, ExternalLink, Download, FileCheck, FileWarning, Clock } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useData } from '../../context/DataContext';
 
 const DocumentModal = ({ isOpen, onClose, patient }) => {
-    if (!isOpen || !patient) return null;
-
     const { t, language } = useLanguage();
-    const [activeTab, setActiveTab] = useState('cert');
-    const [certData, setCertData] = useState({
-        diagnosis: '',
-        days: 1,
-        startDate: new Date().toISOString().split('T')[0],
-        comments: '',
-        lang: 'TH' // TH or EN
-    });
+    const { patientDocuments, addPatientDocument, deletePatientDocument } = useData();
+    const [isUploading, setIsUploading] = useState(false);
+    const [docType, setDocType] = useState('Consent Form');
 
-    const clinicInfo = {
-        nameTH: "คลินิกทันตกรรม CIKI DENTAL",
-        nameEN: "CIKI DENTAL CLINIC",
-        addressTH: "123 ถ.สุขุมวิท เขตวัฒนา กรุงเทพฯ 10110",
-        addressEN: "123 Sukhumvit Rd, Watthana, Bangkok 10110",
-        license: "1234567890"
+    if (!isOpen) return null;
+
+    const documents = (patientDocuments || []).filter(doc => doc.patientId === patient.id);
+
+    const handleUpload = () => {
+        setIsUploading(true);
+        setTimeout(() => {
+            const newDoc = {
+                patientId: patient.id,
+                name: `${docType} - ${new Date().toLocaleDateString()}`,
+                type: docType,
+                fileUrl: '#',
+                size: '1.2 MB',
+                status: 'Signed',
+                date: new Date().toLocaleDateString(),
+                uploadedBy: 'Dr. Smith',
+                lastModified: new Date().toISOString()
+            };
+            addPatientDocument(newDoc);
+            setIsUploading(false);
+        }, 1500);
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
-
-    // --- Tab Content Components ---
-
-    const MedicalCertificate = () => (
-        <div className="printable-content a4-page">
-            <div className="doc-header">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>
-                            {certData.lang === 'TH' ? clinicInfo.nameTH : clinicInfo.nameEN}
-                        </h2>
-                        <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>
-                            {certData.lang === 'TH' ? clinicInfo.addressTH : clinicInfo.addressEN}
-                        </p>
-                    </div>
-                    <div style={{ textAlign: 'right', fontSize: '0.9rem' }}>
-                        <p><strong>Date:</strong> {new Date().toLocaleDateString('th-TH')}</p>
-                        <p><strong>Lic. No:</strong> {clinicInfo.license}</p>
-                    </div>
-                </div>
-                <hr style={{ border: 'none', borderTop: '2px solid #000', margin: '1.5rem 0' }} />
-
-                <h1 style={{ textAlign: 'center', fontSize: '2rem', fontWeight: 900, marginBottom: '2rem', textTransform: 'uppercase' }}>
-                    {certData.lang === 'TH' ? 'ใบรับรองแพทย์' : 'MEDICAL CERTIFICATE'}
-                </h1>
-
-                <div className="doc-body" style={{ fontSize: '1.1rem', lineHeight: 1.8 }}>
-                    <p>
-                        {certData.lang === 'TH' ? 'ข้าพเจ้า ทพ. สมชาย ใจดี (เลขที่ใบประกอบวิชาชีพ 99999) ได้ทำการตรวจร่างกาย' : 'I, Dr. Somchai Jaidee (License No. 99999), have examined'}
-                    </p>
-                    <p>
-                        {certData.lang === 'TH' ? 'ชื่อผู้ป่วย:' : 'Patient Name:'} <strong>{patient.name}</strong> (HN: {patient.id})
-                    </p>
-                    <p>
-                        {certData.lang === 'TH' ? 'เมื่อวันที่:' : 'On Date:'} <strong>{new Date().toLocaleDateString('th-TH', { dateStyle: 'long' })}</strong>
-                    </p>
-
-                    <div style={{ margin: '2rem 0', padding: '1.5rem', border: '1px solid #ddd', borderRadius: '8px', background: '#fafafa' }}>
-                        <p style={{ marginBottom: '1rem' }}>
-                            <strong>{certData.lang === 'TH' ? 'การวินิจฉัยโรค (Diagnosis):' : 'Diagnosis:'}</strong><br />
-                            <span style={{ fontSize: '1.25rem', paddingLeft: '1rem', display: 'block', marginTop: '0.5rem' }}>
-                                {certData.diagnosis || '___________________________'}
-                            </span>
-                        </p>
-                        <p>
-                            <strong>{certData.lang === 'TH' ? 'ความเห็นแพทย์ (Opinion):' : 'Opinion:'}</strong><br />
-                            <span style={{ paddingLeft: '1rem', display: 'block', marginTop: '0.5rem' }}>
-                                {certData.lang === 'TH'
-                                    ? `สมควรให้หยุดพักรักษาตัวเป็นเวลา ${certData.days} วัน ตั้งแต่วันที่ ${new Date(certData.startDate).toLocaleDateString('th-TH')}`
-                                    : `Appropriate to rest for ${certData.days} day(s) starting from ${new Date(certData.startDate).toLocaleDateString('en-US')}`
-                                }
-                            </span>
-                        </p>
-                    </div>
-                </div>
-
-                <div className="doc-footer" style={{ marginTop: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <div style={{ textAlign: 'center', width: '250px' }}>
-                        <div style={{ height: '60px', borderBottom: '1px dotted #000' }}></div>
-                        <p style={{ marginTop: '0.5rem', fontWeight: 700 }}>( ทพ. สมชาย ใจดี )</p>
-                        <p style={{ fontSize: '0.9rem' }}>{certData.lang === 'TH' ? 'ทันตแพทย์ผู้ตรวจ' : 'Attending Dentist'}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
-    const OPDCard = () => (
-        <div className="printable-content a4-page">
-            <div style={{ textAlign: 'center', marginBottom: '2rem', borderBottom: '2px solid #000', paddingBottom: '1rem' }}>
-                <h2>OPD CARD / ประวัติการรักษา</h2>
-                <h3>{clinicInfo.nameEN}</h3>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem', fontSize: '0.9rem' }}>
-                <div>
-                    <p><strong>Name:</strong> {patient.name}</p>
-                    <p><strong>HN:</strong> {patient.id}</p>
-                    <p><strong>Birth Date:</strong> {new Date().getFullYear() - patient.age}-01-01 (Age: {patient.age})</p>
-                    <p><strong>Gender:</strong> {patient.gender}</p>
-                </div>
-                <div>
-                    <p><strong>Allergies:</strong> <span style={{ color: 'red' }}>{(patient.medicalHistory || []).join(', ')}</span></p>
-                    <p><strong>Phone:</strong> {patient.phone}</p>
-                    <p><strong>Address:</strong> {patient.address}</p>
-                </div>
-            </div>
-
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                <thead>
-                    <tr style={{ background: '#eee', borderBottom: '1px solid #000' }}>
-                        <th style={{ border: '1px solid #000', padding: '8px' }}>Date</th>
-                        <th style={{ border: '1px solid #000', padding: '8px' }}>Treatment</th>
-                        <th style={{ border: '1px solid #000', padding: '8px' }}>Doctor</th>
-                        <th style={{ border: '1px solid #000', padding: '8px', textAlign: 'right' }}>Fees</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {(patient.treatments || []).map((t, i) => (
-                        <tr key={i}>
-                            <td style={{ border: '1px solid #000', padding: '8px' }}>{new Date(t.date).toLocaleDateString()}</td>
-                            <td style={{ border: '1px solid #000', padding: '8px' }}>{t.procedure}</td>
-                            <td style={{ border: '1px solid #000', padding: '8px' }}>{t.doctor || 'Dr. Somchai'}</td>
-                            <td style={{ border: '1px solid #000', padding: '8px', textAlign: 'right' }}>{t.price?.toLocaleString()}</td>
-                        </tr>
-                    ))}
-                    {(!patient.treatments || patient.treatments.length === 0) && (
-                        <tr><td colSpan="4" style={{ padding: '2rem', textAlign: 'center' }}>No records found</td></tr>
-                    )}
-                </tbody>
-            </table>
-        </div>
-    );
-
-    const HNCard = () => (
-        <div className="printable-content" style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-            <div style={{
-                width: '85.6mm', height: '53.98mm',
-                border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden',
-                background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
-                color: 'white', position: 'relative', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-            }}>
-                <div style={{ padding: '1rem', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, textTransform: 'uppercase' }}>CIKI DENTAL</h3>
-                            <p style={{ fontSize: '0.6rem', opacity: 0.8 }}>Patient Identification Card</p>
-                        </div>
-                        <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>HN: {patient.id}</div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <div style={{ flex: 1 }}>
-                            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 0.25rem 0', textTransform: 'uppercase' }}>{patient.name}</h2>
-                            <p style={{ fontSize: '0.7rem', opacity: 0.9 }}>Issued: {new Date().toLocaleDateString()}</p>
-                        </div>
-                        <div style={{ background: 'white', padding: '4px', borderRadius: '4px' }}>
-                            {/* Mock QR Code */}
-                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${patient.id}`} alt="QR" style={{ width: '60px', height: '60px' }} />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+    const docTypes = [
+        { id: 'Consent Form', icon: FileCheck, color: '#10b981', description: 'Patient consent for treatment' },
+        { id: 'Medical Certificate', icon: FileText, color: '#3b82f6', description: 'Official medical certificate' },
+        { id: 'X-Ray Report', icon: FileWarning, color: '#f59e0b', description: 'Radiology reports and images' },
+        { id: 'Referral Letter', icon: ExternalLink, color: '#8b5cf6', description: 'Referral to specialists' },
+        { id: 'Lab Results', icon: FileWarning, color: '#ef4444', description: 'Laboratory test results' },
+        { id: 'Treatment Plan', icon: FileText, color: '#06b6d4', description: 'Detailed treatment plan' },
+        { id: 'Insurance Form', icon: FileCheck, color: '#84cc16', description: 'Insurance claim forms' },
+        { id: 'Progress Notes', icon: FileText, color: '#f97316', description: 'Treatment progress notes' },
+    ];
 
     return (
         <div className="modal-overlay">
-            <div className="modal-content" style={{ width: '900px', maxWidth: '95vw', height: '90vh', display: 'flex', flexDirection: 'column', padding: 0 }}>
-                {/* Header */}
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Document Center</h2>
-                    <button onClick={onClose} className="btn-icon"><X size={24} /></button>
+            <div className="modal-container" style={{ maxWidth: '800px' }}>
+                <div className="modal-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ 
+                            width: '40px', height: '40px', borderRadius: '10px', 
+                            background: 'var(--primary-100)', color: 'var(--primary-600)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            <FileText size={20} />
+                        </div>
+                        <div>
+                            <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Patient Documents</h2>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--neutral-500)' }}>
+                                {patient.name} • {patient.id}
+                            </p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="modal-close">
+                        <X size={20} />
+                    </button>
                 </div>
 
-                <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                    {/* Sidebar */}
-                    <div style={{ width: '250px', borderRight: '1px solid #eee', background: '#f8fafc', padding: '1rem' }}>
-                        <div className="setup-nav-item" onClick={() => setActiveTab('cert')} style={{ background: activeTab === 'cert' ? '#e0f2fe' : 'transparent', color: activeTab === 'cert' ? '#0284c7' : 'inherit' }}>
-                            <FileText size={18} /> Medical Certificate
-                        </div>
-                        <div className="setup-nav-item" onClick={() => setActiveTab('opd')} style={{ background: activeTab === 'opd' ? '#e0f2fe' : 'transparent', color: activeTab === 'opd' ? '#0284c7' : 'inherit' }}>
-                            <Activity size={18} /> OPD Card (History)
-                        </div>
-                        <div className="setup-nav-item" onClick={() => setActiveTab('hn')} style={{ background: activeTab === 'hn' ? '#e0f2fe' : 'transparent', color: activeTab === 'hn' ? '#0284c7' : 'inherit' }}>
-                            <CreditCard size={18} /> HN Card
+                <div className="modal-body">
+                    {/* Upload Section */}
+                    <div className="card" style={{ marginBottom: '2rem', background: 'linear-gradient(135deg, var(--neutral-50) 0%, white 100%)', borderStyle: 'dashed', borderColor: 'var(--primary-200)' }}>
+                        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-end' }}>
+                            <div style={{ flex: 1 }}>
+                                <label className="form-label">Document Type</label>
+                                <select 
+                                    className="form-select" 
+                                    value={docType}
+                                    onChange={(e) => setDocType(e.target.value)}
+                                    style={{ background: 'white', borderColor: 'var(--primary-100)' }}
+                                >
+                                    {docTypes.map(type => (
+                                        <option key={type.id} value={type.id}>{type.id}</option>
+                                    ))}
+                                </select>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', marginTop: '0.25rem' }}>
+                                    {docTypes.find(t => t.id === docType)?.description}
+                                </p>
+                            </div>
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={handleUpload}
+                                disabled={isUploading}
+                                style={{ height: '48px', padding: '0 2rem', background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%)', border: 'none' }}
+                            >
+                                {isUploading ? (
+                                    <>
+                                        <Clock size={18} className="animate-spin" />
+                                        Uploading...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload size={18} />
+                                        Upload Document
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
 
-                    {/* Preview Area */}
-                    <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', background: '#e2e8f0', display: 'flex', justifyContent: 'center' }}>
-                        <div style={{ background: 'white', width: '210mm', minHeight: '297mm', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                            {activeTab === 'cert' && <MedicalCertificate />}
-                            {activeTab === 'opd' && <OPDCard />}
-                            {activeTab === 'hn' && <HNCard />}
+                    {/* Documents List */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                            <h3 style={{ fontSize: '1rem', color: 'var(--neutral-600)', margin: 0 }}>
+                                Recent Documents ({documents.length})
+                            </h3>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderRadius: '8px' }}>
+                                    <Upload size={14} style={{ marginRight: '0.25rem' }} />
+                                    Bulk Upload
+                                </button>
+                                <button className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderRadius: '8px' }}>
+                                    <Download size={14} style={{ marginRight: '0.25rem' }} />
+                                    Export All
+                                </button>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Controls Sidebar (Right) */}
-                    <div style={{ width: '300px', borderLeft: '1px solid #eee', background: 'white', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-                        <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem' }}>Settings</h3>
-
-                        {activeTab === 'cert' && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Language</label>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button className={`btn ${certData.lang === 'TH' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setCertData({ ...certData, lang: 'TH' })}>Thai</button>
-                                        <button className={`btn ${certData.lang === 'EN' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setCertData({ ...certData, lang: 'EN' })}>English</button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Diagnosis</label>
-                                    <textarea
-                                        className="input-field"
-                                        rows="3"
-                                        value={certData.diagnosis}
-                                        onChange={e => setCertData({ ...certData, diagnosis: e.target.value })}
-                                        placeholder="Enter diagnosis..."
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Rest Days</label>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        value={certData.days}
-                                        onChange={e => setCertData({ ...certData, days: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Start Date</label>
-                                    <input
-                                        type="date"
-                                        className="input-field"
-                                        value={certData.startDate}
-                                        onChange={e => setCertData({ ...certData, startDate: e.target.value })}
-                                    />
-                                </div>
+                        
+                        {documents.length > 0 ? (
+                            <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                {documents.map(doc => {
+                                    const docType = docTypes.find(t => t.id === doc.type);
+                                    return (
+                                        <div key={doc.id} className="card" style={{ 
+                                            display: 'flex', alignItems: 'center', gap: '1.25rem', 
+                                            padding: '1rem 1.5rem', transition: 'all 0.2s',
+                                            borderLeft: `4px solid ${docType?.color || '#6b7280'}`,
+                                            background: 'linear-gradient(135deg, white 0%, rgba(255,255,255,0.8) 100%)'
+                                        }}>
+                                            <div style={{ 
+                                                width: '48px', height: '48px', borderRadius: '12px',
+                                                background: `${docType?.color}15`,
+                                                color: docType?.color,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                boxShadow: `0 4px 12px ${docType?.color}20`
+                                            }}>
+                                                {React.createElement(docType?.icon || FileText, { size: 24 })}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: 700, color: 'var(--neutral-900)', fontSize: '0.95rem' }}>{doc.name}</div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--neutral-500)', display: 'flex', gap: '1rem', marginTop: '0.25rem' }}>
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                        <Clock size={12} />
+                                                        {doc.date}
+                                                    </span>
+                                                    <span>{doc.size}</span>
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success-500)' }} />
+                                                        {doc.status}
+                                                    </span>
+                                                    {doc.uploadedBy && (
+                                                        <span style={{ color: 'var(--primary-600)', fontWeight: 500 }}>by {doc.uploadedBy}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <button className="btn-secondary" style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--primary-50)', color: 'var(--primary-600)' }} title="Download">
+                                                    <Download size={16} />
+                                                </button>
+                                                <button className="btn-secondary" style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--amber-50)', color: 'var(--amber-600)' }} title="View">
+                                                    <ExternalLink size={16} />
+                                                </button>
+                                                <button 
+                                                    className="btn-secondary" 
+                                                    style={{ padding: '0.5rem', borderRadius: '8px', background: 'var(--danger-50)', color: 'var(--danger-600)' }} 
+                                                    title="Delete"
+                                                    onClick={() => deletePatientDocument(doc.id)}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div style={{ 
+                                padding: '4rem 2rem', textAlign: 'center', 
+                                border: '2px dashed var(--neutral-200)', borderRadius: '20px',
+                                color: 'var(--neutral-400)',
+                                background: 'linear-gradient(135deg, var(--neutral-50) 0%, white 100%)'
+                            }}>
+                                <FileText size={48} style={{ margin: '0 auto 1.5rem', opacity: 0.3 }} />
+                                <p style={{ fontSize: '1.1rem', fontWeight: 500, margin: 0 }}>No documents uploaded yet</p>
+                                <p style={{ fontSize: '0.9rem', margin: '0.5rem 0 0 0' }}>Upload consent forms, reports, or treatment plans for this patient.</p>
                             </div>
                         )}
+                    </div>
+                </div>
 
-                        <div style={{ marginTop: 'auto' }}>
-                            <button className="btn btn-primary" onClick={handlePrint} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '1rem' }}>
-                                <Printer size={20} /> Print Document
+                <div className="modal-footer">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--neutral-500)' }}>
+                            <span>Storage used: {documents.length * 1.2} MB</span>
+                            <span style={{ margin: '0 1rem' }}>•</span>
+                            <span>Last updated: {new Date().toLocaleTimeString()}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            <button onClick={onClose} className="btn btn-secondary" style={{ borderRadius: '12px' }}>
+                                Cancel
+                            </button>
+                            <button onClick={onClose} className="btn btn-primary" style={{ borderRadius: '12px', background: 'linear-gradient(135deg, var(--success-600) 0%, var(--success-500) 100%)' }}>
+                                Save Changes
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <style>{`
-                @media print { 
-                    body * { visibility: hidden; } 
-                    .modal-overlay { background: white; postion: absolute; inset: 0; z-index: 9999; }
-                    .printable-content, .printable-content * { visibility: visible; }
-                    .printable-content { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; box-shadow: none !important; }
-                    .a4-page { width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto; }
-                }
-            `}</style>
         </div>
     );
 };

@@ -80,141 +80,189 @@ const InvoiceModal = ({ isOpen, onClose, onSave, initialPatientId = '', initialI
     if (!isOpen) return null;
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-        }}>
-            <div className="card animate-scale-in" style={{ width: '100%', maxWidth: '600px', padding: '0', maxHeight: '90vh', overflowY: 'auto' }}>
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--neutral-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2 style={{ fontSize: '1.25rem' }}>{t('bill_modal_title')}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
+        <div className="modal-overlay">
+            <div className="modal-container" style={{ maxWidth: '750px' }}>
+                {/* Modal Header */}
+                <div className="modal-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div className="icon-box" style={{ background: 'var(--primary-100)', color: 'var(--primary-600)', width: '40px', height: '40px' }}>
+                            <Save size={20} />
+                        </div>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--neutral-900)' }}>{t('bill_modal_title')}</h2>
+                    </div>
+                    <button onClick={onClose} className="modal-close">
+                        <X size={20} />
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* Modal Content - SCROLLABLE BODY */}
+                <div className="modal-body" style={{ padding: '2rem' }}>
+                    <form id="invoice-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label className="form-label">{t('pat_col_patient')}</label>
+                                <select
+                                    className="form-select"
+                                    required
+                                    value={selectedPatientId}
+                                    onChange={e => setSelectedPatientId(e.target.value)}
+                                >
+                                    <option value="">{t('apt_select_patient')}</option>
+                                    {patients.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">{t('bill_col_date')}</label>
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    required
+                                    value={date}
+                                    onChange={e => setDate(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '1.25rem', 
+                            background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', 
+                            padding: '1.5rem', 
+                            borderRadius: '20px', 
+                            border: '1px solid #bbf7d0',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                        }}>
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={useSSO}
+                                    onChange={e => {
+                                        setUseSSO(e.target.checked);
+                                        setItems(items.map(i => ({ ...i, isSSO: e.target.checked })));
+                                    }}
+                                    id="useSSO"
+                                    style={{ 
+                                        width: '24px', 
+                                        height: '24px', 
+                                        cursor: 'pointer',
+                                        accentColor: '#16a34a'
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="useSSO" style={{ cursor: 'pointer', fontWeight: 800, color: '#166534', userSelect: 'none', display: 'block', fontSize: '1rem' }}>
+                                    {t('bill_sso_enable')}
+                                </label>
+                                <span style={{ fontSize: '0.85rem', color: '#15803d', opacity: 0.8 }}>{t('bill_sso_help')}</span>
+                            </div>
+                        </div>
+
                         <div>
-                            <label className="form-label">{t('pat_col_patient')}</label>
-                            <select
-                                className="form-select"
-                                required
-                                value={selectedPatientId}
-                                onChange={e => setSelectedPatientId(e.target.value)}
-                            >
-                                <option value="">{t('apt_select_patient')}</option>
-                                {patients.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="form-label">{t('bill_col_date')}</label>
-                            <input
-                                type="date"
-                                className="form-input"
-                                required
-                                value={date}
-                                onChange={e => setDate(e.target.value)}
-                            />
-                        </div>
-                    </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', alignItems: 'center' }}>
+                                <label className="form-label" style={{ fontWeight: 800, fontSize: '1.1rem', margin: 0 }}>{t('bill_modal_items')}</label>
+                                <button type="button" className="btn btn-secondary" style={{ padding: '0.6rem 1.25rem', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700 }} onClick={addItem}>
+                                    <Plus size={16} style={{ marginRight: '6px' }} /> {t('bill_modal_add_item')}
+                                </button>
+                            </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f0fdf4', padding: '0.75rem', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                        <input
-                            type="checkbox"
-                            checked={useSSO}
-                            onChange={e => {
-                                setUseSSO(e.target.checked);
-                                setItems(items.map(i => ({ ...i, isSSO: e.target.checked })));
-                            }}
-                            id="useSSO"
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                        />
-                        <label htmlFor="useSSO" style={{ cursor: 'pointer', fontWeight: 600, color: '#166534', userSelect: 'none' }}>
-                            Enable Social Security (SSO) Coverage
-                        </label>
-                    </div>
-
-                    <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <label className="form-label">{t('bill_modal_items')}</label>
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={addItem}>
-                                <Plus size={14} style={{ marginRight: '4px' }} /> {t('bill_modal_add_item')}
-                            </button>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            {items.map((item, index) => (
-                                <div key={item.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        placeholder="Description"
-                                        style={{ flex: 1 }}
-                                        required
-                                        value={item.description}
-                                        onChange={e => updateItem(item.id, 'description', e.target.value)}
-                                    />
-                                    <input
-                                        type="number"
-                                        className="form-input"
-                                        placeholder="Amount"
-                                        style={{ width: '120px' }}
-                                        required
-                                        min="0"
-                                        value={item.amount}
-                                        onChange={e => updateItem(item.id, 'amount', e.target.value)}
-                                    />
-                                    {useSSO && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: item.isSSO ? '#166534' : '#6b7280' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {items.map((item, index) => (
+                                    <div key={item.id} style={{ 
+                                        display: 'flex', 
+                                        gap: '1rem', 
+                                        alignItems: 'center', 
+                                        padding: '1.25rem', 
+                                        background: 'var(--neutral-50)', 
+                                        borderRadius: '20px', 
+                                        border: '1px solid var(--neutral-100)',
+                                        transition: 'all 0.2s ease'
+                                    }}>
+                                        <div style={{ flex: 1 }}>
                                             <input
-                                                type="checkbox"
-                                                checked={item.isSSO || false}
-                                                onChange={e => updateItem(item.id, 'isSSO', e.target.checked)}
-                                                style={{ width: '16px', height: '16px' }}
+                                                type="text"
+                                                className="form-input"
+                                                placeholder={language === 'TH' ? "ระบุหัตถการ (เช่น ขูดหินปูน)" : "Procedural description (e.g. Scaling & Polishing)"}
+                                                style={{ border: 'none', background: 'transparent', padding: '0', fontSize: '1.05rem', fontWeight: 700, boxShadow: 'none' }}
+                                                required
+                                                value={item.description}
+                                                onChange={e => updateItem(item.id, 'description', e.target.value)}
                                             />
-                                            SSO
                                         </div>
-                                    )}
-                                    {items.length > 1 && (
-                                        <button type="button" onClick={() => removeItem(item.id)} style={{ padding: '0.5rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}>
-                                            <Trash2 size={16} />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
+                                        <div style={{ width: '150px', position: 'relative' }}>
+                                            <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-400)', fontWeight: 600 }}>฿</div>
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                placeholder="0.00"
+                                                style={{ textAlign: 'right', paddingLeft: '2rem', border: '1.5px solid var(--neutral-200)', borderRadius: '12px', fontWeight: 800, fontSize: '1.1rem' }}
+                                                required
+                                                min="0"
+                                                value={item.amount}
+                                                onChange={e => updateItem(item.id, 'amount', e.target.value)}
+                                            />
+                                        </div>
+                                        {useSSO && (
+                                            <div style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: '8px', 
+                                                fontSize: '0.75rem', 
+                                                fontWeight: 800,
+                                                color: item.isSSO ? '#166534' : '#94a3b8', 
+                                                background: item.isSSO ? '#dcfce7' : 'var(--neutral-100)', 
+                                                padding: '0.5rem 0.85rem', 
+                                                borderRadius: '10px', 
+                                                border: item.isSSO ? '1px solid #86efac' : '1px solid var(--neutral-200)',
+                                                cursor: 'pointer',
+                                                userSelect: 'none'
+                                            }} onClick={() => updateItem(item.id, 'isSSO', !item.isSSO)}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={item.isSSO || false}
+                                                    onChange={e => updateItem(item.id, 'isSSO', e.target.checked)}
+                                                    style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#16a34a' }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                SSO
+                                            </div>
+                                        )}
+                                        {items.length > 1 && (
+                                            <button type="button" onClick={() => removeItem(item.id)} className="modal-close" style={{ color: 'var(--danger)', background: 'white', width: '36px', height: '36px' }}>
+                                                <Trash2 size={18} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                {/* Modal Footer - FIXED AT BOTTOM */}
+                <div className="modal-footer">
+                    <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--neutral-500)', fontWeight: 600, marginBottom: '0.25rem' }}>
+                            {t('bill_subtotal')}: ฿{calculateTotal().total.toLocaleString()}
+                        </div>
+                        <div style={{ fontWeight: 900, fontSize: '1.75rem', color: 'var(--neutral-900)', display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.9rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('bill_net')}: </span>
+                            ฿{calculateTotal().patientTotal.toLocaleString()}
                         </div>
                     </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', borderTop: '1px solid var(--neutral-100)', paddingTop: '1.5rem' }}>
-                        <div style={{ marginRight: 'auto', textAlign: 'right' }}>
-                            <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                                Total: ฿{calculateTotal().total.toLocaleString()}
-                            </div>
-                            {useSSO && (
-                                <div style={{ fontSize: '0.8rem', color: '#166534' }}>
-                                    SSO Pays: ฿{calculateTotal().ssoTotal.toLocaleString()}
-                                </div>
-                            )}
-                            <div style={{ fontWeight: 700, fontSize: '1.25rem', color: useSSO ? '#1e40af' : 'inherit' }}>
-                                Patient Pays: ฿{calculateTotal().patientTotal.toLocaleString()}
-                            </div>
-                        </div>
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>{t('btn_cancel')}</button>
-                        <button type="submit" className="btn btn-primary">
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '0.85rem 2rem', borderRadius: '16px', fontWeight: 600 }} onClick={onClose}>
+                            {t('btn_cancel')}
+                        </button>
+                        <button type="submit" form="invoice-form" className="btn btn-primary" style={{ padding: '0.85rem 3rem', borderRadius: '16px', fontWeight: 800, fontSize: '1.1rem', boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)' }}>
                             <Save size={18} style={{ marginRight: '8px' }} />
                             {t('bill_modal_create')}
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );

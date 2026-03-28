@@ -35,16 +35,16 @@ const ClaimTracking = () => {
     };
 
     const StatusCard = ({ title, count, icon: Icon, color, onClick }) => (
-        <div className="glass-panel"
-            style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', transition: 'transform 0.2s' }}
+        <div className="card glass-panel-premium animate-fade-in"
+            style={{ padding: '1.75rem', display: 'flex', alignItems: 'center', gap: '1.25rem', cursor: 'pointer', background: 'white' }}
             onClick={onClick}
         >
-            <div style={{ background: `${color}20`, padding: '1rem', borderRadius: '50%', color: color }}>
-                <Icon size={24} />
+            <div className="floating-icon" style={{ background: `${color}15`, padding: '1rem', borderRadius: '20px', color: color, boxShadow: `0 8px 16px -4px ${color}30` }}>
+                <Icon size={28} />
             </div>
             <div>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{count}</div>
-                <div style={{ color: 'var(--neutral-500)' }}>{title}</div>
+                <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--neutral-900)', lineHeight: 1 }}>{count}</div>
+                <div style={{ color: 'var(--neutral-500)', fontWeight: 600, fontSize: '0.9rem', marginTop: '0.4rem' }}>{title}</div>
             </div>
         </div>
     );
@@ -53,21 +53,19 @@ const ClaimTracking = () => {
 
     return (
         <div className="animate-fade-in">
-            <h2 className="page-title">{t('sso_track_title')}</h2>
-
             {/* Stats Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
                 <StatusCard title={t('sso_status_pending')} count={stats.pending} icon={Clock} color="#d97706" onClick={() => setFilter('Pending')} />
                 <StatusCard title={t('sso_status_approved')} count={stats.approved} icon={CheckCircle} color="#166534" onClick={() => setFilter('Approved')} />
-                <StatusCard title={t('sso_status_paid')} count={stats.paid} icon={FileText} color="#1e40af" onClick={() => setFilter('Paid')} />
-                <StatusCard title={t('sso_status_rejected')} count={stats.rejected} icon={XCircle} color="#b91c1c" onClick={() => setFilter('Rejected')} />
+                <StatusCard title={t('sso_status_paid')} count={stats.paid} icon={FileText} color="#3b82f6" onClick={() => setFilter('Paid')} />
+                <StatusCard title={t('sso_status_rejected')} count={stats.rejected} icon={XCircle} color="#ef4444" onClick={() => setFilter('Rejected')} />
             </div>
 
             {/* Table */}
             <div className="glass-panel">
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1.5rem', borderBottom: '1px solid var(--neutral-200)' }}>
                     <h3>Recent Claims</h3>
-                    <button className="btn-secondary" onClick={() => setFilter('All')} disabled={filter === 'All'}>
+                    <button className="btn btn-secondary" style={{ borderRadius: '12px', fontSize: '0.85rem', padding: '0.5rem 1rem' }} onClick={() => setFilter('All')} disabled={filter === 'All'}>
                         Show All
                     </button>
                 </div>

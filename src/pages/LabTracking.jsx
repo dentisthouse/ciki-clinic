@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, Truck, CheckCircle, Plus, Clock, ChevronRight } from 'lucide-react';
+import { Package, Truck, CheckCircle, Plus, Clock, ChevronRight, X } from 'lucide-react';
 import { useData } from '../context/DataContext';
 
 const LabTracking = () => {
@@ -33,13 +33,26 @@ const LabTracking = () => {
 
     return (
         <div className="animate-slide-up" style={{ padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div className="glass-panel" style={{ 
+                padding: '1.5rem 2rem', 
+                marginBottom: '1.5rem', 
+                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                border: '1px solid var(--neutral-200)',
+                borderRadius: '24px'
+            }}>
                 <div>
-                    <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--neutral-900)' }}>Lab Tracking</h1>
-                    <p style={{ color: 'var(--neutral-500)' }}>Manage external lab orders and status</p>
+                    <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--neutral-900)', margin: 0, letterSpacing: '-0.02em' }}>
+                        Lab Tracking
+                    </h1>
+                    <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', margin: '0.25rem 0 0', fontWeight: 500 }}>
+                        Manage external lab orders and real-time status
+                    </p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-                    <Plus size={20} style={{ marginRight: '8px' }} /> New Order
+                <button className="btn btn-primary" onClick={() => setIsModalOpen(true)} style={{ padding: '0.75rem 1.5rem', borderRadius: '14px', fontWeight: 800, fontSize: '0.875rem' }}>
+                    <Plus size={18} style={{ marginRight: '8px' }} /> New Order
                 </button>
             </div>
 
@@ -98,66 +111,92 @@ const LabTracking = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="modal-overlay">
-                    <div className="modal-content" style={{ width: '400px' }}>
-                        <h2>New Lab Order</h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-                            <div>
-                                <label>Patient</label>
-                                <select
-                                    className="input-field"
-                                    value={newOrder.patientId}
-                                    onChange={e => setNewOrder({ ...newOrder, patientId: e.target.value })}
-                                >
-                                    <option value="">Select Patient</option>
-                                    {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
+                    <div className="modal-container" style={{ maxWidth: '550px' }}>
+                        {/* Modal Header */}
+                        <div className="modal-header">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <div className="icon-box" style={{ background: 'var(--primary-100)', color: 'var(--primary-600)', width: '40px', height: '40px' }}>
+                                    <Truck size={20} />
+                                </div>
+                                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>New Lab Order</h2>
                             </div>
-                            <div>
-                                <label>Lab Name</label>
-                                <input
-                                    className="input-field"
-                                    placeholder="e.g. Hexa Ceram"
-                                    value={newOrder.lab}
-                                    onChange={e => setNewOrder({ ...newOrder, lab: e.target.value })}
-                                />
+                            <button onClick={() => setIsModalOpen(false)} className="modal-close">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="modal-body" style={{ padding: '2rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                <div className="form-group">
+                                    <label className="form-label">Patient</label>
+                                    <select
+                                        className="form-select"
+                                        value={newOrder.patientId}
+                                        onChange={e => setNewOrder({ ...newOrder, patientId: e.target.value })}
+                                    >
+                                        <option value="">Select Patient</option>
+                                        {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </select>
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label className="form-label">Lab Name</label>
+                                    <input
+                                        className="form-input"
+                                        placeholder="e.g. Hexa Ceram"
+                                        value={newOrder.lab}
+                                        onChange={e => setNewOrder({ ...newOrder.lab, lab: e.target.value })}
+                                    />
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">Appliance Type (Ortho)</label>
+                                        <select
+                                            className="form-select"
+                                            value={newOrder.appliance}
+                                            onChange={e => setNewOrder({ ...newOrder, appliance: e.target.value })}
+                                        >
+                                            <option value="">-- None / General --</option>
+                                            <option value="Retainer">Retainer</option>
+                                            <option value="Aligner">Clear Aligner</option>
+                                            <option value="RPE">RPE Expander</option>
+                                            <option value="Space Maintainer">Space Maintainer</option>
+                                            <option value="Functional">Functional Appliance</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Due Date</label>
+                                        <input
+                                            type="date"
+                                            className="form-input"
+                                            value={newOrder.due}
+                                            onChange={e => setNewOrder({ ...newOrder, due: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Work Type</label>
+                                    <input
+                                        className="form-input"
+                                        placeholder="e.g. Zirconia Crown #16"
+                                        value={newOrder.work}
+                                        onChange={e => setNewOrder({ ...newOrder, work: e.target.value })}
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label>Appliance Type (Ortho)</label>
-                                <select
-                                    className="input-field"
-                                    value={newOrder.appliance}
-                                    onChange={e => setNewOrder({ ...newOrder, appliance: e.target.value })}
-                                >
-                                    <option value="">-- None / General --</option>
-                                    <option value="Retainer">Retainer</option>
-                                    <option value="Aligner">Clear Aligner</option>
-                                    <option value="RPE">RPE Expander</option>
-                                    <option value="Space Maintainer">Space Maintainer</option>
-                                    <option value="Functional">Functional Appliance</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label>Work Type</label>
-                                <input
-                                    className="input-field"
-                                    placeholder="e.g. Zirconia Crown #16"
-                                    value={newOrder.work}
-                                    onChange={e => setNewOrder({ ...newOrder, work: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label>Due Date</label>
-                                <input
-                                    type="date"
-                                    className="input-field"
-                                    value={newOrder.due}
-                                    onChange={e => setNewOrder({ ...newOrder, due: e.target.value })}
-                                />
-                            </div>
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                                <button className="btn btn-primary" onClick={handleCreate} style={{ flex: 1 }}>Create</button>
-                                <button className="btn btn-secondary" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }}>Cancel</button>
-                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={() => setIsModalOpen(false)} style={{ padding: '0.85rem 2rem', borderRadius: '16px', fontWeight: 600 }}>
+                                Cancel
+                            </button>
+                            <button className="btn btn-primary" onClick={handleCreate} style={{ padding: '0.85rem 2.5rem', borderRadius: '16px', fontWeight: 800, boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)' }}>
+                                Create Order
+                            </button>
                         </div>
                     </div>
                 </div>

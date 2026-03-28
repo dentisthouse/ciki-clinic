@@ -23,22 +23,37 @@ const SocialSecurity = () => {
     };
 
     return (
-        <div className="page-container">
-            <header className="page-header">
-                <div>
-                    <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <ShieldCheck size={32} className="text-primary" />
+        <div className="animate-slide-up">
+            <header className="page-header" style={{ marginBottom: '2.5rem' }}>
+                <div className="page-title-group">
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div className="floating-icon" style={{ padding: '0.75rem', background: 'var(--primary-50)', color: 'var(--primary-600)', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(20, 184, 166, 0.2)' }}>
+                            <ShieldCheck size={32} />
+                        </div>
                         {t('sso_title')}
                     </h1>
-                    <p className="page-subtitle">Manage Social Security rights, claims, and reimbursements.</p>
+                    <p style={{ marginTop: '0.5rem', color: 'var(--neutral-500)', fontSize: '1rem' }}>Manage Social Security rights, claims, and reimbursements.</p>
                 </div>
             </header>
 
             {/* Tabs */}
-            <div className="tabs">
+            <div className="tabs" style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', padding: '0.5rem', background: 'var(--neutral-100)', borderRadius: '20px', width: 'fit-content' }}>
                 <button
                     className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`}
                     onClick={() => setActiveTab('dashboard')}
+                    style={{
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        background: activeTab === 'dashboard' ? 'white' : 'transparent',
+                        color: activeTab === 'dashboard' ? 'var(--primary-600)' : 'var(--neutral-500)',
+                        boxShadow: activeTab === 'dashboard' ? 'var(--shadow-sm)' : 'none',
+                        border: 'none',
+                        fontWeight: 700,
+                        transition: 'all 0.3s'
+                    }}
                 >
                     <BarChart2 size={18} />
                     {t('sso_tab_dashboard')}
@@ -46,18 +61,31 @@ const SocialSecurity = () => {
                 <button
                     className={`tab ${activeTab === 'check' ? 'active' : ''}`}
                     onClick={() => setActiveTab('check')}
+                    style={{
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        background: activeTab === 'check' ? 'white' : 'transparent',
+                        color: activeTab === 'check' ? 'var(--primary-600)' : 'var(--neutral-500)',
+                        boxShadow: activeTab === 'check' ? 'var(--shadow-sm)' : 'none',
+                        border: 'none',
+                        fontWeight: 700,
+                        transition: 'all 0.3s'
+                    }}
                 >
                     <ShieldCheck size={18} />
                     {t('sso_tab_check')}
                 </button>
             </div>
 
-            {/* Content */}
-            <div className="tab-content" style={{ marginTop: '2rem' }}>
+            {/* Content Area */}
+            <div className="tab-content animate-fade-in" style={{ flex: 1 }}>
                 {activeTab === 'dashboard' && <ClaimTracking />}
 
                 {activeTab === 'check' && (
-                    <>
+                    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
                         {viewMode === 'check' && (
                             <QuotaChecker onVerified={handlePatientVerified} />
                         )}
@@ -65,10 +93,10 @@ const SocialSecurity = () => {
                             <ClaimWizard
                                 patient={verifiedPatient}
                                 onComplete={handleClaimCompleted}
-                                onCancel={() => setVerifiedPatient(null)} // Back to check
+                                onCancel={() => setVerifiedPatient(null)}
                             />
                         )}
-                    </>
+                    </div>
                 )}
             </div>
         </div>

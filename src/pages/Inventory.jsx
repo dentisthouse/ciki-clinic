@@ -68,32 +68,32 @@ const Inventory = () => {
             </div>
 
             {/* Overview Grid */}
-            <div className="grid-cols-3" style={{ marginBottom: '2rem' }}>
-                <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="grid-cols-3" style={{ marginBottom: '2.5rem' }}>
+                <div className="card glass-panel-premium animate-slide-up delay-100" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
                     <div>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)' }}>{t('inv_total_items')}</p>
-                        <h3>{inventory.length}</h3>
+                        <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('inv_total_items')}</p>
+                        <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>{inventory.length}</h3>
                     </div>
-                    <div style={{ padding: '0.75rem', background: 'var(--primary-50)', color: 'var(--primary-600)', borderRadius: 'var(--radius-lg)' }}>
-                        <Package size={24} />
+                    <div className="floating-icon" style={{ padding: '1rem', background: 'var(--primary-50)', color: 'var(--primary-600)', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(20, 184, 166, 0.2)' }}>
+                        <Package size={28} />
                     </div>
                 </div>
-                <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="card glass-panel-premium animate-slide-up delay-200" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
                     <div>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)' }}>{t('inv_low_stock')}</p>
-                        <h3 style={{ color: 'var(--warning)' }}>{inventory.filter(i => i.stock < i.reorderPoint).length}</h3>
+                        <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('inv_low_stock')}</p>
+                        <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--warning)' }}>{inventory.filter(i => i.stock < i.reorderPoint).length}</h3>
                     </div>
-                    <div style={{ padding: '0.75rem', background: '#fff7ed', color: '#ea580c', borderRadius: 'var(--radius-lg)' }}>
-                        <AlertTriangle size={24} />
+                    <div className="floating-icon" style={{ padding: '1rem', background: '#fff7ed', color: '#ea580c', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(234, 88, 12, 0.2)' }}>
+                        <AlertTriangle size={28} />
                     </div>
                 </div>
-                <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="card glass-panel-premium animate-slide-up delay-300" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
                     <div>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)' }}>{t('inv_stock_value')}</p>
-                        <h3>฿{stockValue.toLocaleString()}</h3>
+                        <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('inv_stock_value')}</p>
+                        <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>฿{stockValue.toLocaleString()}</h3>
                     </div>
-                    <div style={{ padding: '0.75rem', background: '#f0fdf4', color: '#16a34a', borderRadius: 'var(--radius-lg)' }}>
-                        <TrendingUp size={24} />
+                    <div className="floating-icon" style={{ padding: '1rem', background: '#f0fdf4', color: '#16a34a', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(22, 163, 74, 0.2)' }}>
+                        <TrendingUp size={28} />
                     </div>
                 </div>
             </div>

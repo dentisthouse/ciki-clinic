@@ -36,123 +36,114 @@ const StaffModal = ({ staff, onSave, onClose, language }) => {
     };
 
     return (
-        <div style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)'
-        }} onClick={onClose}>
-            <div style={{
-                background: 'white', borderRadius: '16px', width: '90%', maxWidth: '560px',
-                maxHeight: '90vh', overflow: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
-                animation: 'fadeIn 0.2s'
-            }} onClick={e => e.stopPropagation()}>
-                {/* Header */}
-                <div style={{
-                    padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--neutral-100)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                }}>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>
+        <div className="modal-overlay">
+            <div className="modal-container" style={{ maxWidth: '600px' }}>
+                {/* Modal Header */}
+                <div className="modal-header">
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--neutral-900)' }}>
                         {staff
-                            ? (language === 'TH' ? '✏️ แก้ไขพนักงาน' : '✏️ Edit Staff')
-                            : (language === 'TH' ? '➕ เพิ่มพนักงาน' : '➕ Add Staff')
+                            ? (language === 'TH' ? '✏️ แก้ไขข้อมูลพนักงาน' : '✏️ Edit Staff Information')
+                            : (language === 'TH' ? '➕ เพิ่มพนักงานใหม่' : '➕ Add New Staff')
                         }
                     </h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                        <X size={20} color="#94a3b8" />
+                    <button onClick={onClose} className="modal-close">
+                        <X size={20} />
                     </button>
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {/* Name */}
-                    <div>
-                        <label style={labelStyle}>{language === 'TH' ? 'ชื่อ-นามสกุล *' : 'Full Name *'}</label>
-                        <input style={fieldStyle} value={form.name} onChange={e => update('name', e.target.value)} required placeholder="Dr. Thana Somchai" />
-                    </div>
+                {/* Modal Content - SCROLLABLE BODY */}
+                <div className="modal-body" style={{ padding: '2rem' }}>
+                    <form id="staff-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {/* Name */}
+                        <div className="form-group">
+                            <label className="form-label">{language === 'TH' ? 'ชื่อ-นามสกุล *' : 'Full Name *'}</label>
+                            <input className="form-input" value={form.name} onChange={e => update('name', e.target.value)} required placeholder="Dr. Thana Somchai" />
+                        </div>
 
-                    {/* Role + Status */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <label style={labelStyle}>{language === 'TH' ? 'ตำแหน่ง' : 'Role'}</label>
-                            <select style={fieldStyle} value={form.role} onChange={e => update('role', e.target.value)}>
-                                <option value="dentist">{language === 'TH' ? 'ทันตแพทย์' : 'Dentist'}</option>
-                                <option value="assistant">{language === 'TH' ? 'ผู้ช่วยทันตแพทย์' : 'Dental Assistant'}</option>
-                                <option value="hygienist">{language === 'TH' ? 'ทันตาภิบาล' : 'Hygienist'}</option>
-                                <option value="receptionist">{language === 'TH' ? 'พนักงานต้อนรับ' : 'Receptionist'}</option>
-                                <option value="admin">{language === 'TH' ? 'ผู้ดูแลระบบ' : 'Admin'}</option>
-                            </select>
+                        {/* Role + Status */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label className="form-label">{language === 'TH' ? 'ตำแหน่ง' : 'Role'}</label>
+                                <select className="form-select" value={form.role} onChange={e => update('role', e.target.value)}>
+                                    <option value="dentist">{language === 'TH' ? 'ทันตแพทย์' : 'Dentist'}</option>
+                                    <option value="assistant">{language === 'TH' ? 'ผู้ช่วยทันตแพทย์' : 'Dental Assistant'}</option>
+                                    <option value="hygienist">{language === 'TH' ? 'ทันตาภิบาล' : 'Hygienist'}</option>
+                                    <option value="receptionist">{language === 'TH' ? 'พนักงานต้อนรับ' : 'Receptionist'}</option>
+                                    <option value="admin">{language === 'TH' ? 'ผู้ดูแลระบบ' : 'Admin'}</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">{language === 'TH' ? 'สถานะ' : 'Status'}</label>
+                                <select className="form-select" value={form.status} onChange={e => update('status', e.target.value)}>
+                                    <option value="active">{language === 'TH' ? 'ทำงาน' : 'Active'}</option>
+                                    <option value="inactive">{language === 'TH' ? 'พักงาน' : 'Inactive'}</option>
+                                    <option value="leave">{language === 'TH' ? 'ลางาน' : 'On Leave'}</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label style={labelStyle}>{language === 'TH' ? 'สถานะ' : 'Status'}</label>
-                            <select style={fieldStyle} value={form.status} onChange={e => update('status', e.target.value)}>
-                                <option value="active">{language === 'TH' ? 'ทำงาน' : 'Active'}</option>
-                                <option value="inactive">{language === 'TH' ? 'พักงาน' : 'Inactive'}</option>
-                                <option value="leave">{language === 'TH' ? 'ลางาน' : 'On Leave'}</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    {/* Phone + Email */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <label style={labelStyle}>{language === 'TH' ? 'เบอร์โทร' : 'Phone'}</label>
-                            <input style={fieldStyle} value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="08x-xxx-xxxx" />
+                        {/* Phone + Email */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label className="form-label">{language === 'TH' ? 'เบอร์โทร' : 'Phone'}</label>
+                                <input className="form-input" value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="08x-xxx-xxxx" />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">{language === 'TH' ? 'อีเมล' : 'Email'}</label>
+                                <input className="form-input" type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="name@clinic.com" />
+                            </div>
                         </div>
-                        <div>
-                            <label style={labelStyle}>{language === 'TH' ? 'อีเมล' : 'Email'}</label>
-                            <input style={fieldStyle} type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="name@clinic.com" />
-                        </div>
-                    </div>
 
-                    {/* License + Specialty */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <label style={labelStyle}>{language === 'TH' ? 'เลขใบอนุญาต (ท.)' : 'License Number'}</label>
-                            <input style={fieldStyle} value={form.licenseNumber} onChange={e => update('licenseNumber', e.target.value)} placeholder="ท.12345" />
+                        {/* License + Specialty */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label className="form-label">{language === 'TH' ? 'เลขใบอนุญาต (ท.)' : 'License Number'}</label>
+                                <input className="form-input" value={form.licenseNumber} onChange={e => update('licenseNumber', e.target.value)} placeholder="ท.12345" />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">{language === 'TH' ? 'ความเชี่ยวชาญ' : 'Specialty'}</label>
+                                <input className="form-input" value={form.specialty} onChange={e => update('specialty', e.target.value)} placeholder={language === 'TH' ? 'ทันตกรรมทั่วไป' : 'General Dentistry'} />
+                            </div>
                         </div>
-                        <div>
-                            <label style={labelStyle}>{language === 'TH' ? 'ความเชี่ยวชาญ' : 'Specialty'}</label>
-                            <input style={fieldStyle} value={form.specialty} onChange={e => update('specialty', e.target.value)} placeholder={language === 'TH' ? 'ทันตกรรมทั่วไป' : 'General Dentistry'} />
+
+                        {/* Start Date + Salary */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label className="form-label">{language === 'TH' ? 'วันเริ่มงาน' : 'Start Date'}</label>
+                                <input className="form-input" type="date" value={form.startDate} onChange={e => update('startDate', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">{language === 'TH' ? 'เงินเดือน (฿)' : 'Salary (฿)'}</label>
+                                <input className="form-input" type="number" value={form.salary} onChange={e => update('salary', e.target.value)} placeholder="35,000" />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Start Date + Salary */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <label style={labelStyle}>{language === 'TH' ? 'วันเริ่มงาน' : 'Start Date'}</label>
-                            <input style={fieldStyle} type="date" value={form.startDate} onChange={e => update('startDate', e.target.value)} />
+                        {/* Schedule */}
+                        <div className="form-group">
+                            <label className="form-label">{language === 'TH' ? 'ตารางงาน' : 'Work Schedule'}</label>
+                            <input className="form-input" value={form.schedule} onChange={e => update('schedule', e.target.value)} placeholder={language === 'TH' ? 'จ-ศ 09:00-17:00' : 'Mon-Fri 09:00-17:00'} />
                         </div>
-                        <div>
-                            <label style={labelStyle}>{language === 'TH' ? 'เงินเดือน (฿)' : 'Salary (฿)'}</label>
-                            <input style={fieldStyle} type="number" value={form.salary} onChange={e => update('salary', e.target.value)} placeholder="35,000" />
+
+                        {/* Note */}
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">{language === 'TH' ? 'หมายเหตุ' : 'Note'}</label>
+                            <textarea className="form-textarea" rows={3} style={{ resize: 'none' }} value={form.note} onChange={e => update('note', e.target.value)} />
                         </div>
-                    </div>
+                    </form>
+                </div>
 
-                    {/* Schedule */}
-                    <div>
-                        <label style={labelStyle}>{language === 'TH' ? 'ตารางงาน' : 'Work Schedule'}</label>
-                        <input style={fieldStyle} value={form.schedule} onChange={e => update('schedule', e.target.value)} placeholder={language === 'TH' ? 'จ-ศ 09:00-17:00' : 'Mon-Fri 09:00-17:00'} />
-                    </div>
-
-                    {/* Note */}
-                    <div>
-                        <label style={labelStyle}>{language === 'TH' ? 'หมายเหตุ' : 'Note'}</label>
-                        <textarea style={{ ...fieldStyle, resize: 'vertical' }} rows={2} value={form.note} onChange={e => update('note', e.target.value)} />
-                    </div>
-
-                    {/* Actions */}
-                    <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>
-                            {language === 'TH' ? 'ยกเลิก' : 'Cancel'}
-                        </button>
-                        <button type="submit" className="btn btn-primary">
-                            {staff
-                                ? (language === 'TH' ? 'บันทึก' : 'Save')
-                                : (language === 'TH' ? 'เพิ่มพนักงาน' : 'Add Staff')
-                            }
-                        </button>
-                    </div>
-                </form>
+                {/* Modal Footer - FIXED AT BOTTOM */}
+                <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" style={{ padding: '0.85rem 2rem', borderRadius: '16px', fontWeight: 600 }} onClick={onClose}>
+                        {language === 'TH' ? 'ยกเลิก' : 'Cancel'}
+                    </button>
+                    <button type="submit" form="staff-form" className="btn btn-primary" style={{ padding: '0.85rem 3rem', borderRadius: '16px', fontWeight: 800, boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)' }}>
+                        {staff
+                            ? (language === 'TH' ? 'บันทึกข้อมูล' : 'Save Changes')
+                            : (language === 'TH' ? 'เพิ่มพนักงาน' : 'Add Staff')
+                        }
+                    </button>
+                </div>
             </div>
         </div>
     );

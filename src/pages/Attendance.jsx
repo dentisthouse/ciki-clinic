@@ -673,7 +673,7 @@ const Attendance = () => {
 
                         {activeStaff.length === 0 && (
                             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--neutral-400)', fontSize: '0.9rem' }}>
-                                {language === 'TH' ? 'ไม่มีพนักงาน — กด Demo Mode เพื่อโหลดข้อมูลตัวอย่าง' : 'No staff — load demo data first'}
+                                {language === 'TH' ? 'ไม่มีพนักงาน' : 'No staff'}
                             </div>
                         )}
                     </div>

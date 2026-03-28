@@ -132,306 +132,255 @@ const PatientModal = ({ isOpen, onClose, onSave, patient }) => {
     };
 
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000, padding: '2rem'
-        }} onClick={onClose}>
-            <div
-                className="animate-scale-in"
-                onClick={e => e.stopPropagation()}
-                style={{
-                    width: '100%', maxWidth: '900px',
-                    background: 'white', borderRadius: '24px',
-                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-                    maxHeight: '90vh', overflowY: 'auto', margin: 'auto'
-                }}
-            >
-                {/* Header */}
-                <div style={{
-                    padding: '1.5rem 2rem', borderBottom: '1px solid var(--neutral-100)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    background: 'var(--neutral-50)'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ padding: '0.75rem', background: 'var(--primary-100)', borderRadius: '12px', color: 'var(--primary-600)' }}>
+        <div className="modal-overlay">
+            <div className="modal-container" style={{ maxWidth: '950px' }}>
+                {/* Modal Header */}
+                <div className="modal-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <div style={{
+                            width: '48px', height: '48px', borderRadius: '14px',
+                            background: 'white', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', color: 'var(--primary-600)',
+                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+                        }}>
                             <User size={24} />
                         </div>
                         <div>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--neutral-800)', margin: 0 }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--neutral-900)' }}>
                                 {patient ? (language === 'TH' ? 'แก้ไขข้อมูลคนไข้' : 'Edit Patient Profile') : (language === 'TH' ? 'ลงทะเบียนคนไข้ใหม่' : 'New Patient Registration')}
                             </h2>
-                            <p style={{ margin: 0, color: 'var(--neutral-500)', fontSize: '0.875rem' }}>
-                                {language === 'TH' ? 'กรุณากรอกข้อมูลให้ครบถ้วน' : 'Please fill in all required information'}
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--neutral-500)', fontWeight: 500 }}>
+                                {patient ? `Patient ID: ${patient.id}` : 'Fill in the information to register a new patient'}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} style={{
-                        background: 'white', border: '1px solid var(--neutral-200)', cursor: 'pointer',
-                        padding: '0.5rem', color: 'var(--neutral-500)', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', borderRadius: '8px', transition: 'all 0.2s'
-                    }}>
+                    <button onClick={onClose} className="modal-close">
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Form Content - 2 Columns */}
-                <form onSubmit={handleSubmit} style={{ padding: '2rem', display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem' }}>
+                {/* Modal Content - SCROLLABLE BODY */}
+                <div className="modal-body">
+                    <form id="patient-form" onSubmit={handleSubmit} style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(250px, 320px) 1fr',
+                        gap: '3rem'
+                    }}>
+                        {/* LEFT COLUMN: Profile & Photo */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{
+                                    width: '240px', height: '240px', borderRadius: '40px',
+                                    margin: '0 auto 1.5rem', overflow: 'hidden',
+                                    backgroundColor: 'var(--neutral-50)', position: 'relative',
+                                    border: '2px dashed var(--neutral-200)', transition: 'all 0.3s',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.02)'
+                                }}>
+                                    {isCameraOpen ? (
+                                        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                                            <video autoPlay ref={videoRef} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <div style={{ position: 'absolute', bottom: '1rem', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                                                <button type="button" onClick={takePhoto} className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>Take</button>
+                                                <button type="button" onClick={stopCamera} className="btn btn-secondary" style={{ padding: '0.5rem' }}>X</button>
+                                            </div>
+                                        </div>
+                                    ) : formData.photo ? (
+                                        <img src={formData.photo} alt="Patient" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ textAlign: 'center' }}>
+                                            <div style={{ marginBottom: '0.75rem', color: 'var(--neutral-200)' }}>
+                                                <User size={64} strokeWidth={1.5} />
+                                            </div>
+                                            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--neutral-400)' }}>No Profile Photo</span>
+                                        </div>
+                                    )}
+                                    <canvas ref={canvasRef} style={{ display: 'none' }} />
+                                </div>
 
-                    {/* Left Column: Photo & ID */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {/* Photo Capture */}
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{
-                                width: '100%', height: '240px', background: '#f3f4f6',
-                                borderRadius: '16px', border: '2px dashed #d1d5db',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                overflow: 'hidden', marginBottom: '1rem', position: 'relative'
-                            }}>
-                                {isCameraOpen ? (
-                                    <video ref={videoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : formData.photo ? (
-                                    <img src={formData.photo} alt="Patient" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : (
-                                    <div style={{ color: '#9ca3af', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                        <User size={48} />
-                                        <span>No Photo</span>
-                                    </div>
+                                {!isCameraOpen && (
+                                    <button type="button" onClick={startCamera} className="btn btn-secondary" style={{ width: '100%', padding: '0.85rem', borderRadius: '16px', fontWeight: 700 }}>
+                                        📷 {language === 'TH' ? 'ถ่ายรูปคนไข้' : 'Capture Photo'}
+                                    </button>
                                 )}
-                                <canvas ref={canvasRef} style={{ display: 'none' }} />
                             </div>
 
-                            {!isCameraOpen ? (
-                                <button type="button" onClick={startCamera} className="btn" style={{ width: '100%', border: '1px solid var(--neutral-300)', padding: '0.75rem' }}>
-                                    📷 {language === 'TH' ? 'ถ่ายรูป' : 'Take Photo'}
-                                </button>
-                            ) : (
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button type="button" onClick={takePhoto} className="btn btn-primary" style={{ flex: 1 }}>
-                                        Capture
-                                    </button>
-                                    <button type="button" onClick={stopCamera} className="btn btn-secondary">
-                                        Cancel
+                            {/* ID Card Segment */}
+                            <div className="card" style={{ padding: '1.5rem', background: 'var(--neutral-50)', borderStyle: 'dashed' }}>
+                                <label className="form-label" style={{ marginBottom: '1rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div className="icon-box" style={{ width: '24px', height: '24px', borderRadius: '6px' }}><Shield size={14} /></div>
+                                        {language === 'TH' ? 'เลขบัตรประชาชน / Passport ID' : 'National ID / Passport'}
+                                    </div>
+                                </label>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        style={{ height: '48px' }}
+                                        value={formData.idCard || ''}
+                                        onChange={e => setFormData({ ...formData, idCard: e.target.value })}
+                                        placeholder="x-xxxx-xxxxx-xx-x"
+                                    />
+                                    <button type="button" className="btn btn-secondary" style={{ height: '48px', width: '48px', padding: 0, flexShrink: 0 }}>
+                                        🪪
                                     </button>
                                 </div>
-                            )}
-                        </div>
-
-                        {/* ID Card */}
-                        <div>
-                            <label style={labelStyle}>
-                                {language === 'TH' ? 'เลขบัตรประชาชน / Passport ID' : 'National ID / Passport'}
-                            </label>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <input
-                                    type="text"
-                                    style={inputBaseStyle}
-                                    value={formData.idCard}
-                                    onChange={e => setFormData({ ...formData, idCard: e.target.value })}
-                                    placeholder="x-xxxx-xxxxx-xx-x"
-                                />
-                                <button type="button" className="btn btn-secondary" title="Scan ID Card" style={{ padding: '0 1rem' }}>
-                                    🪪
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Column: Details */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {/* Name & Age */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1rem' }}>
-                            <div>
-                                <label style={labelStyle}>{t('pat_form_name')} <span style={{ color: 'red' }}>*</span></label>
-                                <input
-                                    type="text"
-                                    style={inputBaseStyle}
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>{t('pat_form_age')} <span style={{ color: 'red' }}>*</span></label>
-                                <input
-                                    type="number"
-                                    style={inputBaseStyle}
-                                    value={formData.age}
-                                    onChange={e => setFormData({ ...formData, age: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>{language === 'TH' ? 'เพศ' : 'Gender'}</label>
-                                <select
-                                    style={inputBaseStyle}
-                                    value={formData.gender}
-                                    onChange={e => setFormData({ ...formData, gender: e.target.value })}
-                                >
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
                             </div>
                         </div>
 
-                        {/* Contact */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <div>
-                                <label style={labelStyle}><Phone size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> {language === 'TH' ? 'เบอร์โทรศัพท์' : 'Phone'} <span style={{ color: 'red' }}>*</span></label>
-                                <input
-                                    type="tel"
-                                    style={inputBaseStyle}
-                                    value={formData.phone}
-                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label style={labelStyle}><Mail size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Email</label>
-                                <input
-                                    type="email"
-                                    style={inputBaseStyle}
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Address */}
-                        <div>
-                            <label style={labelStyle}><MapPin size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> {language === 'TH' ? 'ที่อยู่' : 'Address'}</label>
-                            <textarea
-                                style={{ ...inputBaseStyle, resize: 'none' }}
-                                rows="2"
-                                value={formData.address}
-                                onChange={e => setFormData({ ...formData, address: e.target.value })}
-                            ></textarea>
-                        </div>
-
-                        {/* Insurance Section */}
-                        <div style={{ background: '#f0fdf4', padding: '1rem', borderRadius: '12px', border: '1px solid #dcfce7' }}>
-                            <label style={{ ...labelStyle, color: '#166534', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                                <Shield size={16} />
-                                {t('pat_form_insurance_section')}
-                            </label>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                                <div>
-                                    <label style={labelStyle}>{t('pat_form_coverage_type')}</label>
-                                    <select
-                                        style={inputBaseStyle}
-                                        value={formData.insuranceType}
-                                        onChange={e => setFormData({ ...formData, insuranceType: e.target.value })}
-                                    >
-                                        <option value="Self">{t('pat_cov_self')}</option>
-                                        <option value="SSO">{t('pat_cov_sso')}</option>
-                                        <option value="Private">{t('pat_cov_private')}</option>
-                                        <option value="Gov">{t('pat_cov_gov')}</option>
-                                    </select>
+                        {/* RIGHT COLUMN: Details Form */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                            {/* Personal Details Section */}
+                            <div className="form-section" style={{ marginTop: 0, paddingTop: 0, border: 'none' }}>
+                                <div className="form-section-title">
+                                    <div className="icon-box"><User size={18} /></div>
+                                    {language === 'TH' ? 'ข้อมูลส่วนตัว' : 'Personal Details'}
                                 </div>
-                                {formData.insuranceType === 'SSO' && (
-                                    <div>
-                                        <label style={labelStyle}>{t('pat_form_hospital')}</label>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr 1.25fr', gap: '1.5rem' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">{t('pat_form_name')} <span style={{ color: 'var(--danger)' }}>*</span></label>
                                         <input
                                             type="text"
-                                            style={inputBaseStyle}
-                                            value={formData.hospital}
-                                            onChange={e => setFormData({ ...formData, hospital: e.target.value })}
-                                            placeholder="Ex. Rajavithi Hospital"
+                                            className="form-input"
+                                            value={formData.name}
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            required
                                         />
                                     </div>
-                                )}
-                                {formData.insuranceType === 'Private' && (
-                                    <div>
-                                        <label style={labelStyle}>{t('pat_form_provider')}</label>
-                                        <input
-                                            type="text"
-                                            style={inputBaseStyle}
-                                            value={formData.insuranceProvider}
-                                            onChange={e => setFormData({ ...formData, insuranceProvider: e.target.value })}
-                                            placeholder="Ex. AIA, Muang Thai"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-
-                            {formData.insuranceType !== 'Self' && (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-                                    <div>
-                                        <label style={labelStyle}>{t('pat_form_policy_no')}</label>
-                                        <input
-                                            type="text"
-                                            style={inputBaseStyle}
-                                            value={formData.policyNumber}
-                                            onChange={e => setFormData({ ...formData, policyNumber: e.target.value })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label style={labelStyle}>{t('pat_form_limit')}</label>
+                                    <div className="form-group">
+                                        <label className="form-label">{t('pat_form_age')} <span style={{ color: 'var(--danger)' }}>*</span></label>
                                         <input
                                             type="number"
-                                            style={inputBaseStyle}
-                                            value={formData.insuranceLimit}
-                                            onChange={e => setFormData({ ...formData, insuranceLimit: e.target.value })}
-                                            placeholder="Optional"
+                                            className="form-input"
+                                            value={formData.age}
+                                            onChange={e => setFormData({ ...formData, age: e.target.value })}
+                                            required
                                         />
-                                        {formData.insuranceType === 'SSO' && (
-                                            <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
-                                                Yearly Limit: 900 THB
-                                            </div>
-                                        )}
                                     </div>
-                                    <div>
-                                        <label style={labelStyle}>{t('pat_form_expiry')}</label>
+                                    <div className="form-group">
+                                        <label className="form-label">{language === 'TH' ? 'เพศ' : 'Gender'}</label>
+                                        <select
+                                            className="form-select"
+                                            value={formData.gender}
+                                            onChange={e => setFormData({ ...formData, gender: e.target.value })}
+                                        >
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">
+                                            <Phone size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> 
+                                            {language === 'TH' ? 'เบอร์โทรศัพท์' : 'Phone'} <span style={{ color: 'var(--danger)' }}>*</span>
+                                        </label>
                                         <input
-                                            type="date"
-                                            style={inputBaseStyle}
-                                            value={formData.insuranceExpiry}
-                                            onChange={e => setFormData({ ...formData, insuranceExpiry: e.target.value })}
+                                            type="tel"
+                                            className="form-input"
+                                            value={formData.phone}
+                                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">
+                                            <Mail size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> 
+                                            Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            className="form-input"
+                                            value={formData.email || ''}
+                                            onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                            placeholder="example@email.com"
                                         />
                                     </div>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Medical History */}
-                        <div style={{ background: '#fef2f2', padding: '1rem', borderRadius: '12px', border: '1px solid #fee2e2' }}>
-                            <label style={{ ...labelStyle, color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Heart size={16} fill="#ef4444" color="#ef4444" />
-                                {language === 'TH' ? 'ประวัติการแพ้และโรคประจำตัว' : 'Medical History & Allergies'}
-                            </label>
-                            <textarea
-                                style={{ ...inputBaseStyle, borderColor: '#fca5a5' }}
-                                rows="3"
-                                value={formData.medicalHistory}
-                                onChange={e => setFormData({ ...formData, medicalHistory: e.target.value })}
-                                placeholder={language === 'TH' ? 'เช่น แพ้ยา Penicillin, โรคเบาหวาน, ความดัน...' : 'e.g., Penicillin allergy, Diabetes...'}
-                            ></textarea>
-                        </div>
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        <MapPin size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} /> 
+                                        {language === 'TH' ? 'ที่อยู่ปัจจุบัน' : 'Current Address'}
+                                    </label>
+                                    <textarea
+                                        className="form-textarea"
+                                        rows="2"
+                                        value={formData.address || ''}
+                                        onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                        placeholder="Streed address, City..."
+                                    ></textarea>
+                                </div>
+                            </div>
 
-                        {/* Action Buttons */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                            <button
-                                type="button"
-                                className="btn btn-secondary"
-                                onClick={onClose}
-                                style={{ padding: '0.75rem 1.5rem' }}
-                            >
-                                {language === 'TH' ? 'ยกเลิก' : 'Cancel'}
-                            </button>
-                            <button
-                                type="submit"
-                                className="btn btn-primary"
-                                style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            >
-                                <Save size={18} />
-                                {language === 'TH' ? 'บันทึกข้อมูล' : 'Save Record'}
-                            </button>
+                            {/* Insurance & Coverage Section */}
+                            <div className="form-section" style={{ background: 'var(--primary-50)', padding: '1.75rem', borderRadius: '28px', border: '1px solid var(--primary-100)' }}>
+                                <div className="form-section-title" style={{ color: 'var(--primary-800)', marginBottom: '1.25rem' }}>
+                                    <div className="icon-box" style={{ background: 'var(--primary-200)', color: 'var(--primary-700)' }}><Shield size={18} /></div>
+                                    {t('pat_form_insurance_section')}
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label className="form-label" style={{ color: 'var(--primary-800)' }}>{t('pat_form_coverage_type')}</label>
+                                        <select
+                                            className="form-select"
+                                            style={{ border: '1.5px solid var(--primary-200)' }}
+                                            value={formData.insuranceType || 'Self'}
+                                            onChange={e => setFormData({ ...formData, insuranceType: e.target.value })}
+                                        >
+                                            <option value="Self">{t('pat_cov_self')}</option>
+                                            <option value="SSO">{t('pat_cov_sso')}</option>
+                                            <option value="Private">{t('pat_cov_private')}</option>
+                                            <option value="Gov">{t('pat_cov_gov')}</option>
+                                        </select>
+                                    </div>
+                                    {formData.insuranceType !== 'Self' && (
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label" style={{ color: 'var(--primary-800)' }}>{language === 'TH' ? 'เลขกรมธรรม์' : 'Policy Number'}</label>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                style={{ border: '1.5px solid var(--primary-200)' }}
+                                                placeholder="P-000000"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Medical Alert Section */}
+                            <div className="form-section" style={{ background: 'rgba(239, 68, 68, 0.03)', padding: '1.75rem', borderRadius: '28px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+                                <div className="form-section-title" style={{ color: '#b91c1c', marginBottom: '1rem' }}>
+                                    <div className="icon-box" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}><Heart size={18} /></div>
+                                    {language === 'TH' ? 'ประวัติการแพ้ยาและโรคประจำตัว' : 'Medical History & Allergies'}
+                                </div>
+                                <textarea
+                                    className="form-textarea"
+                                    style={{ borderColor: 'rgba(239, 68, 68, 0.2)', minHeight: '100px' }}
+                                    value={formData.medicalHistory || ''}
+                                    onChange={e => setFormData({ ...formData, medicalHistory: e.target.value })}
+                                    placeholder={language === 'TH' ? 'ระบุให้ชัดเจน เช่น แพ้ยาพาราเซตามอล, โรคหัวใจ...' : 'Clearly specify allergies or chronic conditions...'}
+                                ></textarea>
+                            </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
+
+                {/* Modal Footer - FIXED AT BOTTOM */}
+                <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" onClick={onClose} style={{ padding: '0.85rem 2.5rem', borderRadius: '16px', fontWeight: 600 }}>
+                        {language === 'TH' ? 'ยกเลิก' : 'Cancel'}
+                    </button>
+                    <button type="submit" form="patient-form" className="btn btn-primary" style={{ padding: '0.85rem 3.5rem', borderRadius: '18px', fontWeight: 800, boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)' }}>
+                        <Save size={20} style={{ marginRight: '8px' }} />
+                        {language === 'TH' ? 'บันทึกข้อมูลคนไข้' : 'Save Patient Record'}
+                    </button>
+                </div>
             </div>
         </div>
     );

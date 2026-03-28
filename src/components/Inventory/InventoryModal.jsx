@@ -35,102 +35,108 @@ const InventoryModal = ({ isOpen, onClose, onSave, item }) => {
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-        }}>
-            <div className="card animate-scale-in" style={{ width: '100%', maxWidth: '500px', padding: '0' }}>
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--neutral-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2 style={{ fontSize: '1.25rem' }}>{item ? t('inv_modal_edit') : t('inv_modal_add')}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
+        <div className="modal-overlay">
+            <div className="modal-container" style={{ maxWidth: '600px' }}>
+                {/* Modal Header */}
+                <div className="modal-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div className="icon-box" style={{ background: 'var(--primary-100)', color: 'var(--primary-600)', width: '40px', height: '40px' }}>
+                            <Package size={20} />
+                        </div>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--neutral-900)' }}>
+                            {item ? t('inv_modal_edit') : t('inv_modal_add')}
+                        </h2>
+                    </div>
+                    <button onClick={onClose} className="modal-close">
+                        <X size={20} />
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div>
-                        <label className="form-label">{t('inv_form_name')}</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            required
-                        />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <label className="form-label">{t('inv_col_category')}</label>
-                            <select
-                                className="form-select"
-                                value={formData.category}
-                                onChange={e => setFormData({ ...formData, category: e.target.value })}
-                            >
-                                <option value="Medication">Medication</option>
-                                <option value="Consumables">Consumables</option>
-                                <option value="Restorative">Restorative</option>
-                                <option value="Prosthodontics">Prosthodontics</option>
-                                <option value="Instruments">Instruments</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="form-label">{t('inv_form_unit')}</label>
-                            <select
-                                className="form-select"
-                                value={formData.unit}
-                                onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                            >
-                                <option value="Boxes">{t('inv_unit_boxes')}</option>
-                                <option value="Vials">{t('inv_unit_vials')}</option>
-                                <option value="Pieces">Pieces</option>
-                                <option value="Syringes">{t('inv_unit_syringes')}</option>
-                                <option value="Kits">{t('inv_unit_kits')}</option>
-                                <option value="Bottles">Bottles</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <label className="form-label">{t('inv_form_stock')}</label>
+                {/* Modal Content - SCROLLABLE BODY */}
+                <div className="modal-body" style={{ padding: '2rem' }}>
+                    <form id="inv-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className="form-group">
+                            <label className="form-label">{t('inv_form_name')}</label>
                             <input
-                                type="number"
+                                type="text"
                                 className="form-input"
-                                min="0"
-                                value={formData.stock}
-                                onChange={e => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 required
+                                placeholder="Item name..."
                             />
                         </div>
-                        <div>
-                            <label className="form-label">{t('inv_form_reorder')}</label>
-                            <input
-                                type="number"
-                                className="form-input"
-                                min="0"
-                                value={formData.reorderPoint}
-                                onChange={e => setFormData({ ...formData, reorderPoint: parseInt(e.target.value) || 0 })}
-                                required
-                            />
-                        </div>
-                    </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>{t('btn_cancel')}</button>
-                        <button type="submit" className="btn btn-primary">
-                            <Save size={18} style={{ marginRight: '8px' }} />
-                            {t('inv_form_save')}
-                        </button>
-                    </div>
-                </form>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label className="form-label">{t('inv_col_category')}</label>
+                                <select
+                                    className="form-select"
+                                    value={formData.category}
+                                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                >
+                                    <option value="Medication">Medication</option>
+                                    <option value="Consumables">Consumables</option>
+                                    <option value="Restorative">Restorative</option>
+                                    <option value="Prosthodontics">Prosthodontics</option>
+                                    <option value="Instruments">Instruments</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">{t('inv_form_unit')}</label>
+                                <select
+                                    className="form-select"
+                                    value={formData.unit}
+                                    onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                                >
+                                    <option value="Boxes">{t('inv_unit_boxes')}</option>
+                                    <option value="Vials">{t('inv_unit_vials')}</option>
+                                    <option value="Pieces">Pieces</option>
+                                    <option value="Syringes">{t('inv_unit_syringes')}</option>
+                                    <option value="Kits">{t('inv_unit_kits')}</option>
+                                    <option value="Bottles">Bottles</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">{t('inv_form_stock')}</label>
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    min="0"
+                                    value={formData.stock}
+                                    onChange={e => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">{t('inv_form_reorder')}</label>
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    min="0"
+                                    value={formData.reorderPoint}
+                                    onChange={e => setFormData({ ...formData, reorderPoint: parseInt(e.target.value) || 0 })}
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                {/* Modal Footer - FIXED AT BOTTOM */}
+                <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" style={{ padding: '0.85rem 2rem', borderRadius: '16px', fontWeight: 600 }} onClick={onClose}>
+                        {t('btn_cancel')}
+                    </button>
+                    <button type="submit" form="inv-form" className="btn btn-primary" style={{ padding: '0.85rem 2.5rem', borderRadius: '16px', fontWeight: 800, boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)' }}>
+                        <Save size={18} style={{ marginRight: '8px' }} />
+                        {t('inv_form_save')}
+                    </button>
+                </div>
             </div>
         </div>
     );

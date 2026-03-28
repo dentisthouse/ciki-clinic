@@ -4,16 +4,11 @@ import { DollarSign, AlertCircle, CheckCircle, Calendar, Plus } from 'lucide-rea
 const InstallmentPlan = ({ patient, language, onUpdate }) => {
     // Mock Data
     const [plan, setPlan] = useState(patient.orthoPlan || {
-        totalAmount: 45000,
-        downPayment: 5000,
-        monthlyAmount: 1500,
+        totalAmount: 0,
+        downPayment: 0,
+        monthlyAmount: 0,
         startDate: new Date().toISOString().split('T')[0],
-        payments: [
-            { id: 1, date: '2024-01-15', amount: 5000, type: 'Down Payment', status: 'Paid' },
-            { id: 2, date: '2024-02-15', amount: 1500, type: 'Installment 1', status: 'Paid' },
-            { id: 3, date: '2024-03-15', amount: 1500, type: 'Installment 2', status: 'Paid' },
-            { id: 4, date: '2024-04-15', amount: 1500, type: 'Installment 3', status: 'Overdue' }
-        ]
+        payments: []
     });
 
     const totalPaid = plan.payments

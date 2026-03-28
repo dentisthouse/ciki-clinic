@@ -1,0 +1,5 @@
+id,name,phone,email,status,points,tier,created_at,updated_at
+"8b8d1b3e-2c4f-4a8b-9d6e-1f2a3b4c5d6e","Test User","0812345678","test@example.com","Active",0,"Standard","2024-01-01T00:00:00Z","2024-01-01T00:00:00Z"
+"9c9e2c4f-3d5g-5b9c-a7f0-2g3b4c5d6e7f","Somchai Jaidee","0812345678","somchai@example.com","Active",0,"Standard","2024-01-01T00:00:00Z","2024-01-01T00:00:00Z"
+"7d7c0d3e-1b3e-4a7a-8c5d-0e1f2a3b4c5d","Suda Rakdee","0812345678","suda@example.com","Active",0,"Standard","2024-01-01T00:00:00Z","2024-01-01T00:00:00Z"
+"6e6b0c2d-0a2d-3a6a-7b4c-d0e1f2a3b4c5","Nong Test","0812345678","nong@example.com","Active",0,"Standard","2024-01-01T00:00:00Z","2024-01-01T00:00:00Z"

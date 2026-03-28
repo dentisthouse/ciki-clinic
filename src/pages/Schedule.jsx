@@ -182,14 +182,14 @@ const Schedule = () => {
             {viewMode === 'calendar' ? renderCalendar() : (
                 <>
                     {/* Stats Header */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
-                        <div className="card shadow-sm" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ padding: '0.75rem', background: 'var(--primary-50)', color: 'var(--primary-600)', borderRadius: 'var(--radius-lg)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                        <div className="card glass-panel-premium animate-slide-up delay-100" style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'white' }}>
+                            <div className="floating-icon" style={{ padding: '0.85rem', background: 'var(--primary-50)', color: 'var(--primary-600)', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(20, 184, 166, 0.2)' }}>
                                 <CalendarIcon size={24} />
                             </div>
                             <div>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('dash_appointments')}</div>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>{appointments.length} {t('sch_today_count_label')}</div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{appointments.filter(apt => isSameDay(new Date(apt.date), new Date())).length} {t('sch_today_count_label')}</div>
                             </div>
                         </div>
                     </div>

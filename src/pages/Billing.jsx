@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, FileText, CheckCircle } from 'lucide-react';
+import { Plus, FileText, CheckCircle, TrendingUp } from 'lucide-react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -87,13 +87,34 @@ const Billing = () => {
             </div>
 
             {/* Financial Overview */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
-                {financialSummary.map((item, index) => (
-                    <div key={index} className="card shadow-sm" style={{ padding: '1.5rem', borderLeft: `4px solid ${item.color}` }}>
-                        <div style={{ color: 'var(--neutral-500)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>{item.label}</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--neutral-900)' }}>{item.value}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <div className="card glass-panel-premium animate-slide-up delay-100" style={{ padding: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+                    <div>
+                        <div style={{ color: 'var(--neutral-500)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>{t('dash_revenue')}</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--neutral-900)' }}>฿{totalRevenue.toLocaleString()}</div>
                     </div>
-                ))}
+                    <div className="floating-icon" style={{ padding: '1rem', background: 'var(--primary-50)', color: 'var(--primary-600)', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(20, 184, 166, 0.2)' }}>
+                        <TrendingUp size={28} />
+                    </div>
+                </div>
+                <div className="card glass-panel-premium animate-slide-up delay-200" style={{ padding: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+                    <div>
+                        <div style={{ color: 'var(--neutral-500)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>{t('bill_unpaid')}</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--danger)' }}>฿{pendingAmount.toLocaleString()}</div>
+                    </div>
+                    <div className="floating-icon" style={{ padding: '1rem', background: '#ffe4e6', color: '#e11d48', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(225, 29, 72, 0.2)' }}>
+                        <FileText size={28} />
+                    </div>
+                </div>
+                <div className="card glass-panel-premium animate-slide-up delay-300" style={{ padding: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+                    <div>
+                        <div style={{ color: 'var(--neutral-500)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>{t('bill_collected')}</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--success)' }}>฿{totalRevenue.toLocaleString()}</div>
+                    </div>
+                    <div className="floating-icon" style={{ padding: '1rem', background: '#f0fdf4', color: '#16a34a', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(22, 163, 74, 0.2)' }}>
+                        <CheckCircle size={28} />
+                    </div>
+                </div>
             </div>
 
             {/* Invoices Table */}

@@ -23,6 +23,8 @@ export const translations = {
         dash_total_patients: "Total Patients",
         dash_appointments: "Appointments",
         dash_revenue: "Revenue (THB)",
+        dash_today_revenue: "Today's Revenue",
+        dash_new_patients_today: "New Patients (Today)",
         dash_inventory: "Low Stock Items",
         dash_active_treatments: "Active Treatments",
         dash_today_schedule: "Today's Schedule",
@@ -100,6 +102,9 @@ export const translations = {
         sch_today_count_label: "Today",
         sch_alert_calendar_feature: "Calendar view is coming in Module 2 update!",
         sch_alert_viewing_details: "Viewing details for",
+        sch_view_calendar: "Calendar View",
+        sch_view_list: "List View",
+        sch_walk_in: "Walk-in Registration",
 
         // Appointment Modal
         apt_title: "New Appointment",
@@ -255,6 +260,10 @@ export const translations = {
         bill_modal_items: "Items",
         bill_modal_add_item: "Add Item",
         bill_modal_create: "Create Invoice",
+        bill_sso_enable: "Enable Thai Social Security (SSO) Coverage",
+        bill_sso_help: "Individual items can be marked for SSO reimbursement (900฿ limit)",
+        bill_subtotal: "Subtotal",
+        bill_net: "Invoice Net",
 
         lab_modal_edit: "Edit Lab Order",
         lab_modal_new: "New Lab Order",
@@ -315,6 +324,8 @@ export const translations = {
         dash_total_patients: "คนไข้ทั้งหมด",
         dash_appointments: "รายการนัด",
         dash_revenue: "รายได้ (บาท)",
+        dash_today_revenue: "รายได้วันนี้",
+        dash_new_patients_today: "คนไข้ใหม่วันนี้",
         dash_inventory: "สินค้าใกล้หมด",
         dash_active_treatments: "การรักษาที่ดำเนินการอยู่",
         dash_today_schedule: "ตารางนัดวันนี้",
@@ -395,6 +406,7 @@ export const translations = {
         sch_alert_viewing_details: "กำลังดูรายละเอียดของ",
         sch_view_calendar: "มุมมองปฏิทิน",
         sch_view_list: "มุมมองรายการ",
+        sch_walk_in: "ลงทะเบียน Walk-in",
 
         // Appointment Modal
         apt_title: "นัดหมายใหม่",
@@ -551,6 +563,10 @@ export const translations = {
         bill_modal_items: "รายการ",
         bill_modal_add_item: "เพิ่มรายการ",
         bill_modal_create: "สร้างใบแจ้งหนี้",
+        bill_sso_enable: "เปิดใช้งานสิทธิประกันสังคม (SSO)",
+        bill_sso_help: "สามารถเลือกเบิกประกันสังคมรายรายการได้ (ยอดรวมไม่เกิน 900฿)",
+        bill_subtotal: "ยอดรวม",
+        bill_net: "ยอดสุทธิ",
 
         lab_modal_edit: "แก้ไขงานแล็บ",
         lab_modal_new: "สั่งงานแล็บใหม่",
