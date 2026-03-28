@@ -752,7 +752,7 @@ const LinePortal = () => {
                         </div>
                         
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            {DENTAL_SERVICES.slice(0, 3).map(service => (
+                            {getDentalServices(pt).slice(0, 3).map(service => (
                                 <div key={service.id} onClick={() => { setBookingService(service.id); setPage('booking'); }} className="lp-service-card" style={{ cursor: 'pointer' }}>
                                     <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--lp-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <service.icon size={22} />
