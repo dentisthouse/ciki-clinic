@@ -34,6 +34,9 @@ const LinePortal = () => {
     const [otpCode, setOtpCode] = useState('');
     const [authLoading, setAuthLoading] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [registerLoading, setRegisterLoading] = useState(false);
     const otpInputRef = useRef(null);
 
     // Booking state
@@ -142,66 +145,69 @@ const LinePortal = () => {
             return;
         }
 
-        // หาผู้ใช้จากฐานข้อมูลเรียงตามลำดับ:
-        // 1. ค้นหาจากฐานข้อมูลก่อน (ข้อมูลจริง)
-        // 2. ถ้าไม่เจอ ค้นหาจาก localStorage (ข้อมูล mock)
-        // 3. ถ้าไม่เจอสร้างผู้ใช้ใหม่
-        console.log('🔍 Searching for phone:', phoneNum);
-        console.log('📊 DB Patients count:', dbPatients.length);
-        console.log('📊 Local Patients count:', patients.length);
-        
+        // หาผู้ใช้จากฐานข้อมูล
         let user = dbPatients.find((p) => p.phone === phoneNum);
-        console.log('👤 Found in DB:', user ? 'YES' : 'NO');
         
-        if (!user) {
-            user = patients.find((p) => p.phone === phoneNum);
-            console.log('👤 Found in Local:', user ? 'YES' : 'NO');
+        if (user) {
+            // บันทึก session และเข้าสู่ระบบ
+            localStorage.setItem('ciki_portal_user', JSON.stringify(user));
+            setCurrentUser(user);
+            loadUserAppointments(user);
+            setPage('home');
+            alert(`ยินดีต้อนรับคุณ ${user.name}`);
+        } else {
+            // ไปหน้าสมัครสมาชิก
+            setPage('register');
         }
+    };
+
+    const handleRegister = async (e) => {
+        if (e) e.preventDefault();
         
-        if (!user) {
-            // สร้างผู้ใช้ใหม่ในฐานข้อมูล
-            const newUser = {
-                name: 'ลูกค้า LINE',
-                phone: phoneNum,
-                status: 'Active',
-                points: 0,
-                tier: 'Standard',
-                created_at: new Date().toISOString()
-            };
-            
-            console.log('🆕 Creating new user:', newUser);
-            
-            try {
-                const { data, error } = await supabase
-                    .from('patients')
-                    .insert([newUser])
-                    .select()
-                    .single();
-                
-                if (error) throw error;
-                user = data;
-                console.log('✅ Created new patient in DB:', user);
-                
-                // Refresh patients list
-                await fetchPatientsFromDB();
-            } catch (error) {
-                console.error('❌ Error creating patient:', error);
-                // Fallback: ใช้ข้อมูลชั่วคราว
-                user = {
-                    id: `temp_${Date.now()}`,
-                    ...newUser
-                };
-                console.log('⚠️ Using temp user:', user);
-            }
+        if (!firstName.trim() || !lastName.trim()) {
+            alert('กรุณากรอกชื่อและนามสกุล');
+            return;
         }
 
-        // บันทึก session
-        localStorage.setItem('ciki_portal_user', JSON.stringify(user));
-        setCurrentUser(user);
-        loadUserAppointments(user);
-        
-        setPage('home');
-        alert(`ยินดีต้อนรับคุณ ${user.name}`);
+        setRegisterLoading(true);
+
+        const newUser = {
+            name: `${firstName.trim()} ${lastName.trim()}`,
+            phone: phoneNum,
+            status: 'Active',
+            points: 0,
+            tier: 'Standard',
+            created_at: new Date().toISOString()
+        };
+
+        try {
+            console.log('🆕 Registering new user:', newUser);
+            const { data, error } = await supabase
+                .from('patients')
+                .insert([newUser])
+                .select()
+                .single();
+
+            if (error) throw error;
+            
+            const user = data;
+            console.log('✅ Created new patient in DB:', user);
+            
+            // บันทึก session
+            localStorage.setItem('ciki_portal_user', JSON.stringify(user));
+            setCurrentUser(user);
+            
+            // Refresh patients list
+            await fetchPatientsFromDB();
+            
+            setPage('home');
+            alert(`ยินดีต้อนรับคุณ ${user.name} สมัครสมาชิกสำเร็จ!`);
+        } catch (error) {
+            console.error('❌ Error creating patient:', error);
+            alert('เกิดข้อผิดพลาดในการลงทะเบียน กรุณาลองใหม่อีกครั้ง');
+        } finally {
+            setRegisterLoading(false);
+        }
     };
 
     const handleLogout = () => {
@@ -518,6 +524,109 @@ const LinePortal = () => {
                         }}
                     >
                         ขอรหัสใหม่อีกครั้ง
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // ===== REGISTER PAGE =====
+    if (page === 'register') {
+        return (
+            <div style={{ 
+                minHeight: '100vh', 
+                background: '#F8F9FA',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '2rem'
+            }}>
+                <div style={{ 
+                    width: '320px', 
+                    background: 'white',
+                    padding: '2rem',
+                    borderRadius: '1.5rem',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+                    border: '1px solid #E5E7EB'
+                }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', textAlign: 'center' }}>สมัครสมาชิก</h1>
+                    <p style={{ color: '#6B7280', marginBottom: '2rem', textAlign: 'center', fontSize: '0.875rem' }}>
+                        ยินดีต้อนรับ! กรุณากรอกข้อมูลเพื่อเริ่มใช้งาน
+                    </p>
+
+                    <div style={{ marginBottom: '1.25rem' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', marginBottom: '0.5rem', display: 'block' }}>
+                            ชื่อ
+                        </label>
+                        <input 
+                            type="text"
+                            placeholder="กรอกชื่อ" 
+                            value={firstName} 
+                            onChange={e => setFirstName(e.target.value)} 
+                            style={{
+                                width: '100%',
+                                height: '3rem',
+                                padding: '0 1rem',
+                                borderRadius: '0.75rem',
+                                border: '1px solid #E5E7EB',
+                                fontSize: '1rem'
+                            }}
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: '2rem' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', marginBottom: '0.5rem', display: 'block' }}>
+                            นามสกุล
+                        </label>
+                        <input 
+                            type="text"
+                            placeholder="กรอกนามสกุล" 
+                            value={lastName} 
+                            onChange={e => setLastName(e.target.value)} 
+                            style={{
+                                width: '100%',
+                                height: '3rem',
+                                padding: '0 1rem',
+                                borderRadius: '0.75rem',
+                                border: '1px solid #E5E7EB',
+                                fontSize: '1rem'
+                            }}
+                        />
+                    </div>
+
+                    <button 
+                        onClick={handleRegister}
+                        disabled={registerLoading}
+                        style={{
+                            width: '100%',
+                            height: '3.5rem',
+                            background: '#2563EB',
+                            color: 'white',
+                            borderRadius: '1rem',
+                            fontSize: '1.125rem',
+                            fontWeight: 700,
+                            border: 'none',
+                            cursor: registerLoading ? 'not-allowed' : 'pointer',
+                            opacity: registerLoading ? 0.7 : 1
+                        }}
+                    >
+                        {registerLoading ? 'กำลังบันทึก...' : 'สมัครสมาชิก'}
+                    </button>
+                    
+                    <button 
+                        onClick={() => setPage('login')}
+                        style={{ 
+                            background: 'none', 
+                            border: 'none', 
+                            color: '#6B7280',
+                            fontSize: '0.875rem',
+                            cursor: 'pointer',
+                            width: '100%',
+                            marginTop: '1rem'
+                        }}
+                    >
+                        ยกเลิก
                     </button>
                 </div>
             </div>

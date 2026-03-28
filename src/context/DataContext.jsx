@@ -63,9 +63,22 @@ export const DataProvider = ({ children }) => {
                     if (!error && data) {
                         // Some tables need conversion from snake_case to camelCase
                         if (table.name === 'patients') {
-                            table.stateSet(data.map(p => ({ ...p, toothChart: p.tooth_chart, medicalHistory: p.medical_history, vitals: p.vitals || {} })));
+                            table.stateSet(data.map(p => ({ 
+                                ...p, 
+                                toothChart: p.tooth_chart || {}, 
+                                medicalHistory: p.medical_history || [], 
+                                vitals: p.vitals || {},
+                                lastVisit: p.last_visit // Map last_visit too
+                            })));
                         } else if (table.name === 'lab_orders') {
-                            table.stateSet(data.map(l => ({ ...l, patientId: l.patient_id, patientName: l.patient_name, labName: l.lab_name, dateSent: l.date_sent, dateReceived: l.date_received })));
+                            table.stateSet(data.map(l => ({ 
+                                ...l, 
+                                patientId: l.patient_id, 
+                                patientName: l.patient_name, 
+                                labName: l.lab_name, 
+                                dateSent: l.date_sent, 
+                                dateReceived: l.date_received 
+                            })));
                         } else {
                             table.stateSet(data);
                         }
@@ -113,13 +126,18 @@ export const DataProvider = ({ children }) => {
 
     // Patients
     const addPatient = async (patient) => {
+        // Use crypto.randomUUID() for a standard UUID that Supabase expects
+        const newPatientId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : generateId('P');
+
         const newPatient = {
             ...patient,
-            id: generateId('P'),
+            id: newPatientId,
             status: 'Active',
-            medical_history: patient.medicalHistory || [],
-            tooth_chart: {},
-            treatments: []
+            medicalHistory: patient.medicalHistory || [],
+            toothChart: patient.toothChart || {},
+            vitals: patient.vitals || {},
+            treatments: [],
+            lastVisit: null
         };
         
         // Optimistic update
@@ -129,17 +147,27 @@ export const DataProvider = ({ children }) => {
         const { error } = await supabase.from('patients').insert([{
             id: newPatient.id,
             name: newPatient.name,
-            age: newPatient.age,
+            age: parseInt(newPatient.age) || null, // Convert to integer
             gender: newPatient.gender,
             phone: newPatient.phone,
             email: newPatient.email,
             address: newPatient.address,
-            medical_history: newPatient.medical_history,
-            tooth_chart: newPatient.tooth_chart,
+            medical_history: newPatient.medicalHistory,
+            tooth_chart: newPatient.toothChart,
+            vitals: newPatient.vitals,
             status: newPatient.status
         }]);
 
-        if (error) console.error("Error adding patient to Supabase:", error);
+        if (error) {
+            console.error("❌ Error adding patient to Supabase:", error);
+            // Optionally rollback or alert user
+            alert("ไม่สามารถบันทึกข้อมูลคนไข้ลงในระบบได้ กรุณาลองใหม่อีกครั้ง");
+            // Rollback optimistic update
+            setPatients(prev => prev.filter(p => p.id !== newPatient.id));
+            return null;
+        }
+
+        console.log("✅ Patient added successfully to Supabase!");
         return newPatient;
     };
 
@@ -151,15 +179,27 @@ export const DataProvider = ({ children }) => {
         const supabaseUpdates = { ...updates };
         if (updates.medicalHistory) { supabaseUpdates.medical_history = updates.medicalHistory; delete supabaseUpdates.medicalHistory; }
         if (updates.toothChart) { supabaseUpdates.tooth_chart = updates.toothChart; delete supabaseUpdates.toothChart; }
+        if (updates.vitals) { supabaseUpdates.vitals = updates.vitals; delete supabaseUpdates.vitals; }
 
         const { error } = await supabase.from('patients').update(supabaseUpdates).eq('id', id);
-        if (error) console.error("Error updating patient in Supabase:", error);
+        if (error) {
+            console.error("❌ Error updating patient in Supabase:", error);
+            alert("ไม่สามารถอัปเดตข้อมูลไฟล์คนไข้ได้");
+        }
     };
 
     const deletePatient = async (id) => {
+        if (!window.confirm("ต้องการลบข้อมูลคนไข้รายนี้หรือไม่?")) return;
+        
+        // Optimistic delete
         setPatients(patients.filter(p => p.id !== id));
+        
         const { error } = await supabase.from('patients').delete().eq('id', id);
-        if (error) console.error("Error deleting patient from Supabase:", error);
+        if (error) {
+            console.error("❌ Error deleting patient from Supabase:", error);
+            alert("ไม่สามารถลบข้อมูลคนไข้ได้เนื่องจากข้อมูลนี้อาจถูกอ้างอิงอยู่ในส่วนอื่น (เช่น ตารางนัดหมายหรือบิล)");
+            // Optional: refetch to restore state
+        }
     };
 
     // Tooth Chart

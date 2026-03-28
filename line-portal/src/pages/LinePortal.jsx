@@ -4,6 +4,7 @@ import {
     Stethoscope, Sparkles, Heart, Star, XCircle, Check,
     Loader2, Phone, ArrowLeft, MessageCircle
 } from "lucide-react";
+import { userService } from '../supabase';
 
 // LIFF Integration
 let liff = null;
@@ -39,15 +40,85 @@ const LinePortal = () => {
     const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
     const [bookingTime, setBookingTime] = useState('');
     const [userAppointments, setUserAppointments] = useState([]);
+    const [showProfileForm, setShowProfileForm] = useState(false);
+    const [profileData, setProfileData] = useState({
+        name: '',
+        phone: '',
+        email: ''
+    });
 
     // Check existing session
     useEffect(() => {
         const storedUser = localStorage.getItem('ciki_portal_user');
         if (storedUser) {
             const user = JSON.parse(storedUser);
+            console.log('Found stored user:', user);
+            
+            // ใช้ข้อมูลใน cache ก่อนเลย เพื่อไม่ให้หายไป
             setCurrentUser(user);
             setPage('home');
             loadUserAppointments(user);
+            
+            // ค่อย sync ข้อมูลล่าสุดแบบ background
+            const syncUserData = async () => {
+                try {
+                    let latestUser;
+                    
+                    // ลองค้นจาก LINE ID ก่อน
+                    if (user.line_id) {
+                        const { data: userByLine } = await userService.findUserByLineId(user.line_id);
+                        if (userByLine) {
+                            latestUser = userByLine;
+                        }
+                    }
+                    
+                    // ถ้าไม่เจอ ลองค้นจากเบอร์โทรศัพท์
+                    if (!latestUser && user.phone) {
+                        const { data: userByPhone } = await userService.findUserByPhone(user.phone);
+                        if (userByPhone) {
+                            latestUser = userByPhone;
+                        }
+                    }
+                    
+                    if (latestUser) {
+                        console.log('Synced latest user data:', latestUser);
+                        // อัปเดตข้อมูลใน state และ cache
+                        setCurrentUser(latestUser);
+                        localStorage.setItem('ciki_portal_user', JSON.stringify(latestUser));
+                        await loadUserAppointments(latestUser);
+                    } else {
+                        // ถ้าไม่เจอข้อมูลในฐานข้อมูล คงข้อมูลใน cache และบันทึกลง Supabase
+                        console.log('User not found in database, creating from cache');
+                        try {
+                            const { data: createdUser, error: createError } = await userService.createUser(user);
+                            if (createError) {
+                                console.error('Error creating user from cache:', createError);
+                                // ถ้าสร้างไม่ได้ คงไว้ใน cache
+                                console.log('Keeping cached data due to creation error');
+                            } else {
+                                console.log('Created user from cache:', createdUser);
+                                // อัปเดตเป็นข้อมูลใหม่จาก Supabase
+                                setCurrentUser(createdUser);
+                                localStorage.setItem('ciki_portal_user', JSON.stringify(createdUser));
+                                await loadUserAppointments(createdUser);
+                            }
+                        } catch (err) {
+                            console.error('Error creating user from cache:', err);
+                            console.log('Keeping cached data due to error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error syncing user data:', error);
+                    // ถ้าเกิดข้อผิดพลาด คงไว้ใน cache
+                    console.log('Keeping cached data due to sync error');
+                }
+            };
+            
+            // รอ 2 วินาทีแล้วค่อย sync
+            setTimeout(syncUserData, 2000);
+        } else {
+            // ไม่มีข้อมูลใน cache แสดงหน้า login
+            setPage('login');
         }
         
         // Initialize LIFF
@@ -94,45 +165,112 @@ const LinePortal = () => {
     // Handle LIFF login
     const handleLiffLogin = async (profile) => {
         try {
-            // For demo, create user from LINE profile
-            const user = {
-                id: `line_${profile.userId}`,
-                name: profile.displayName,
-                phone: '', // Will be filled later
-                email: '',
-                line_id: profile.userId,
-                line_profile_pic: profile.pictureUrl,
-                status: 'Active',
-                points: 100,
-                tier: 'Gold',
-                created_at: new Date().toISOString()
-            };
+            console.log('Processing LINE login for:', profile.displayName);
             
+            // ค้นหาผู้ใช้จาก LINE ID ใน Supabase
+            const { data: existingUser, error: findError } = await userService.findUserByLineId(profile.userId);
+            
+            if (findError) {
+                console.error('Error finding user:', findError);
+                alert('เกิดข้อผิดพลาดในการค้นหาข้อมูลผู้ใช้');
+                return;
+            }
+            
+            let user;
+            
+            if (existingUser) {
+                // ผู้ใช้เดิม - อัปเดตข้อมูลล่าสุด
+                const { data: updatedUser, error: updateError } = await userService.updateUser(existingUser.id, {
+                    name: profile.displayName,
+                    line_profile_pic: profile.pictureUrl,
+                    last_login: new Date().toISOString()
+                });
+                
+                if (updateError) {
+                    console.error('Error updating user:', updateError);
+                    alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
+                    return;
+                }
+                
+                user = updatedUser;
+                console.log('Updated existing user:', user);
+            } else {
+                // ผู้ใช้ใหม่ - สร้างใหม่
+                const { data: newUser, error: createError } = await userService.createUser({
+                    name: profile.displayName,
+                    line_id: profile.userId,
+                    line_profile_pic: profile.pictureUrl,
+                    points: 100,
+                    tier: 'Gold'
+                });
+                
+                if (createError) {
+                    console.error('Error creating user:', createError);
+                    alert('เกิดข้อผิดพลาดในการสร้างผู้ใช้ใหม่');
+                    return;
+                }
+                
+                user = newUser;
+                console.log('Created new user:', user);
+            }
+            
+            localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
             setPage('home');
-            loadUserAppointments(user);
-            localStorage.setItem('ciki_portal_user', JSON.stringify(user));
+            await loadUserAppointments(user);
             
-            console.log('Logged in via LINE:', user);
+            alert(`ยินดีต้อนรับคุณ ${user.name}`);
+            
+            // ไม่ต้อง reload แล้ว เพราะจะ sync แบบ background
+            
         } catch (error) {
             console.error('Error handling LIFF login:', error);
+            alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
         }
     };
 
-    const loadUserAppointments = (user) => {
-        // Mock appointments for demo
-        const mockAppointments = [
-            {
-                id: '1',
-                treatment: 'ตรวจสุขภาพช่องปาก',
-                date: '2024-03-29',
-                time: '10:00',
-                branch: 'สาขา สุขุมวิท',
-                status: 'Confirmed'
+    const loadUserAppointments = async (user) => {
+        try {
+            console.log('Loading appointments for user:', user.id);
+            
+            // ดึงข้อมูลนัดหมายจาก Supabase
+            const { data: appointments, error } = await userService.getUserAppointments(user.id);
+            
+            if (error) {
+                console.error('Error loading appointments:', error);
+                // ถ้าเกิดข้อผิดพลาด ใช้ข้อมูลตัวอย่าง
+                const mockAppointments = [
+                    {
+                        id: 'demo_1',
+                        treatment: 'ตรวจสุขภาพช่องปาก',
+                        date: '2024-03-29',
+                        time: '10:00',
+                        branch: 'สาขา สุขุมวิท',
+                        status: 'Confirmed'
+                    }
+                ];
+                setUserAppointments(mockAppointments);
+                return;
             }
-        ];
-        
-        setUserAppointments(mockAppointments);
+            
+            console.log('Loaded appointments:', appointments);
+            setUserAppointments(appointments || []);
+            
+        } catch (err) {
+            console.error('Error in loadUserAppointments:', err);
+            // ใช้ข้อมูลตัวอย่างถ้าเกิดข้อผิดพลาด
+            const mockAppointments = [
+                {
+                    id: 'demo_1',
+                    treatment: 'ตรวจสุขภาพช่องปาก',
+                    date: '2024-03-29',
+                    time: '10:00',
+                    branch: 'สาขา สุขุมวิท',
+                    status: 'Confirmed'
+                }
+            ];
+            setUserAppointments(mockAppointments);
+        }
     };
 
     const handleLogin = async () => {
@@ -170,23 +308,65 @@ const LinePortal = () => {
 
         setAuthLoading(false);
 
-        // Create user from phone
-        const user = {
-            id: `phone_${phoneNum}`,
-            name: 'ลูกค้า CIKI',
-            phone: phoneNum,
-            status: 'Active',
-            points: 0,
-            tier: 'Standard',
-            created_at: new Date().toISOString()
-        };
+        try {
+            console.log('Processing phone login for:', phoneNum);
+            
+            // ค้นหาผู้ใช้จากเบอร์โทรศัพท์ใน Supabase
+            const { data: existingUser, error: findError } = await userService.findUserByPhone(phoneNum);
+            
+            if (findError) {
+                console.error('Error finding user by phone:', findError);
+                alert('เกิดข้อผิดพลาดในการค้นหาข้อมูลผู้ใช้');
+                return;
+            }
+            
+            let user;
+            
+            if (existingUser) {
+                // ผู้ใช้เดิม - อัปเดตข้อมูลล่าสุด
+                const { data: updatedUser, error: updateError } = await userService.updateUser(existingUser.id, {
+                    last_login: new Date().toISOString()
+                });
+                
+                if (updateError) {
+                    console.error('Error updating user:', updateError);
+                    alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
+                    return;
+                }
+                
+                user = updatedUser;
+                console.log('Updated existing user by phone:', user);
+            } else {
+                // ผู้ใช้ใหม่ - สร้างใหม่
+                const { data: newUser, error: createError } = await userService.createUser({
+                    name: 'ลูกค้า CIKI',
+                    phone: phoneNum,
+                    points: 0,
+                    tier: 'Standard'
+                });
+                
+                if (createError) {
+                    console.error('Error creating user:', createError);
+                    alert('เกิดข้อผิดพลาดในการสร้างผู้ใช้ใหม่');
+                    return;
+                }
+                
+                user = newUser;
+                console.log('Created new user by phone:', user);
+            }
 
-        localStorage.setItem('ciki_portal_user', JSON.stringify(user));
-        setCurrentUser(user);
-        loadUserAppointments(user);
-        
-        setPage('home');
-        alert(`ยินดีต้อนรับคุณ ${user.name}`);
+            localStorage.setItem('ciki_portal_user', JSON.stringify(user));
+            setCurrentUser(user);
+            await loadUserAppointments(user);
+            
+            alert(`ยินดีต้อนรับคุณ ${user.name}`);
+            
+            // ไม่ต้อง reload แล้ว เพราะจะ sync แบบ background
+            
+        } catch (error) {
+            console.error('Error in phone login:', error);
+            alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+        }
     };
 
     const handleLogout = () => {
@@ -195,7 +375,7 @@ const LinePortal = () => {
         setPage('login');
         setPhoneNum('');
         setOtpCode('');
-        alert('ออกจากระบบเรียบร้อยแล้ว');
+        // ไม่ต้อง reload แล้ว
     };
 
     const handleBooking = async () => {
@@ -204,80 +384,249 @@ const LinePortal = () => {
             return;
         }
 
-        const service = DENTAL_SERVICES.find(s => s.id === bookingService);
-        
-        alert(`จองนัดหมายสำเร็จ! ${service?.name} วันที่ ${bookingDate} เวลา ${bookingTime}`);
-
-        loadUserAppointments(currentUser);
-        setPage('booking-confirm');
+        try {
+            const service = DENTAL_SERVICES.find(s => s.id === bookingService);
+            
+            console.log('Creating appointment:', {
+                patient_id: currentUser.id,
+                treatment: service.name,
+                date: bookingDate,
+                time: bookingTime,
+                branch: bookingBranch
+            });
+            
+            // บันทึกนัดหมายลง Supabase
+            const { data: appointment, error } = await userService.createAppointment({
+                patient_id: currentUser.id,
+                treatment: service.name,
+                date: bookingDate,
+                time: bookingTime,
+                branch: bookingBranch
+            });
+            
+            if (error) {
+                console.error('Error creating appointment:', error);
+                alert('เกิดข้อผิดพลาดในการจองนัดหมาย');
+                return;
+            }
+            
+            console.log('Appointment created:', appointment);
+            
+            // โหลดข้อมูลนัดหมายใหม่
+            await loadUserAppointments(currentUser);
+            
+            alert(`จองนัดหมายสำเร็จ! ${service?.name} วันที่ ${bookingDate} เวลา ${bookingTime}`);
+            setPage('booking-confirm');
+            
+        } catch (error) {
+            console.error('Error in booking:', error);
+            alert('เกิดข้อผิดพลาดในการจองนัดหมาย');
+        }
     };
 
-    const LineHeader = ({ title, onBack, showProfile = true }) => (
-        <div style={{ 
-            background: 'rgba(255,255,255,0.95)', 
-            backdropFilter: 'blur(10px)',
-            padding: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            position: 'sticky',
-            top: 0,
-            zIndex: 50,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            borderBottom: '1px solid #e5e7eb'
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {onBack && (
-                    <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                        <ArrowLeft size={22} />
-                    </button>
-                )}
-                <div style={{ 
-                    width: '36px', 
-                    height: '36px', 
-                    background: '#00C300',
-                    borderRadius: '0.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 700,
-                    fontSize: '0.75rem'
-                }}>
-                    CIKI
-                </div>
-            </div>
-            
-            {showProfile && (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button 
-                        onClick={() => setPage('appointments')}
-                        style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            borderRadius: '50%'
-                        }}
-                    >
-                        <Calendar size={20} />
-                    </button>
-                    <button 
-                        onClick={handleLogout}
-                        style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            borderRadius: '50%'
-                        }}
-                    >
-                        <LogOut size={20} />
-                    </button>
-                </div>
+    // เพิ่มปุ่ม refresh ในหน้า home
+const refreshUserData = async () => {
+    try {
+        console.log('Manually refreshing user data...');
+        
+        let latestUser;
+        
+        // ค้นหาจาก LINE ID ก่อน
+        if (currentUser?.line_id) {
+            const { data: userByLine } = await userService.findUserByLineId(currentUser.line_id);
+            if (userByLine) {
+                latestUser = userByLine;
+            }
+        }
+        
+        // ถ้าไม่เจอ ลองค้นจากเบอร์โทรศัพท์
+        if (!latestUser && currentUser?.phone) {
+            const { data: userByPhone } = await userService.findUserByPhone(currentUser.phone);
+            if (userByPhone) {
+                latestUser = userByPhone;
+            }
+        }
+        
+        if (latestUser) {
+            console.log('Refreshed user data:', latestUser);
+            setCurrentUser(latestUser);
+            localStorage.setItem('ciki_portal_user', JSON.stringify(latestUser));
+            await loadUserAppointments(latestUser);
+            alert('อัปเดตข้อมูลเรียบร้อยแล้ว');
+        } else {
+            // ถ้าไม่เจอใน Supabase สร้างใหม่จากข้อมูลปัจจุบัน
+            if (currentUser) {
+                try {
+                    const { data: createdUser, error: createError } = await userService.createUser(currentUser);
+                    if (createError) {
+                        console.error('Error creating user from current data:', createError);
+                        alert('ไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้');
+                    } else {
+                        console.log('Created user from current data:', createdUser);
+                        setCurrentUser(createdUser);
+                        localStorage.setItem('ciki_portal_user', JSON.stringify(createdUser));
+                        await loadUserAppointments(createdUser);
+                        alert('บันทึกข้อมูลลงฐานข้อมูลเรียบร้อยแล้ว');
+                    }
+                } catch (err) {
+                    console.error('Error creating user:', err);
+                    alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error refreshing user data:', error);
+        alert('เกิดข้อผิดพลาดในการรีเฟรชข้อมูล');
+    }
+};
+
+// ฟังก์ชันสำหรับบันทึกข้อมูลผู้ใช้ใหม่
+const handleSaveProfile = async () => {
+    try {
+        console.log('Saving new user profile:', profileData);
+        
+        if (!profileData.name.trim()) {
+            alert('กรุณากรอกชื่อ');
+            return;
+        }
+        
+        if (!profileData.phone.trim()) {
+            alert('กรุณากรอกเบอร์โทรศัพท์');
+            return;
+        }
+        
+        // ตรวจว่าเบอร์ซ้ำกันหรือไม่
+        const { data: existingUser } = await userService.findUserByPhone(profileData.phone);
+        
+        if (existingUser) {
+            alert('เบอร์โทรศัพท์นี้มีในระบบแล้ว');
+            return;
+        }
+        
+        // สร้างผู้ใช้ใหม่
+        const { data: newUser, error: createError } = await userService.createUser({
+            name: profileData.name.trim(),
+            phone: profileData.phone.trim(),
+            email: profileData.email.trim(),
+            points: 0,
+            tier: 'Standard'
+        });
+        
+        if (createError) {
+            console.error('Error creating new user:', createError);
+            alert('ไม่สามารถสร้างผู้ใช้ใหม่ได้');
+            return;
+        }
+        
+        console.log('Created new user:', newUser);
+        
+        // อัปเดต state และ cache
+        setCurrentUser(newUser);
+        localStorage.setItem('ciki_portal_user', JSON.stringify(newUser));
+        await loadUserAppointments(newUser);
+        
+        // รีเซ็ตฟอร์ม
+        setProfileData({ name: '', phone: '', email: '' });
+        setShowProfileForm(false);
+        
+        alert(`สร้างผู้ใช้ใหม่สำเร็จ! ยินดีต้อนรับคุณ ${newUser.name}`);
+        
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    }
+};
+
+const LineHeader = ({ title, onBack, showProfile = true }) => (
+    <div style={{ 
+        background: 'rgba(255,255,255,0.95)', 
+        backdropFilter: 'blur(10px)',
+        padding: '1.25rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        borderBottom: '1px solid #e5e7eb'
+    }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {onBack && (
+                <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <ArrowLeft size={22} />
+                </button>
             )}
+            <div style={{ 
+                width: '36px', 
+                height: '36px', 
+                background: '#00C300',
+                borderRadius: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '0.75rem'
+            }}>
+                CIKI
+            </div>
         </div>
-    );
+        
+        {showProfile && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button 
+                    onClick={() => setPage('appointments')}
+                    style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        cursor: 'pointer',
+                        padding: '0.5rem',
+                        borderRadius: '50%'
+                    }}
+                >
+                    <Calendar size={20} />
+                </button>
+                <button 
+                    onClick={() => setShowProfileForm(true)}
+                    style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        cursor: 'pointer',
+                        padding: '0.5rem',
+                        borderRadius: '50%'
+                    }}
+                >
+                    <User size={20} />
+                </button>
+                <button 
+                    onClick={refreshUserData}
+                    style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        cursor: 'pointer',
+                        padding: '0.5rem',
+                        borderRadius: '50%'
+                    }}
+                >
+                    <Loader2 size={20} />
+                </button>
+                <button 
+                    onClick={handleLogout}
+                    style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        cursor: 'pointer',
+                        padding: '0.5rem',
+                        borderRadius: '50%'
+                    }}
+                >
+                    <LogOut size={20} />
+                </button>
+            </div>
+        )}
+    </div>
+);
 
     // ===== LOGIN PAGE =====
     if (page === 'login') {
@@ -603,6 +952,147 @@ const LinePortal = () => {
         return (
             <div style={{ minHeight: '100vh', background: '#F3F4F6' }}>
                 <LineHeader title="CIKI Dental" showProfile={true} />
+                
+                {/* Profile Form Modal */}
+                {showProfileForm && (
+                    <div style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000
+                    }}>
+                        <div style={{
+                            background: 'white',
+                            borderRadius: '1rem',
+                            padding: '2rem',
+                            width: '90%',
+                            maxWidth: '400px',
+                            boxShadow: '0 20px 25px rgba(0,0,0,0.15)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
+                                    ลงทะเบียนผู้ใช้ใหม่
+                                </h3>
+                                <button 
+                                    onClick={() => setShowProfileForm(false)}
+                                    style={{ 
+                                        background: 'none', 
+                                        border: 'none', 
+                                        cursor: 'pointer',
+                                        fontSize: '1.5rem',
+                                        color: '#6B7280'
+                                    }}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div>
+                                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem', display: 'block' }}>
+                                        ชื่อ-นามสกุล *
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        value={profileData.name}
+                                        onChange={e => setProfileData({...profileData, name: e.target.value})}
+                                        placeholder="กรอกชื่อ-นามสกุล"
+                                        style={{
+                                            width: '100%',
+                                            height: '3rem',
+                                            padding: '0 1rem',
+                                            borderRadius: '0.5rem',
+                                            border: '1px solid #E5E7EB',
+                                            fontSize: '1rem'
+                                        }}
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem', display: 'block' }}>
+                                        เบอร์โทรศัพท์ *
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        value={profileData.phone}
+                                        onChange={e => setProfileData({...profileData, phone: e.target.value.replace(/[^0-9]/g, '')})}
+                                        placeholder="08x-xxx-xxxx"
+                                        maxLength={10}
+                                        style={{
+                                            width: '100%',
+                                            height: '3rem',
+                                            padding: '0 1rem',
+                                            borderRadius: '0.5rem',
+                                            border: '1px solid #E5E7EB',
+                                            fontSize: '1rem'
+                                        }}
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem', display: 'block' }}>
+                                        อีเมล (ถ้ามี)
+                                    </label>
+                                    <input 
+                                        type="email"
+                                        value={profileData.email}
+                                        onChange={e => setProfileData({...profileData, email: e.target.value})}
+                                        placeholder="example@email.com"
+                                        style={{
+                                            width: '100%',
+                                            height: '3rem',
+                                            padding: '0 1rem',
+                                            borderRadius: '0.5rem',
+                                            border: '1px solid #E5E7EB',
+                                            fontSize: '1rem'
+                                        }}
+                                    />
+                                </div>
+                                
+                                <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                                    <button 
+                                        onClick={() => setShowProfileForm(false)}
+                                        style={{
+                                            flex: 1,
+                                            height: '3rem',
+                                            background: '#F3F4F6',
+                                            color: '#374151',
+                                            border: '1px solid #E5E7EB',
+                                            borderRadius: '0.5rem',
+                                            fontSize: '1rem',
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button 
+                                        onClick={handleSaveProfile}
+                                        style={{
+                                            flex: 1,
+                                            height: '3rem',
+                                            background: '#00C300',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '0.5rem',
+                                            fontSize: '1rem',
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        บันทึกข้อมูล
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 
                 <div style={{ padding: '1rem' }}>
                     {/* Member Card with LINE Profile */}
