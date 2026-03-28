@@ -61,17 +61,19 @@ const LinePortal = () => {
                 await liff.init({ liffId });
                 console.log("✅ LIFF Initialized");
 
-                if (liff.isLoggedIn()) {
+                if (!liff.isLoggedIn()) {
+                    console.log("⚠️ Logging in to LIFF...");
+                    liff.login();
+                } else {
                     const profile = await liff.getProfile();
                     console.log("📱 LINE User Profile:", profile);
                     setLineUserId(profile.userId);
                     setLinePictureUrl(profile.pictureUrl || '');
-                } else {
-                    console.log("⚠️ User not logged in to LIFF");
-                    // Optionally: liff.login();
+                    // alert(`📱 ดึงโปรไฟล์ ${profile.displayName} สำเร็จ!`);
                 }
             } catch (err) {
                 console.error("❌ LIFF Init Error:", err);
+                alert(`❌ LIFF Initialization Error: ${err.message}`);
             }
         };
 
@@ -108,11 +110,13 @@ const LinePortal = () => {
 
                     if (!error && data) {
                         console.log('✅ LINE info synced successfully');
+                        alert('✅ ซิงค์ข้อมูลโปรไฟล์ LINE สำเร็จ');
                         // Update local state and storage
                         localStorage.setItem('ciki_portal_user', JSON.stringify(data));
                         setCurrentUser(data);
                     } else if (error) {
                         console.error('❌ Error syncing LINE info:', error);
+                        alert(`❌ ข้อผิดพลาดในการซิงค์: ${error.message}`);
                     }
                 }
             }
