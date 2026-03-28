@@ -273,7 +273,8 @@ export const DataProvider = ({ children }) => {
             id: generateId('APT'),
             status: 'Pending',
             queueStatus: 'Waiting',
-            queueNumber: qNum
+            queueNumber: qNum,
+            type: appointment.type || 'Staff Appointment' // Default to Staff if from admin
         };
         setAppointments([...appointments, newApt]);
 
@@ -285,7 +286,7 @@ export const DataProvider = ({ children }) => {
             dentist_name: newApt.dentist,
             date: newApt.date,
             time: newApt.time,
-            duration: newApt.duration,
+            duration: newApt.duration || 30, // Default duration
             treatment: newApt.treatment,
             status: newApt.status,
             type: newApt.type,

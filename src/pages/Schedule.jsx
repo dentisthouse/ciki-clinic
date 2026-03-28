@@ -12,7 +12,49 @@ const Schedule = () => {
     const { t, language } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
-    const { appointments, addAppointment, updateAppointment, updateQueueStatus } = useData();
+    const { patients, appointments, addAppointment, updateAppointment, updateQueueStatus } = useData();
+    
+    const handleSendLineConfirmation = async (apt) => {
+        const patient = patients.find(p => p.id === apt.patientId);
+        const lineUserId = patient?.lineUserId || patient?.line_user_id;
+
+        if (!lineUserId) {
+            alert(language === 'TH' ? 'คนไข้รายนี้ยังไม่มีการยืนยันตัวตนผ่าน LINE (ไม่พบ User ID)' : 'This patient has no linked LINE account (User ID not found)');
+            return;
+        }
+
+        try {
+            // เรียกใช้ Backend API (ปกติจะรันที่ port 3001 ตาม server/index.js)
+            const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+            
+            const response = await fetch(`${serverUrl}/api/line/appointment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: lineUserId,
+                    patientName: apt.patientName || apt.patient,
+                    appointmentDate: apt.date,
+                    appointmentTime: apt.time,
+                    treatment: apt.procedure || apt.treatment,
+                    doctor: apt.dentist || 'ทันตแพทย์ประจำ',
+                    appointmentId: apt.id
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(language === 'TH' ? `ส่ง Flex Message ยืนยันนัดไปยัง LINE คุณ ${apt.patientName || apt.patient} เรียบร้อยแล้ว!` : `Sent Flex Message confirmation to ${apt.patientName || apt.patient} on LINE!`);
+            } else {
+                throw new Error(result.error || 'Failed to send');
+            }
+        } catch (error) {
+            console.error("Error sending LINE notification:", error);
+            alert(language === 'TH' ? 'ไม่สารมารถส่ง LINE ได้ กรุณาตรวจสอบว่า Backend Server กำลังทำงานอยู่' : 'Could not send LINE message. Please check if the Backend Server is running.');
+        }
+    };
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -196,13 +238,24 @@ const Schedule = () => {
 
                     {/* Schedule Table */}
                     <div className="table-container shadow-sm">
-                        <div className="table-header">
+                        <div className="table-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h3 style={{ fontSize: '1.125rem' }}>{t('sch_today_agenda')}</h3>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', display: 'flex', gap: '1rem' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb' }}></div>
+                                    {language === 'TH' ? 'จองผ่าน LINE' : 'LINE Booking'}
+                                </span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#94a3b8' }}></div>
+                                    {language === 'TH' ? 'พนักงานลงนัด' : 'Staff Booking'}
+                                </span>
+                            </div>
                         </div>
                         <table>
                             <thead>
                                 <tr>
                                     <th>{t('sch_col_time')}</th>
+                                    <th>{language === 'TH' ? 'ช่องทาง' : 'Source'}</th>
                                     <th>{language === 'TH' ? 'คิว' : 'Queue'}</th>
                                     <th>{t('sch_col_patient')}</th>
                                     <th>{t('sch_col_procedure')}</th>
@@ -217,6 +270,41 @@ const Schedule = () => {
                                     .map((apt, index) => (
                                         <tr key={index} className="hover:bg-neutral-50 transition-colors">
                                             <td style={{ fontWeight: 600, color: 'var(--primary-600)' }}>{apt.time}</td>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    {apt.type === 'LINE Booking' ? (
+                                                        <div style={{ 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            gap: '0.35rem', 
+                                                            padding: '0.25rem 0.6rem', 
+                                                            background: '#EFF6FF', 
+                                                            color: '#2563EB',
+                                                            borderRadius: '20px',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 600
+                                                        }}>
+                                                            <div style={{ fontSize: '1rem' }}>📱</div>
+                                                            {language === 'TH' ? 'จองเอง' : 'Portal'}
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            gap: '0.35rem', 
+                                                            padding: '0.25rem 0.6rem', 
+                                                            background: '#F8FAFC', 
+                                                            color: '#64748B',
+                                                            borderRadius: '20px',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 600
+                                                        }}>
+                                                            <User size={12} />
+                                                            {language === 'TH' ? 'ลงนัด' : 'Staff'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td>
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                     <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>
@@ -254,6 +342,23 @@ const Schedule = () => {
                                                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                                     {apt.status !== 'Completed' && (
                                                         <>
+                                                            <button
+                                                                className="btn"
+                                                                style={{
+                                                                    padding: '0.4rem 0.8rem',
+                                                                    fontSize: '0.75rem',
+                                                                    backgroundColor: '#E0F2FE',
+                                                                    color: '#0369A1',
+                                                                    border: 'none',
+                                                                    borderRadius: 'var(--radius-md)',
+                                                                    fontWeight: 600
+                                                                }}
+                                                                onClick={() => handleSendLineConfirmation(apt)}
+                                                            >
+                                                                <span style={{ marginRight: '4px' }}>💬</span>
+                                                                {language === 'TH' ? 'ส่งยืนยัน' : 'Send Conf.'}
+                                                            </button>
+
                                                             {(!apt.queueStatus || apt.queueStatus === 'Waiting' || apt.queueStatus === 'Skipped') && (
                                                                 <button
                                                                     className="btn"

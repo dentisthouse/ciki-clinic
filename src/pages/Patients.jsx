@@ -207,9 +207,18 @@ const Patients = () => {
                                                             alignItems: 'center',
                                                             justifyContent: 'center',
                                                             fontWeight: 600,
-                                                            marginRight: '1rem'
+                                                            marginRight: '1rem',
+                                                            overflow: 'hidden'
                                                         }}>
-                                                            {patient.name.charAt(0)}
+                                                            {patient.line_picture_url ? (
+                                                                <img 
+                                                                    src={patient.line_picture_url} 
+                                                                    alt={patient.name} 
+                                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                />
+                                                            ) : (
+                                                                patient.name.charAt(0)
+                                                            )}
                                                         </div>
                                                         <div>
                                                             <div style={{ fontWeight: 600, color: 'var(--neutral-900)' }}>{patient.name}</div>

@@ -34,6 +34,8 @@ const LinePortal = () => {
     const [otpCode, setOtpCode] = useState('');
     const [authLoading, setAuthLoading] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
+    const [lineUserId, setLineUserId] = useState(''); // Store LINE ID
+    const [linePictureUrl, setLinePictureUrl] = useState(''); // Store Profile Picture
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [registerLoading, setRegisterLoading] = useState(false);
@@ -46,8 +48,35 @@ const LinePortal = () => {
     const [bookingTime, setBookingTime] = useState('');
     const [userAppointments, setUserAppointments] = useState([]);
 
-    // Check existing session
+    // Initial LIFF and Session Check
     useEffect(() => {
+        const initializeLiff = async () => {
+            try {
+                const liffId = import.meta.env.VITE_LIFF_ID;
+                if (!liffId) {
+                    console.warn("LIFF ID not found in .env. Initialization skipped.");
+                    return;
+                }
+
+                await liff.init({ liffId });
+                console.log("✅ LIFF Initialized");
+
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    console.log("📱 LINE User Profile:", profile);
+                    setLineUserId(profile.userId);
+                    setLinePictureUrl(profile.pictureUrl || '');
+                } else {
+                    console.log("⚠️ User not logged in to LIFF");
+                    // Optionally: liff.login();
+                }
+            } catch (err) {
+                console.error("❌ LIFF Init Error:", err);
+            }
+        };
+
+        initializeLiff();
+
         const storedUser = localStorage.getItem('ciki_portal_user');
         if (storedUser) {
             const user = JSON.parse(storedUser);
@@ -149,6 +178,25 @@ const LinePortal = () => {
         let user = dbPatients.find((p) => p.phone === phoneNum);
         
         if (user) {
+            // อัปเดต LINE User ID และรูปโปรไฟล์ ถ้ามี
+            const updates = {};
+            if (lineUserId && user.line_user_id !== lineUserId) {
+                updates.line_user_id = lineUserId;
+                user.line_user_id = lineUserId;
+            }
+            if (linePictureUrl && user.line_picture_url !== linePictureUrl) {
+                updates.line_picture_url = linePictureUrl;
+                user.line_picture_url = linePictureUrl;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                console.log(`Updating LINE info for ${user.name}:`, updates);
+                await supabase
+                    .from('patients')
+                    .update(updates)
+                    .eq('id', user.id);
+            }
+
             // บันทึก session และเข้าสู่ระบบ
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
@@ -174,6 +222,8 @@ const LinePortal = () => {
         const newUser = {
             name: `${firstName.trim()} ${lastName.trim()}`,
             phone: phoneNum,
+            line_user_id: lineUserId,
+            line_picture_url: linePictureUrl,
             status: 'Active',
             points: 0,
             tier: 'Standard',
@@ -454,31 +504,47 @@ const LinePortal = () => {
                 </div>
 
                 <div style={{ width: '100%', maxWidth: '320px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                            <div 
-                                key={i} 
-                                style={{
-                                    width: '40px',
-                                    height: '56px',
-                                    border: `2px solid ${otpCode.length === i - 1 ? '#1F2937' : '#E5E7EB'}`,
-                                    borderRadius: '0.75rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '1.5rem',
-                                    fontWeight: 800
-                                }}
-                            >
-                                {otpCode[i - 1] || ''}
-                            </div>
-                        ))}
+                    <div 
+                        onClick={() => otpInputRef.current?.focus()}
+                        style={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            gap: '0.5rem', 
+                            marginBottom: '2rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {[1, 2, 3, 4, 5, 6].map(i => {
+                            const isActive = otpCode.length === i - 1;
+                            return (
+                                <div 
+                                    key={i} 
+                                    style={{
+                                        width: '40px',
+                                        height: '56px',
+                                        border: `2px solid ${isActive ? '#2563EB' : '#E5E7EB'}`,
+                                        background: isActive ? '#EFF6FF' : 'white',
+                                        borderRadius: '0.75rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '1.5rem',
+                                        fontWeight: 800,
+                                        transition: 'all 0.2s',
+                                        boxShadow: isActive ? '0 0 0 3px rgba(37, 99, 235, 0.1)' : 'none'
+                                    }}
+                                >
+                                    {otpCode[i - 1] || ''}
+                                </div>
+                            );
+                        })}
                     </div>
                     
                     <input
                         ref={otpInputRef}
                         type="text"
                         inputMode="numeric"
+                        autoFocus
                         value={otpCode}
                         onChange={e => {
                             const val = e.target.value.replace(/[^0-9]/g, '');
@@ -487,10 +553,14 @@ const LinePortal = () => {
                         maxLength={6}
                         style={{ 
                             position: 'absolute', 
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
                             opacity: 0, 
+                            zIndex: -1,
                             pointerEvents: 'none'
                         }}
-                        autoFocus
                     />
 
                     <button 
