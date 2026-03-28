@@ -88,6 +88,39 @@ const LinePortal = () => {
         fetchPatientsFromDB();
     }, []);
 
+    // Sync LINE info if missing (for already logged-in users)
+    useEffect(() => {
+        const syncLineInfo = async () => {
+            if (currentUser && lineUserId) {
+                // Check if current user data matches LINE data
+                if (currentUser.line_user_id !== lineUserId || currentUser.line_picture_url !== linePictureUrl) {
+                    console.log('🔄 Syncing LINE info automatically...');
+                    
+                    const { data, error } = await supabase
+                        .from('patients')
+                        .update({ 
+                            line_user_id: lineUserId,
+                            line_picture_url: linePictureUrl 
+                        })
+                        .eq('id', currentUser.id)
+                        .select()
+                        .single();
+
+                    if (!error && data) {
+                        console.log('✅ LINE info synced successfully');
+                        // Update local state and storage
+                        localStorage.setItem('ciki_portal_user', JSON.stringify(data));
+                        setCurrentUser(data);
+                    } else if (error) {
+                        console.error('❌ Error syncing LINE info:', error);
+                    }
+                }
+            }
+        };
+
+        syncLineInfo();
+    }, [currentUser, lineUserId, linePictureUrl]);
+
     // Fetch patients from database
     const fetchPatientsFromDB = async () => {
         try {
