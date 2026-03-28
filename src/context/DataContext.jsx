@@ -101,8 +101,17 @@ export const DataProvider = ({ children }) => {
             })
             .subscribe();
 
+        const patientSubscription = supabase
+            .channel('patients-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, (payload) => {
+                console.log("Real-time patient update received:", payload);
+                fetchAllFromSupabase();
+            })
+            .subscribe();
+
         return () => {
-            aptSubscription.unsubscribe();
+            supabase.removeChannel(aptSubscription);
+            supabase.removeChannel(patientSubscription);
         };
     }, []);
 
