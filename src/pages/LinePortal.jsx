@@ -4,7 +4,7 @@ import {
     Calendar, CheckCircle2, Clock, Bell, User, LogOut,
     Stethoscope, Sparkles, Heart, Star, XCircle, Check,
     Loader2, Phone, ArrowLeft, ShieldCheck, Mail, MapPin,
-    CreditCard, ChevronRight, History, Settings
+    CreditCard, ChevronRight, History, Settings, MonitorSmartphone
 } from "lucide-react";
 import "./LinePortal.css";
 import { useData } from "../context/DataContext";
@@ -33,6 +33,17 @@ const LinePortal = () => {
     const pt = (key) => PORTAL_TRANS[language]?.[key] || PORTAL_TRANS["EN"]?.[key] || key;
     const { patients, appointments, addAppointment } = useData();
     const [dbPatients, setDbPatients] = useState([]);
+    
+    const [isDesktop, setIsDesktop] = useState(false);
+    
+    useEffect(() => {
+        const checkWidth = () => {
+            setIsDesktop(window.innerWidth > 768);
+        };
+        checkWidth();
+        window.addEventListener('resize', checkWidth);
+        return () => window.removeEventListener('resize', checkWidth);
+    }, []);
     
     const [page, setPage] = useState('login');
     const [phoneNum, setPhoneNum] = useState('');
@@ -396,6 +407,23 @@ const LinePortal = () => {
     );
 
     // ===== LOGIN PAGE =====
+    
+    // ===== DESKTOP BLOCKER =====
+    if (isDesktop) {
+        return (
+            <div className="desktop-blocker">
+                <div style={{ padding: '2rem', background: 'rgba(255,255,255,0.05)', borderRadius: '2rem', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <MonitorSmartphone size={64} color="#10b981" style={{ margin: '0 auto 1.5rem', opacity: 0.9 }} />
+                    <h1>Mobile Experience Only</h1>
+                    <p>
+                        {pt('ciki_dental')} is beautifully optimized specifically for your smartphone. 
+                        Please open this portal on your mobile device via the LINE application to continue.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+    
     if (page === 'login') {
         return (
             <div className="lp-container" style={{ justifyContent: 'center', padding: '2rem', position: 'relative' }}>
