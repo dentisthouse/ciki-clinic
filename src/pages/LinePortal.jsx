@@ -885,18 +885,8 @@ const LinePortal = () => {
                                     <button
                                         key={branch}
                                         onClick={() => setBookingBranch(branch)}
-                                        style={{
-                                            padding: '0.75rem 1rem',
-                                            borderRadius: '12px',
-                                            border: '2px solid',
-                                            borderColor: bookingBranch === branch ? 'var(--lp-secondary)' : '#f3f4f6',
-                                            background: bookingBranch === branch ? 'rgba(59, 130, 246, 0.05)' : 'white',
-                                            color: bookingBranch === branch ? 'var(--lp-secondary)' : 'var(--lp-text-muted)',
-                                            fontWeight: 700,
-                                            fontSize: '0.85rem',
-                                            whiteSpace: 'nowrap',
-                                            cursor: 'pointer'
-                                        }}
+                                        className={`lp-time-slot ${bookingBranch === branch ? 'selected' : ''}`}
+                                        style={{ width: 'auto', padding: '0.75rem 1.5rem', flex: '0 0 auto', aspectRatio: 'auto' }}
                                     >
                                         {branch}
                                     </button>
@@ -931,14 +921,7 @@ const LinePortal = () => {
                                     <button
                                         key={time}
                                         onClick={() => setBookingTime(time)}
-                                        className="lp-time-slot"
-                                        style={{
-                                            border: '2px solid',
-                                            borderColor: bookingTime === time ? 'var(--lp-text-main)' : '#f3f4f6',
-                                            background: bookingTime === time ? 'var(--lp-text-main)' : 'white',
-                                            color: bookingTime === time ? 'white' : 'var(--lp-text-main)',
-                                            cursor: 'pointer'
-                                        }}
+                                        className={`lp-time-slot ${bookingTime === time ? 'selected' : ''}`}
                                     >
                                         {time}
                                     </button>
@@ -951,12 +934,7 @@ const LinePortal = () => {
                             className="lp-btn-primary"
                             onClick={handleBooking}
                             disabled={!bookingService || !bookingTime}
-                            style={{ 
-                                background: !bookingService || !bookingTime ? '#e5e7eb' : 'var(--lp-text-main)',
-                                color: !bookingService || !bookingTime ? '#9ca3af' : 'white',
-                                cursor: !bookingService || !bookingTime ? 'not-allowed' : 'pointer',
-                                height: '3.75rem'
-                            }}
+                            style={{ marginTop: '1rem', height: '4rem' }}
                         >
                             Confirm Booking
                         </button>
