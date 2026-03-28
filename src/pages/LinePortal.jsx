@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import liff from "@line/liff";
 import {
     Calendar, CheckCircle2, Clock, Bell, User, LogOut,
     Stethoscope, Sparkles, Heart, Star, XCircle, Check,
