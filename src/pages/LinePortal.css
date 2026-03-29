@@ -156,6 +156,7 @@
 
 .lp-input {
   width: 100%;
+  box-sizing: border-box;
   background: rgba(255,255,255,0.8);
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255,255,255,0.9);
@@ -348,6 +349,7 @@ select.lp-input {
   font-weight: 900;
   margin-bottom: 1rem;
   background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

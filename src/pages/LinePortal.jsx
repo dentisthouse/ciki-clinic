@@ -25,7 +25,11 @@ const getDentalServices = (pt) => [
     { id: 'extraction', name: pt('srv_extraction'), price: 1500, icon: XCircle, duration: `30 ${pt('min')}` },
 ];
 
-const TIME_SLOTS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+const TIME_SLOTS = [
+    '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', 
+    '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', 
+    '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
+];
 const getBranches = (pt) => [pt('branch_prachinburi')];
 
 const LinePortal = () => {
@@ -865,7 +869,7 @@ const LinePortal = () => {
                                 className="lp-input"
                                 style={{ paddingLeft: '1.25rem' }}
                             >
-                                <option value="">Choose a treatment...</option>
+                                <option value="">{pt('choose_treatment')}</option>
                                 {getDentalServices(pt).map(service => (
                                     <option key={service.id} value={service.id}>
                                         {service.name} (฿{service.price.toLocaleString()})
@@ -898,7 +902,7 @@ const LinePortal = () => {
                         <div style={{ marginBottom: '1.5rem' }}>
                             <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Calendar size={16} color="var(--lp-primary)" />
-                                CHOOSE DATE
+                                {pt('choose_date')}
                             </label>
                             <input 
                                 type="date"

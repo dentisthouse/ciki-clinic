@@ -1,6 +1,8 @@
 export const PORTAL_TRANS = {
     EN: {
         "ciki_dental": "Baan More Fun Dental",
+        "choose_treatment": "Choose a treatment...",
+        "choose_date": "CHOOSE DATE",
         "exp_future": "Experience the future of dentistry",
         "phone_label": "Your Phone Number",
         "phone_placeholder": "08x-xxx-xxxx",
@@ -94,6 +96,8 @@ export const PORTAL_TRANS = {
     },
     TH: {
         "ciki_dental": "บ้านหมอฟัน",
+        "choose_treatment": "เลือกบริการ...",
+        "choose_date": "เลือกวันที่",
         "exp_future": "พบกับประสบการณ์ทำฟันแห่งอนาคต",
         "phone_label": "เบอร์โทรศัพท์ของคุณ",
         "phone_placeholder": "08x-xxx-xxxx",
@@ -187,6 +191,8 @@ export const PORTAL_TRANS = {
     },
     CN: {
         "ciki_dental": "บ้านหมอฟัน (牙科)",
+        "choose_treatment": "选择服务...",
+        "choose_date": "选择日期",
         "exp_future": "体验未来的牙科服务",
         "phone_label": "您的手机号码",
         "phone_placeholder": "08x-xxx-xxxx",
