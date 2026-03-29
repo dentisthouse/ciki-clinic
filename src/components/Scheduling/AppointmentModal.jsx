@@ -13,6 +13,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
         time: '09:00',
         duration: 30,
         type: 'General Checkup',
+        dentist: 'หมอทั่วไป',
         notes: ''
     });
     
@@ -179,7 +180,28 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            
+                            {/* Doctor */}
+                            <div className="form-group">
+                                <label className="form-label">
+                                    <User size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                                    หมอ (Doctor)
+                                </label>
+                                <select
+                                    className="form-select"
+                                    value={formData.dentist || 'หมอทั่วไป'}
+                                    onChange={(e) => setFormData({ ...formData, dentist: e.target.value })}
+                                >
+                                    <option value="หมอทั่วไป">หมอทั่วไป (General)</option>
+                                    <option value="หมอเฉพาะทาง">หมอเฉพาะทาง (Specialist)</option>
+                                    <option value="หมอจัดฟัน">หมอจัดฟัน (Ortho)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                             {/* Duration */}
+        
                             <div className="form-group">
                                 <label className="form-label">{t('apt_duration')}</label>
                                 <select
@@ -361,7 +383,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
                                                     appointmentDate: formData.date,
                                                     appointmentTime: formData.time,
                                                     treatment: formData.type,
-                                                    doctor: 'ทันตแพทย์ประจำ',
+                                                    doctor: formData.dentist || 'หมอทั่วไป',
                                                     appointmentId: `APT-${Date.now()}`
                                                 });
                                                 setSending(false);
@@ -406,7 +428,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
                                                     appointmentDate: formData.date,
                                                     appointmentTime: formData.time,
                                                     treatment: formData.type,
-                                                    doctor: 'ทันตแพทย์ประจำ'
+                                                    doctor: formData.dentist || 'หมอทั่วไป'
                                                 });
                                                 setSending(false);
                                                 if (result.success) {

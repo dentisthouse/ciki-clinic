@@ -339,6 +339,12 @@ const LinePortal = () => {
 
         const service = getDentalServices(pt).find(s => s.id === bookingService);
         
+        const getDoctorForService = (serviceId) => {
+            if (['braces', 'retainer'].includes(serviceId)) return 'หมอจัดฟัน';
+            if (['veneers', 'extraction'].includes(serviceId)) return 'หมอเฉพาะทาง';
+            return 'หมอทั่วไป';
+        };
+
         const newAppointment = {
             patientId: currentUser?.id,
             patientName: currentUser?.name || 'ลูกค้า LINE',
@@ -346,7 +352,7 @@ const LinePortal = () => {
             date: bookingDate,
             time: bookingTime,
             treatment: service?.name,
-            dentist: 'ทันตแพทย์ประจำ',
+            dentist: getDoctorForService(bookingService),
             branch: bookingBranch,
             type: 'LINE Booking',
             status: 'Pending'

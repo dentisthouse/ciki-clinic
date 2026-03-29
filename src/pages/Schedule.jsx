@@ -56,7 +56,8 @@ const Schedule = () => {
         }
     };
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
+    const [viewMode, setViewMode] = useState('list');
+    const [doctorFilter, setDoctorFilter] = useState('All');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
 
@@ -116,7 +117,8 @@ const Schedule = () => {
                         {calendarDays.map((day, idx) => {
                             const isToday = isSameDay(day, new Date());
                             const isCurrentMonth = isSameMonth(day, monthStart);
-                            const dayAppointments = appointments.filter(apt => isSameDay(new Date(apt.date), day));
+                            const filteredApts = appointments.filter(apt => doctorFilter === 'All' || apt.dentist === doctorFilter);
+                            const dayAppointments = filteredApts.filter(apt => isSameDay(new Date(apt.date), day));
 
                             return (
                                 <div
@@ -214,7 +216,28 @@ const Schedule = () => {
                         {viewMode === 'list' ? <CalendarIcon size={16} /> : <List size={16} />}
                         {viewMode === 'list' ? t('sch_view_calendar') : t('sch_view_list')}
                     </button>
-                    <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+                    
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <select 
+                            value={doctorFilter}
+                            onChange={(e) => setDoctorFilter(e.target.value)}
+                            style={{ 
+                                padding: '0.65rem 1rem', 
+                                borderRadius: '12px', 
+                                border: '1px solid var(--neutral-200)',
+                                background: 'white',
+                                fontWeight: 700,
+                                color: 'var(--primary-700)',
+                                outline: 'none'
+                            }}
+                        >
+                            <option value="All">แพทย์ทั้งหมด (All Doctors)</option>
+                            <option value="หมอทั่วไป">หมอทั่วไป (General)</option>
+                            <option value="หมอเฉพาะทาง">หมอเฉพาะทาง (Specialist)</option>
+                            <option value="หมอจัดฟัน">หมอจัดฟัน (Ortho)</option>
+                        </select>
+                        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+    
                         <Plus size={18} style={{ marginRight: '8px' }} />
                         {t('sch_new_apt')}
                     </button>
