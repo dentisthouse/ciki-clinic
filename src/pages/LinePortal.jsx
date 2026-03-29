@@ -884,7 +884,7 @@ const LinePortal = () => {
                                 <MapPin size={16} color="var(--lp-secondary)" />
                                 {pt('select_branch_label')}
                             </label>
-                            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', padding: '0.5rem 0.25rem 1.5rem 0.25rem' }}>
                                 {getBranches(pt).map(branch => (
                                     <button
                                         key={branch}
@@ -920,7 +920,7 @@ const LinePortal = () => {
                                 <Clock size={16} color="var(--lp-secondary)" />
                                 {pt('avail_slots')}
                             </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.65rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.65rem' }}>
                                 {TIME_SLOTS.map(time => (
                                     <button
                                         key={time}
@@ -940,7 +940,7 @@ const LinePortal = () => {
                             disabled={!bookingService || !bookingTime}
                             style={{ marginTop: '1rem', height: '4rem' }}
                         >
-                            Confirm Booking
+                            {pt('confirm_booking')}
                         </button>
                     </div>
                 </div>
