@@ -991,15 +991,30 @@ const LinePortal = () => {
                                 {pt('avail_slots')}
                             </label>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.65rem' }}>
-                                {TIME_SLOTS.map(time => (
-                                    <button
-                                        key={time}
-                                        onClick={() => setBookingTime(time)}
-                                        className={`lp-time-slot ${bookingTime === time ? 'selected' : ''}`}
-                                    >
-                                        {time}
-                                    </button>
-                                ))}
+                                {TIME_SLOTS.map(time => {
+                                    const isTaken = appointments.some(apt => {
+                                        const aptTime = apt.time ? String(apt.time).substring(0, 5) : '';
+                                        const targetTime = time.substring(0, 5);
+                                        return apt.date === bookingDate && aptTime === targetTime && apt.status !== 'Cancelled';
+                                    });
+
+                                    return (
+                                        <button
+                                            key={time}
+                                            onClick={() => !isTaken && setBookingTime(time)}
+                                            className={`lp-time-slot ${bookingTime === time ? 'selected' : ''} ${isTaken ? 'taken' : ''}`}
+                                            disabled={isTaken}
+                                            style={isTaken ? { 
+                                                opacity: 0.4, 
+                                                cursor: 'not-allowed', 
+                                                background: '#f1f5f9',
+                                                textDecoration: 'line-through' 
+                                            } : {}}
+                                        >
+                                            {time}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
