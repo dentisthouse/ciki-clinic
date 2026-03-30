@@ -185,13 +185,20 @@ const Schedule = () => {
                             return (
                                 <div
                                     key={idx}
+                                    onClick={() => {
+                                        setCurrentDate(day);
+                                        setViewMode('list');
+                                    }}
+                                    className="calendar-day-hover"
                                     style={{
                                         minHeight: '120px',
                                         padding: '0.75rem',
                                         borderBottom: '1px solid var(--neutral-100)',
                                         borderRight: '1px solid var(--neutral-100)',
                                         backgroundColor: isCurrentMonth ? 'white' : 'var(--neutral-50)',
-                                        position: 'relative'
+                                        position: 'relative',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
                                     }}
                                 >
                                     <div style={{
@@ -347,7 +354,7 @@ const Schedule = () => {
                                     {(() => {
                                         const userIsClinical = staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor';
                                         const effectiveFilter = userIsClinical ? (DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name) : doctorFilter;
-                                        return appointments.filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), new Date())).length;
+                                        return appointments.filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), currentDate)).length;
                                     })()} {t('sch_today_count_label')}
                                 </div>
                             </div>
@@ -357,7 +364,9 @@ const Schedule = () => {
                     {/* Schedule Table */}
                     <div className="table-container shadow-sm">
                         <div className="table-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ fontSize: '1.125rem' }}>{t('sch_today_agenda')}</h3>
+                            <h3 style={{ fontSize: '1.125rem' }}>
+                                {t('sch_today_agenda')} - {format(currentDate, 'dd MMMM yyyy', { locale: language === 'TH' ? th : enUS })}
+                            </h3>
                             <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', display: 'flex', gap: '1rem' }}>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb' }}></div>
@@ -387,7 +396,7 @@ const Schedule = () => {
                                     const effectiveFilter = userIsClinical ? (DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name) : doctorFilter;
                                     
                                     return appointments
-                                        .filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), new Date()))
+                                        .filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), currentDate))
                                         .sort((a, b) => a.time.localeCompare(b.time));
                                 })().map((apt, index) => (
                                         <tr key={index} className="hover:bg-neutral-50 transition-colors">
