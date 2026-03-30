@@ -350,21 +350,19 @@ export const DataProvider = ({ children }) => {
         };
         setAppointments([...appointments, newApt]);
 
-        // Supabase Sync - Map to correct column names from screenshot
+        // Supabase Sync - Map to exact schema provided (no duration, type, queue_number, or queue_status)
         const { error } = await supabase.from('appointments').insert([{
             id: newApt.id,
             patient_id: newApt.patientId,
             patient_name: newApt.patientName,
-            phone: newApt.phone, // Adding missing phone column
-            dentist: newApt.dentist, // Using correct 'dentist' column instead of 'dentist_name'
+            phone: newApt.phone,
+            dentist: newApt.dentist,
             date: newApt.date,
             time: newApt.time,
-            duration: newApt.duration || 30,
             treatment: newApt.treatment,
+            branch: newApt.branch,
             status: newApt.status || 'Pending',
-            type: newApt.type || 'LINE Booking',
-            queue_number: newApt.queueNumber,
-            queue_status: newApt.queueStatus
+            notes: newApt.notes || ''
         }]);
 
         if (error) {
@@ -381,48 +379,33 @@ export const DataProvider = ({ children }) => {
     const updateAppointment = async (id, updates) => {
         setAppointments(appointments.map(a => a.id === id ? { ...a, ...updates } : a));
 
-        const supabaseUpdates = { ...updates };
-        if (updates.patientId) { supabaseUpdates.patient_id = updates.patientId; delete supabaseUpdates.patientId; }
-        if (updates.patientName) { supabaseUpdates.patient_name = updates.patientName; delete supabaseUpdates.patientName; }
-        if (updates.dentist) { supabaseUpdates.dentist_name = updates.dentist; delete supabaseUpdates.dentist; }
-        if (updates.queueNumber) { supabaseUpdates.queue_number = updates.queueNumber; delete supabaseUpdates.queueNumber; }
-        if (updates.queueStatus) { supabaseUpdates.queue_status = updates.queueStatus; delete supabaseUpdates.queueStatus; }
+        const supabaseUpdates = {};
+        if (updates.patientId) supabaseUpdates.patient_id = updates.patientId;
+        if (updates.patientName) supabaseUpdates.patient_name = updates.patientName;
+        if (updates.phone) supabaseUpdates.phone = updates.phone;
+        if (updates.dentist) supabaseUpdates.dentist = updates.dentist;
+        if (updates.date) supabaseUpdates.date = updates.date;
+        if (updates.time) supabaseUpdates.time = updates.time;
+        if (updates.treatment) supabaseUpdates.treatment = updates.treatment;
+        if (updates.status) supabaseUpdates.status = updates.status;
+        if (updates.branch) supabaseUpdates.branch = updates.branch;
+        if (updates.notes) supabaseUpdates.notes = updates.notes;
 
         const { error } = await supabase.from('appointments').update(supabaseUpdates).eq('id', id);
         if (error) console.error("Error updating appointment in Supabase:", error);
     };
 
-    const updateQueueStatus = async (id, status, room = null) => {
-        let checkInTime = null;
+    const updateQueueStatus = async (id, status) => {
         setAppointments(appointments.map(a => {
             if (a.id === id) {
-                const updates = { queueStatus: status };
-                if (status === 'In Progress' && !a.checkInTime) {
-                    updates.checkInTime = new Date().toISOString();
-                    updates.status = 'In Progress';
-                    // Use provided room or default to Room 1
-                    updates.room = room || a.room || 'Room 1';
-                }
-                if (status === 'Completed') {
-                    updates.status = 'Completed';
-                    updates.room = 'Check Out';
-                }
-                checkInTime = updates.checkInTime || a.checkInTime;
-                return { ...a, ...updates };
+                return { ...a, queueStatus: status, status: (status === 'In Progress' || status === 'Completed') ? status : 'Pending' };
             }
             return a;
         }));
 
         const updateData = { 
-            queue_status: status, 
-            status: (status === 'In Progress' || status === 'Completed') ? status : 'Pending',
-            check_in_time: checkInTime
+            status: (status === 'In Progress' || status === 'Completed') ? status : 'Pending'
         };
-        
-        // Include room if provided
-        if (room && status === 'In Progress') {
-            updateData.room = room;
-        }
 
         const { error } = await supabase.from('appointments').update(updateData).eq('id', id);
         if (error) console.error("Error updating queue status in Supabase:", error);
