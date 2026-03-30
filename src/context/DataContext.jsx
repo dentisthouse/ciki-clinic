@@ -89,6 +89,14 @@ export const DataProvider = ({ children }) => {
                                 dateSent: l.date_sent, 
                                 dateReceived: l.date_received 
                             })));
+                        } else if (table.name === 'appointments') {
+                            table.stateSet(data.map(a => ({ 
+                                ...a, 
+                                patientId: a.patient_id, 
+                                patientName: a.patient_name,
+                                dentist: a.dentist, // DB column is 'dentist', UI uses 'dentist' (but sometimes 'dentistName')
+                                dentistName: a.dentist // For safety
+                            })));
                         } else {
                             table.stateSet(data);
                         }
