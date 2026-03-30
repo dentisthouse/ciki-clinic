@@ -212,7 +212,12 @@ const LinePortal = () => {
             
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
-            setPage('home');
+            
+            // IF Rescheduling, DO NOT go to home, stay on booking page (set by fetchRescheduleData)
+            if (!rescheduleId) {
+                setPage('home');
+            }
+            
             await loadUserAppointments(user);
             
             alert(`ยินดีต้อนรับคุณ ${user.name}`);
@@ -353,7 +358,12 @@ const LinePortal = () => {
 
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
-            setPage('home');
+            
+            // IF Rescheduling, DO NOT go to home
+            if (!rescheduleId) {
+                setPage('home');
+            }
+            
             await loadUserAppointments(user);
             
             alert(`ยินดีต้อนรับคุณ ${user.name}`);

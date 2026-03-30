@@ -76,7 +76,9 @@ const Dashboard = () => {
 
     // Calculate Stats
     const totalPatients = patients ? patients.length : 0;
-    const todayStr = today.toISOString().split('T')[0];
+    
+    // Use local date format YYYY-MM-DD instead of UTC string
+    const todayStr = format(today, 'yyyy-MM-dd');
     
     // Revenue calculations
     const todayRevenue = Array.isArray(invoices)
@@ -112,7 +114,7 @@ const Dashboard = () => {
 
     const todayAppointments = Array.isArray(appointments)
         ? appointments
-            .filter(apt => new Date(apt.date).toDateString() === today.toDateString())
+            .filter(apt => apt.date === todayStr)
             .sort((a, b) => a.time.localeCompare(b.time))
         : [];
     const appointmentCount = todayAppointments.length;

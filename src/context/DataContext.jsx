@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
+import { useAuth } from './AuthContext';
 
 const DataContext = createContext();
 
 export const useData = () => useContext(DataContext);
 
-export const DataProvider = ({ children, user }) => {
+export const DataProvider = ({ children }) => {
+    const { user } = useAuth();
     // Patients
     const [patients, setPatients] = useState([]);
     const [patientImages, setPatientImages] = useState([]);
