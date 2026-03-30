@@ -15,7 +15,6 @@ const Header = ({ onMenuClick }) => {
         if (path === '/') return t('nav_dashboard');
         if (path.startsWith('/patients')) return t('nav_patients');
         if (path.startsWith('/schedule')) return t('nav_schedule');
-        if (path.startsWith('/charting')) return t('nav_charting');
         if (path.startsWith('/inventory')) return t('nav_inventory');
         if (path.startsWith('/billing')) return t('nav_billing');
         if (path.startsWith('/labs')) return t('nav_labs');
@@ -141,13 +140,6 @@ const Header = ({ onMenuClick }) => {
                     )}
                 </div>
 
-
-                {/* User Profile */}
-                <div className="user-profile">
-                    <div className="user-avatar">
-                        dr
-                    </div>
-                </div>
             </div>
         </header>
     );

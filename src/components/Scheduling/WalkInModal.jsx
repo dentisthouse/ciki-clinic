@@ -10,6 +10,7 @@ const WalkInModal = ({ isOpen, onClose, onSave }) => {
     const [activeTab, setActiveTab] = useState('existing'); // 'existing' or 'new'
 
     const [procedure, setProcedure] = useState('');
+    const [dentist, setDentist] = useState('หมอต้อง');
 
     // Existing Patient State
     const [searchTerm, setSearchTerm] = useState('');
@@ -37,6 +38,7 @@ const WalkInModal = ({ isOpen, onClose, onSave }) => {
             duration: 30,
             type: 'Walk-in',
             procedure: procedure || 'General Checkup',
+            dentist: dentist || 'หมอต้อง',
             status: 'In Progress',
             notes: 'Walk-in Registration'
         };
@@ -142,6 +144,22 @@ const WalkInModal = ({ isOpen, onClose, onSave }) => {
                             value={procedure}
                             onChange={(e) => setProcedure(e.target.value)}
                         />
+                    </div>
+
+                    {/* Doctor Selector */}
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                        <label className="form-label" style={{ fontWeight: 800 }}>หมอ (Doctor)</label>
+                        <select
+                            className="form-select"
+                            value={dentist}
+                            onChange={(e) => setDentist(e.target.value)}
+                            style={{ fontSize: '1rem', fontWeight: 600 }}
+                        >
+                            <option value="หมอบิ๊ก">หมอบิ๊ก (เฉพาะทางฟันคุด)</option>
+                            <option value="หมอต้อง">หมอต้อง (ทั่วไป)</option>
+                            <option value="หมออ้อม">หมออ้อม (จัดฟัน)</option>
+                            <option value="หมอจุ๊บ">หมอจุ๊บ (จัดฟัน)</option>
+                        </select>
                     </div>
 
                     {activeTab === 'existing' ? (
@@ -278,6 +296,7 @@ const WalkInModal = ({ isOpen, onClose, onSave }) => {
                         duration: 30,
                         type: 'Walk-in',
                         procedure: procedure || 'General Checkup',
+                        dentist: dentist || 'หมอต้อง',
                         status: 'In Progress',
                         notes: 'New Patient Walk-in',
                         patientId: newPatient.id,

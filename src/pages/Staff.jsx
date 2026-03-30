@@ -10,7 +10,6 @@ import StaffModal from '../components/Staff/StaffModal';
 const ROLE_CONFIG = {
     dentist: { label: 'ทันตแพทย์', labelEn: 'Dentist', color: '#3b82f6', bg: '#eff6ff', icon: '🦷' },
     assistant: { label: 'ผู้ช่วยทันตแพทย์', labelEn: 'Dental Assistant', color: '#8b5cf6', bg: '#f5f3ff', icon: '🩺' },
-    hygienist: { label: 'ทันตาภิบาล', labelEn: 'Hygienist', color: '#06b6d4', bg: '#ecfeff', icon: '✨' },
     receptionist: { label: 'พนักงานต้อนรับ', labelEn: 'Receptionist', color: '#f59e0b', bg: '#fffbeb', icon: '📋' },
     admin: { label: 'ผู้ดูแลระบบ', labelEn: 'Admin', color: '#64748b', bg: '#f8fafc', icon: '⚙️' },
 };

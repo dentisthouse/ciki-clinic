@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Plus, MoreHorizontal, Trash2, Edit } from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Trash2, Edit, Phone, MessageSquare, Calendar, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import PatientModal from '../components/Patients/PatientModal';
@@ -52,11 +52,13 @@ const Patients = () => {
     };
 
     const filteredPatients = patients.filter(patient => {
-        const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            patient.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = (patient.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+            (patient.id?.toLowerCase() || '').includes(searchTerm.toLowerCase());
         const matchesFilter = filter === 'All' || patient.status === filter;
         return matchesSearch && matchesFilter;
     });
+
+    const recallPatients = patients.filter(p => p.status === 'Recall Due' || (p.lastVisit && new Date(p.lastVisit) < new Date(Date.now() - 180 * 24 * 60 * 60 * 1000)));
 
     return (
         <div className="animate-slide-up" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -143,6 +145,75 @@ const Patients = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Recall Dashboard - Visible when NOT searching */}
+                {!searchTerm && (
+                    <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                            {/* Recall Stats Card */}
+                            <div className="card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)', color: 'white' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.875rem', opacity: 0.8, fontWeight: 600 }}>{language === 'TH' ? 'คนไข้ที่ต้องนัดตรวจซ้ำ' : 'Patients Due for Recall'}</div>
+                                        <div style={{ fontSize: '2.5rem', fontWeight: 900, margin: '0.5rem 0' }}>{recallPatients.length}</div>
+                                        <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>{language === 'TH' ? 'อัปเดตล่าสุด: วันนี้' : 'Last update: Today'}</div>
+                                    </div>
+                                    <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.2)', borderRadius: '16px' }}>
+                                        <Calendar size={28} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card" style={{ padding: '2rem', border: '1px solid var(--neutral-200)', borderRadius: '24px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ fontWeight: 800, color: 'var(--neutral-900)' }}>{language === 'TH' ? 'รายการ Recall แนะนำประจำวัน' : 'Daily Recommended Recall List'}</h3>
+                                <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }} onClick={() => setSearchTerm('Recall')}>
+                                    {language === 'TH' ? 'ดูทั้งหมด' : 'See All'} <ChevronRight size={14} />
+                                </button>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {recallPatients.slice(0, 5).map(patient => (
+                                    <div key={patient.id} 
+                                        onClick={() => navigate(`/patients/${patient.id}`)}
+                                        style={{ 
+                                            display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                                            padding: '1rem', background: 'var(--neutral-50)', borderRadius: '16px',
+                                            cursor: 'pointer', transition: 'all 0.2s ease'
+                                        }}
+                                        className="hover:bg-primary-50"
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: patient.avatarColor || 'var(--primary-200)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                                                {patient.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 700, color: 'var(--neutral-900)' }}>{patient.name}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)' }}>
+                                                    {language === 'TH' ? 'มาล่าสุดเมื่อ:' : 'Last visited:'} {patient.lastVisit || (language === 'TH' ? 'ไม่ระบุ' : 'N/A')}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
+                                            <a href={`tel:${patient.phone}`} className="btn btn-secondary" style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px' }}>
+                                                <Phone size={16} />
+                                            </a>
+                                            <button className="btn btn-secondary" style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px' }}>
+                                                <MessageSquare size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {recallPatients.length === 0 && (
+                                    <div style={{ textAlign: 'center', color: 'var(--neutral-400)', padding: '2rem' }}>
+                                        {language === 'TH' ? 'ไม่มีรายการนัดตรวจซ้ำในช่วงนี้' : 'No recall tasks available.'}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Patient List - Only visible when searching */}
                 {searchTerm ? (

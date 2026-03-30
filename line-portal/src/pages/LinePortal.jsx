@@ -357,6 +357,7 @@ const LinePortal = () => {
 
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
+            setPage('home');
             await loadUserAppointments(user);
             
             alert(`ยินดีต้อนรับคุณ ${user.name}`);
@@ -398,6 +399,8 @@ const LinePortal = () => {
             // บันทึกนัดหมายลง Supabase
             const { data: appointment, error } = await userService.createAppointment({
                 patient_id: currentUser.id,
+                patient_name: currentUser.name,
+                phone: currentUser.phone,
                 treatment: service.name,
                 date: bookingDate,
                 time: bookingTime,

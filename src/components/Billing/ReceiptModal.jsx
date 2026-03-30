@@ -3,9 +3,13 @@ import ReactDOM from 'react-dom';
 import { CreditCard, Printer, X } from 'lucide-react';
 
 const ReceiptModal = ({ isOpen, onClose, data }) => {
+    const [showQR, setShowQR] = React.useState(false);
     if (!isOpen || !data) return null;
 
     const { patientName, patientId, date, items, total, claimAmount, copayAmount, method } = data;
+    const finalAmount = copayAmount || total;
+    const promptPayID = "0812345678"; // Sample Clinic PromptPay ID (Phone or Tax ID)
+    const qrUrl = `https://promptpay.io/${promptPayID}/${finalAmount}.png`;
 
     return ReactDOM.createPortal(
         <div style={{ 
@@ -25,7 +29,7 @@ const ReceiptModal = ({ isOpen, onClose, data }) => {
         onClick={(e) => e.target === e.currentTarget && onClose()}
         >
             <div className="animate-slide-up" style={{ 
-                width: '600px', 
+                width: showQR ? '800px' : '600px', 
                 maxWidth: '96vw', 
                 maxHeight: '90vh',
                 padding: '3rem', 
@@ -33,7 +37,11 @@ const ReceiptModal = ({ isOpen, onClose, data }) => {
                 position: 'relative',
                 background: 'white',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                overflowY: 'auto'
+                overflowY: 'auto',
+                display: 'grid',
+                gridTemplateColumns: showQR ? '1.5fr 1fr' : '1fr',
+                gap: '2.5rem',
+                transition: 'all 0.3s ease'
             }}>
                 <div className="printable-content" style={{ padding: '0', color: '#1e293b' }}>
 
@@ -57,21 +65,21 @@ const ReceiptModal = ({ isOpen, onClose, data }) => {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem', fontSize: '0.9rem', padding: '1.5rem', background: 'var(--neutral-50)', borderRadius: '20px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Patient Name</label>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Patient Name / ชื่อผู้ป่วย</label>
                                 <span style={{ fontWeight: 800, fontSize: '1rem' }}>{patientName}</span>
                             </div>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Patient HN</label>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Patient HN / เลขประจำตัว</label>
                                 <span style={{ fontWeight: 600 }}>{patientId}</span>
                             </div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', textAlign: 'right' }}>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Receipt No</label>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Receipt No / เลขที่ใบเสร็จ</label>
                                 <span style={{ fontWeight: 600 }}>R-{Date.now().toString().slice(-6)}</span>
                             </div>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Date & Time</label>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Date & Time / วันที่</label>
                                 <span style={{ fontWeight: 600 }}>{new Date(date).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(date).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                         </div>
@@ -81,8 +89,8 @@ const ReceiptModal = ({ isOpen, onClose, data }) => {
                     <table style={{ width: '100%', marginBottom: '2.5rem', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: '2.5px solid var(--neutral-900)' }}>
-                                <th style={{ textAlign: 'left', padding: '1.25rem 0.5rem', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--neutral-600)', letterSpacing: '0.05em' }}>Description</th>
-                                <th style={{ textAlign: 'right', padding: '1.25rem 0.5rem', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--neutral-600)', letterSpacing: '0.05em' }}>Amount</th>
+                                <th style={{ textAlign: 'left', padding: '1.25rem 0.5rem', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--neutral-600)', letterSpacing: '0.05em' }}>Description / รายการ</th>
+                                <th style={{ textAlign: 'right', padding: '1.25rem 0.5rem', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--neutral-600)', letterSpacing: '0.05em' }}>Amount / จำนวน</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -98,13 +106,13 @@ const ReceiptModal = ({ isOpen, onClose, data }) => {
                     {/* Totals Section */}
                     <div style={{ marginLeft: 'auto', width: '320px', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
-                            <span style={{ color: 'var(--neutral-500)', fontWeight: 700 }}>Sub-Total</span>
+                            <span style={{ color: 'var(--neutral-500)', fontWeight: 700 }}>Sub-Total / รวม</span>
                             <span style={{ fontWeight: 700 }}>฿{Number(total).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
 
                         {claimAmount > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a', fontSize: '1rem' }}>
-                                <span style={{ fontWeight: 700 }}>SSO / Insurance</span>
+                                <span style={{ fontWeight: 700 }}>SSO / Insurance / ประกัน</span>
                                 <span style={{ fontWeight: 800 }}>-฿{Number(claimAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                         )}
@@ -119,12 +127,12 @@ const ReceiptModal = ({ isOpen, onClose, data }) => {
                             color: 'var(--neutral-900)',
                             letterSpacing: '-0.03em'
                         }}>
-                            <span>PAID</span>
-                            <span>฿{Number(copayAmount || total).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span>PAID / ชำระแล้ว</span>
+                            <span>฿{Number(finalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         
                         <div style={{ textAlign: 'right', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--neutral-400)', fontWeight: 800 }}>
-                            Method: {method || 'Cash'}
+                            Method / วิธีชำระ: {method || 'Cash'}
                         </div>
                     </div>
 

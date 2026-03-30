@@ -3,7 +3,7 @@ import { Lock, User, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const AuthGuard = ({ children }) => {
-    const { user, login, loading } = useAuth();
+    const { user, staff, isAdmin, permissions, loading, login, logout } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -14,12 +14,19 @@ const AuthGuard = ({ children }) => {
         setError('');
         setIsLoggingIn(true);
 
-        const { error: loginError } = await login(email, password);
+        try {
+            const { error: loginError } = await login(email, password);
 
-        if (loginError) {
-            setError(loginError.message === 'Invalid login credentials'
-                ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
-                : loginError.message);
+            if (loginError) {
+                setError(loginError.message === 'Invalid login credentials'
+                    ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+                    : loginError.message);
+            }
+        } catch (err) {
+            setError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        } finally {
+            // Note: If login is successful, the component will re-render and might unmount 
+            // OR user will change. We reset it anyway to be safe.
             setIsLoggingIn(false);
         }
     };
@@ -179,6 +186,8 @@ const AuthGuard = ({ children }) => {
             </div>
         );
     }
+
+
 
     return children;
 };

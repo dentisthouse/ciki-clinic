@@ -8,6 +8,7 @@ import {
     Smartphone, Fingerprint, Trash2, ShieldCheck, ShieldAlert
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useAuth } from '../context/AuthContext';
 
 // ==========================================
 // DEVICE ID HELPER
@@ -149,7 +150,7 @@ const MonthlySummary = ({ attendanceRecords, staff, language }) => {
     const totalLate = staffSummary.reduce((s, x) => s + x.lateDays, 0);
     const totalOT = staffSummary.reduce((s, x) => s + x.totalOTMinutes, 0);
     const avgAttendance = staffSummary.length > 0 ? (totalPresent / staffSummary.length).toFixed(1) : 0;
-    const ROLE_LABELS = { dentist: language === 'TH' ? 'ทันตแพทย์' : 'Dentist', assistant: language === 'TH' ? 'ผู้ช่วย' : 'Asst.', hygienist: language === 'TH' ? 'ทันตาภิบาล' : 'Hygienist', receptionist: language === 'TH' ? 'ต้อนรับ' : 'Reception', admin: language === 'TH' ? 'แอดมิน' : 'Admin' };
+    const ROLE_LABELS = { dentist: language === 'TH' ? 'ทันตแพทย์' : 'Dentist', assistant: language === 'TH' ? 'ผู้ช่วย' : 'Asst.', receptionist: language === 'TH' ? 'ต้อนรับ' : 'Reception', admin: language === 'TH' ? 'แอดมิน' : 'Admin' };
     const [expandedStaff, setExpandedStaff] = useState(null);
 
     return (
@@ -263,6 +264,7 @@ const MonthlySummary = ({ attendanceRecords, staff, language }) => {
 // ==========================================
 const Attendance = () => {
     const { t, language } = useLanguage();
+    const { staff: me, isAdmin } = useAuth();
     const { addAttendanceRecord, attendanceRecords, staff } = useData();
 
     const [activeTab, setActiveTab] = useState('checkin');
@@ -460,7 +462,12 @@ const Attendance = () => {
                     { key: 'checkin', icon: <Clock size={16} />, label: language === 'TH' ? 'ลงเวลา' : 'Check-in' },
                     { key: 'devices', icon: <Smartphone size={16} />, label: language === 'TH' ? 'อุปกรณ์' : 'Devices' },
                     { key: 'summary', icon: <BarChart3 size={16} />, label: language === 'TH' ? 'สรุป' : 'Summary' },
-                ].map(tab => (
+                ].filter(tab => {
+                    if (!isAdmin) {
+                        return tab.key === 'checkin';
+                    }
+                    return true;
+                }).map(tab => (
                     <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                         style={{ flex: 1, padding: '0.65rem 0.5rem', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: activeTab === tab.key ? 'white' : 'transparent', color: activeTab === tab.key ? 'var(--primary-600)' : 'var(--neutral-500)', boxShadow: activeTab === tab.key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
                     >{tab.icon} {tab.label}</button>
@@ -711,34 +718,36 @@ const Attendance = () => {
                     )}
 
                     {/* Geofence Settings */}
-                    <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-                        <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--neutral-400)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto' }}>
-                            <Settings size={16} /> {language === 'TH' ? 'ตั้งค่า Geofencing' : 'Geofencing Settings'}
-                            <ChevronDown size={14} style={{ transform: showSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                        </button>
-                        {showSettings && (
-                            <div className="card animate-fade-in" style={{ marginTop: '1rem', padding: '1.25rem', textAlign: 'left' }}>
-                                <h4 style={{ marginBottom: '1rem', fontSize: '0.95rem', fontWeight: 600 }}>📍 {language === 'TH' ? 'ตั้งค่าพิกัดคลินิก' : 'Clinic Geofence'}</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-                                    <div>
-                                        <label style={{ fontSize: '0.8rem', color: 'var(--neutral-500)' }}>Latitude</label>
-                                        <input type="number" step="0.0001" value={clinicConfig.lat} onChange={e => setClinicConfig(p => ({ ...p, lat: parseFloat(e.target.value) || 0 }))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--neutral-200)', fontSize: '0.85rem' }} />
+                    {isAdmin && (
+                        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                            <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--neutral-400)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto' }}>
+                                <Settings size={16} /> {language === 'TH' ? 'ตั้งค่า Geofencing' : 'Geofencing Settings'}
+                                <ChevronDown size={14} style={{ transform: showSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                            </button>
+                            {showSettings && (
+                                <div className="card animate-fade-in" style={{ marginTop: '1rem', padding: '1.25rem', textAlign: 'left' }}>
+                                    <h4 style={{ marginBottom: '1rem', fontSize: '0.95rem', fontWeight: 600 }}>📍 {language === 'TH' ? 'ตั้งค่าพิกัดคลินิก' : 'Clinic Geofence'}</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                                        <div>
+                                            <label style={{ fontSize: '0.8rem', color: 'var(--neutral-500)' }}>Latitude</label>
+                                            <input type="number" step="0.0001" value={clinicConfig.lat} onChange={e => setClinicConfig(p => ({ ...p, lat: parseFloat(e.target.value) || 0 }))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--neutral-200)', fontSize: '0.85rem' }} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: '0.8rem', color: 'var(--neutral-500)' }}>Longitude</label>
+                                            <input type="number" step="0.0001" value={clinicConfig.lng} onChange={e => setClinicConfig(p => ({ ...p, lng: parseFloat(e.target.value) || 0 }))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--neutral-200)', fontSize: '0.85rem' }} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: '0.8rem', color: 'var(--neutral-500)' }}>{language === 'TH' ? 'รัศมี (ม.)' : 'Radius (m)'}</label>
+                                            <input type="number" value={clinicConfig.radiusMeters} onChange={e => setClinicConfig(p => ({ ...p, radiusMeters: parseInt(e.target.value) || 100 }))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--neutral-200)', fontSize: '0.85rem' }} />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: '0.8rem', color: 'var(--neutral-500)' }}>Longitude</label>
-                                        <input type="number" step="0.0001" value={clinicConfig.lng} onChange={e => setClinicConfig(p => ({ ...p, lng: parseFloat(e.target.value) || 0 }))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--neutral-200)', fontSize: '0.85rem' }} />
-                                    </div>
-                                    <div>
-                                        <label style={{ fontSize: '0.8rem', color: 'var(--neutral-500)' }}>{language === 'TH' ? 'รัศมี (ม.)' : 'Radius (m)'}</label>
-                                        <input type="number" value={clinicConfig.radiusMeters} onChange={e => setClinicConfig(p => ({ ...p, radiusMeters: parseInt(e.target.value) || 100 }))} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--neutral-200)', fontSize: '0.85rem' }} />
-                                    </div>
+                                    <button className="btn btn-secondary" onClick={setCurrentAsClinic} disabled={!location} style={{ width: '100%', fontSize: '0.85rem' }}>
+                                        <MapPin size={14} style={{ marginRight: '0.5rem' }} /> {language === 'TH' ? 'ใช้ตำแหน่งปัจจุบันเป็นพิกัดคลินิก' : 'Use Current Location as Clinic'}
+                                    </button>
                                 </div>
-                                <button className="btn btn-secondary" onClick={setCurrentAsClinic} disabled={!location} style={{ width: '100%', fontSize: '0.85rem' }}>
-                                    <MapPin size={14} style={{ marginRight: '0.5rem' }} /> {language === 'TH' ? 'ใช้ตำแหน่งปัจจุบันเป็นพิกัดคลินิก' : 'Use Current Location as Clinic'}
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

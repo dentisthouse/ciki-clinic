@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, ChevronRight, Plus, List, ChevronLeft, User } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronRight, Plus, List, ChevronLeft, User, Volume2 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { th, enUS } from 'date-fns/locale';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import AppointmentModal from '../components/Scheduling/AppointmentModal';
 import WalkInModal from '../components/Scheduling/WalkInModal';
 
@@ -12,7 +13,16 @@ const Schedule = () => {
     const { t, language } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
+    const { user, staff, permissions } = useAuth();
     const { patients, appointments, addAppointment, updateAppointment, updateQueueStatus } = useData();
+    
+    // Mapping for hardcoded doctors to filter match names
+    const DOCTOR_MAP = {
+        'owner@dental.com': 'หมออ้อม',
+        'big@dental.com': 'หมอบิ๊ก',
+        'tong@dental.com': 'หมอต้อง',
+        'joob@dental.com': 'หมอจุ๊บ'
+    };
     
     const handleSendLineConfirmation = async (apt) => {
         const patient = patients.find(p => p.id === apt.patientId);
@@ -56,10 +66,20 @@ const Schedule = () => {
         }
     };
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [viewMode, setViewMode] = useState('list');
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
     const [doctorFilter, setDoctorFilter] = useState('All');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState('Room 1'); // For queue calling
+
+    // Filter appointments for dentists on load
+    useEffect(() => {
+        const role = staff?.role?.toLowerCase();
+        if (role === 'dentist' || role === 'doctor') {
+            const drName = DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name;
+            if (drName) setDoctorFilter(drName);
+        }
+    }, [staff, user]);
 
     // Check for query params (e.g., from Dashboard "New Appointment")
     useEffect(() => {
@@ -74,6 +94,43 @@ const Schedule = () => {
     const handleSaveAppointment = (newApt) => {
         addAppointment(newApt);
         setIsModalOpen(false);
+    };
+
+    // Handle calling queue with voice announcement
+    const handleCallQueue = (apt) => {
+        // Update queue status to In Progress with room
+        updateQueueStatus(apt.id, 'In Progress', selectedRoom);
+        
+        // Create voice announcement text
+        const roomText = selectedRoom === 'Room 1' ? 'ห้องตรวจหนึ่ง' : 
+                        selectedRoom === 'Room 2' ? 'ห้องตรวจสอง' : 
+                        selectedRoom === 'Room 3' ? 'ห้องตรวจสาม' : selectedRoom;
+        
+        const announcement = `ขอเชิญคุณ ${apt.patientName || apt.patient} หมายเลขคิว ${apt.queueNumber} กรุณาเข้ารับบริการที่ ${roomText}`;
+        
+        // Use Text-to-Speech API
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(announcement);
+            utterance.lang = 'th-TH';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            window.speechSynthesis.speak(utterance);
+        }
+        
+        // Store announcement in localStorage for Queue Display page
+        const announcementData = {
+            patientName: apt.patientName || apt.patient,
+            queueNumber: apt.queueNumber,
+            room: selectedRoom,
+            timestamp: new Date().toISOString(),
+            announcement: announcement
+        };
+        localStorage.setItem('lastQueueCall', JSON.stringify(announcementData));
+        
+        // Show confirmation
+        alert(language === 'TH' ? 
+            `เรียกคิว ${apt.queueNumber} - ${apt.patientName || apt.patient} ไปที่ ${selectedRoom}` : 
+            `Called queue ${apt.queueNumber} - ${apt.patientName || apt.patient} to ${selectedRoom}`);
     };
 
     const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -117,7 +174,12 @@ const Schedule = () => {
                         {calendarDays.map((day, idx) => {
                             const isToday = isSameDay(day, new Date());
                             const isCurrentMonth = isSameMonth(day, monthStart);
-                            const filteredApts = appointments.filter(apt => doctorFilter === 'All' || apt.dentist === doctorFilter);
+                            
+                            // Strict role-based filtering for render logic
+                            const userIsClinical = staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor';
+                            const effectiveFilter = userIsClinical ? (DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name) : doctorFilter;
+                            
+                            const filteredApts = appointments.filter(apt => effectiveFilter === 'All' || apt.dentist === effectiveFilter);
                             const dayAppointments = filteredApts.filter(apt => isSameDay(new Date(apt.date), day));
 
                             return (
@@ -201,14 +263,16 @@ const Schedule = () => {
                     <p>{t('sch_subtitle')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={() => setIsWalkInModalOpen(true)}
-                        style={{ background: '#f59e0b', color: 'white', border: 'none' }}
-                    >
-                        <User size={18} style={{ marginRight: '8px' }} />
-                        {t('sch_walk_in') || 'Walk-in'}
-                    </button>
+                    {(staff?.role?.toLowerCase() !== 'dentist' && staff?.role?.toLowerCase() !== 'doctor') && (
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => setIsWalkInModalOpen(true)}
+                            style={{ background: '#f59e0b', color: 'white', border: 'none' }}
+                        >
+                            <User size={18} style={{ marginRight: '8px' }} />
+                            {t('sch_walk_in') || 'Walk-in'}
+                        </button>
+                    )}
                     <button
                         className={`btn ${viewMode === 'calendar' ? 'btn-primary' : 'btn-secondary'}`}
                         onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
@@ -216,31 +280,56 @@ const Schedule = () => {
                         {viewMode === 'list' ? <CalendarIcon size={16} /> : <List size={16} />}
                         {viewMode === 'list' ? t('sch_view_calendar') : t('sch_view_list')}
                     </button>
-                    
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <select 
                             value={doctorFilter}
                             onChange={(e) => setDoctorFilter(e.target.value)}
+                            disabled={staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor'}
                             style={{ 
                                 padding: '0.65rem 1rem', 
                                 borderRadius: '12px', 
                                 border: '1px solid var(--neutral-200)',
-                                background: 'white',
+                                background: (staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor') ? '#f1f5f9' : 'white',
                                 fontWeight: 700,
                                 color: 'var(--primary-700)',
-                                outline: 'none'
+                                outline: 'none',
+                                cursor: (staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor') ? 'not-allowed' : 'pointer',
+                                opacity: (staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor') ? 0.7 : 1
                             }}
                         >
-                            <option value="All">แพทย์ทั้งหมด (All Doctors)</option>
-                            <option value="หมอทั่วไป">หมอทั่วไป (General)</option>
-                            <option value="หมอเฉพาะทาง">หมอเฉพาะทาง (Specialist)</option>
-                            <option value="หมอจัดฟัน">หมอจัดฟัน (Ortho)</option>
+                            {/* Dynamic Options: Show only based on Role */}
+                            {(() => {
+                                const role = staff?.role?.toLowerCase();
+                                const isClinical = role === 'dentist' || role === 'doctor';
+                                const myBoundName = DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name;
+
+                                // If owner/admin, show all options
+                                if (!isClinical) {
+                                    return (
+                                        <>
+                                            <option value="All">แพทย์ทั้งหมด (All Doctors)</option>
+                                            <option value="หมอบิ๊ก">หมอบิ๊ก (เฉพาะทางฟันคุด)</option>
+                                            <option value="หมอต้อง">หมอต้อง (ทั่วไป)</option>
+                                            <option value="หมออ้อม">หมออ้อม (จัดฟัน)</option>
+                                            <option value="หมอจุ๊บ">หมอจุ๊บ (จัดฟัน)</option>
+                                        </>
+                                    );
+                                }
+
+                                // If Dentist, only show their OWN option
+                                return (
+                                    <option value={myBoundName}>{myBoundName}</option>
+                                );
+                            })()}
                         </select>
+                    </div>
+                    
+                    {(staff?.role?.toLowerCase() !== 'dentist' && staff?.role?.toLowerCase() !== 'doctor') && (
                         <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-    
-                        <Plus size={18} style={{ marginRight: '8px' }} />
-                        {t('sch_new_apt')}
-                    </button>
+                            <Plus size={18} style={{ marginRight: '8px' }} />
+                            {t('sch_new_apt')}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -254,7 +343,13 @@ const Schedule = () => {
                             </div>
                             <div>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('dash_appointments')}</div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{appointments.filter(apt => isSameDay(new Date(apt.date), new Date())).length} {t('sch_today_count_label')}</div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+                                    {(() => {
+                                        const userIsClinical = staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor';
+                                        const effectiveFilter = userIsClinical ? (DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name) : doctorFilter;
+                                        return appointments.filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), new Date())).length;
+                                    })()} {t('sch_today_count_label')}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -287,10 +382,14 @@ const Schedule = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {appointments
-                                    .filter(apt => isSameDay(new Date(apt.date), new Date()))
-                                    .sort((a, b) => a.time.localeCompare(b.time))
-                                    .map((apt, index) => (
+                                {(() => {
+                                    const userIsClinical = staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor';
+                                    const effectiveFilter = userIsClinical ? (DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name) : doctorFilter;
+                                    
+                                    return appointments
+                                        .filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), new Date()))
+                                        .sort((a, b) => a.time.localeCompare(b.time));
+                                })().map((apt, index) => (
                                         <tr key={index} className="hover:bg-neutral-50 transition-colors">
                                             <td style={{ fontWeight: 600, color: 'var(--primary-600)' }}>{apt.time}</td>
                                             <td>
@@ -383,28 +482,42 @@ const Schedule = () => {
                                                             </button>
 
                                                             {(!apt.queueStatus || apt.queueStatus === 'Waiting' || apt.queueStatus === 'Skipped') && (
-                                                                <button
-                                                                    className="btn"
-                                                                    style={{
-                                                                        padding: '0.4rem 0.8rem',
-                                                                        fontSize: '0.75rem',
-                                                                        backgroundColor: apt.queueStatus === 'Skipped' ? '#94a3b8' : '#f59e0b',
-                                                                        color: 'white',
-                                                                        border: 'none',
-                                                                        borderRadius: 'var(--radius-md)'
-                                                                    }}
-                                                                    onClick={() => {
-                                                                        if (apt.queueStatus === 'Waiting' || !apt.queueStatus) {
-                                                                            // Call
-                                                                            updateQueueStatus(apt.id, 'In Progress');
-                                                                        } else {
-                                                                            // Re-queue
-                                                                            updateQueueStatus(apt.id, 'Waiting');
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    {apt.queueStatus === 'Skipped' ? (language === 'TH' ? 'รอเรียกใหม่' : 'Re-queue') : (language === 'TH' ? 'เรียกคิว' : 'Call')}
-                                                                </button>
+                                                                <>
+                                                                    {/* Room Selection Dropdown */}
+                                                                    <select
+                                                                        value={selectedRoom}
+                                                                        onChange={(e) => setSelectedRoom(e.target.value)}
+                                                                        style={{
+                                                                            padding: '0.4rem 0.6rem',
+                                                                            fontSize: '0.75rem',
+                                                                            borderRadius: 'var(--radius-md)',
+                                                                            border: '1px solid var(--neutral-200)',
+                                                                            background: 'white'
+                                                                        }}
+                                                                    >
+                                                                        <option value="Room 1">{language === 'TH' ? 'ห้อง 1' : 'Room 1'}</option>
+                                                                        <option value="Room 2">{language === 'TH' ? 'ห้อง 2' : 'Room 2'}</option>
+                                                                        <option value="Room 3">{language === 'TH' ? 'ห้อง 3' : 'Room 3'}</option>
+                                                                    </select>
+                                                                    <button
+                                                                        className="btn"
+                                                                        style={{
+                                                                            padding: '0.4rem 0.8rem',
+                                                                            fontSize: '0.75rem',
+                                                                            backgroundColor: apt.queueStatus === 'Skipped' ? '#94a3b8' : '#f59e0b',
+                                                                            color: 'white',
+                                                                            border: 'none',
+                                                                            borderRadius: 'var(--radius-md)',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '0.25rem'
+                                                                        }}
+                                                                        onClick={() => handleCallQueue(apt)}
+                                                                    >
+                                                                        <Volume2 size={14} />
+                                                                        {apt.queueStatus === 'Skipped' ? (language === 'TH' ? 'รอเรียกใหม่' : 'Re-queue') : (language === 'TH' ? 'เรียกคิว' : 'Call')}
+                                                                    </button>
+                                                                </>
                                                             )}
 
                                                             {apt.queueStatus === 'In Progress' && (

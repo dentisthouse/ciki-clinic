@@ -7,10 +7,10 @@ import {
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import PatientModal from '../components/Patients/PatientModal';
 
 import HistoryTab from '../components/EHR/HistoryTab';
-import TreatmentPlanTab from '../components/EHR/TreatmentPlanTab';
 import BillingTab from '../components/EHR/BillingTab';
 import OrthoChartTab from '../components/Ortho/OrthoChartTab';
 import PhotoGalleryTab from '../components/Ortho/PhotoGalleryTab';
@@ -44,10 +44,10 @@ const MedicalAlertModal = ({ patient, onClose }) => {
                 </div>
 
                 <h2 style={{ color: '#dc2626', fontSize: '1.8rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-                    MEDICAL ALERT
+                    {t('prof_medical_alerts')}
                 </h2>
                 <p style={{ color: '#7f1d1d', fontSize: '1.1rem', marginBottom: '2rem' }}>
-                    {patient.name} has the following conditions:
+                    {patient.name} {language === 'TH' ? 'มีสภาวะทางการแพทย์ดังนี้:' : 'has the following conditions:'}
                 </p>
 
                 <div style={{
@@ -99,13 +99,28 @@ const InfoItem = ({ icon: Icon, label, value }) => (
 // MAIN COMPONENT
 const PatientProfile = () => {
     const { t, language } = useLanguage();
+    const { permissions } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const { patients, updatePatient } = useData();
     const patient = patients.find(p => p.id === id);
     const [searchParams] = useSearchParams();
 
-    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'plans');
+    // Check permissions
+    const canViewClinical = permissions?.patients?.clinical || false;
+    const canViewHistory = permissions?.patients?.history || false;
+    const canViewBilling = permissions?.billing?.view || false;
+
+    const [activeTab, setActiveTab] = useState(
+        searchParams.get('tab') || (canViewClinical ? 'plans' : 'billing')
+    );
+
+    // Sync tab when permissions finish loading (Prevent getting stuck on billing tab)
+    React.useEffect(() => {
+        if (canViewClinical && activeTab === 'billing' && !searchParams.get('tab')) {
+            setActiveTab('plans');
+        }
+    }, [canViewClinical]);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDocModalOpen, setIsDocModalOpen] = useState(false);
     const [showAlert, setShowAlert] = useState(false);
@@ -126,8 +141,8 @@ const PatientProfile = () => {
     if (!patient) {
         return (
             <div style={{ padding: '4rem', textAlign: 'center' }}>
-                <h2>Client not found</h2>
-                <button className="btn btn-primary" onClick={() => navigate('/patients')}>Back</button>
+                <h2>{t('prof_not_found')}</h2>
+                <button className="btn btn-primary" onClick={() => navigate('/patients')}>{t('prof_back_dir')}</button>
             </div>
         );
     }
@@ -174,14 +189,14 @@ const PatientProfile = () => {
     // Calculate total unpaid amount for badge
     const unpaidTreatments = (patient.treatments || []).filter(t => t.paymentStatus !== 'paid');
 
+    // Only show tabs the user has permission for
     const tabs = [
-        { id: 'plans', label: language === 'TH' ? 'ผังฟัน' : 'Tooth Chart', icon: Activity },
-        { id: 'ortho', label: language === 'TH' ? 'จัดฟัน' : 'Ortho Chart', icon: Ruler },
-        { id: 'gallery', label: language === 'TH' ? 'รูปถ่าย' : 'Gallery', icon: ImageIcon },
-        { id: 'imaging', label: t('prof_imaging'), icon: ImageIcon }, // New Tab
-        { id: 'history', label: language === 'TH' ? 'ประวัติการรักษา' : 'Treatment History', icon: Calendar },
-        { id: 'billing', label: t('nav_billing'), icon: DollarSign, badge: unpaidTreatments.length > 0 ? unpaidTreatments.length : null },
-    ];
+        canViewClinical && { id: 'ortho', label: language === 'TH' ? 'จัดฟัน' : 'Ortho Chart', icon: Ruler },
+        canViewClinical && { id: 'gallery', label: language === 'TH' ? 'รูปถ่าย' : 'Gallery', icon: ImageIcon },
+        canViewClinical && { id: 'imaging', label: t('prof_imaging'), icon: ImageIcon },
+        canViewHistory && { id: 'history', label: language === 'TH' ? 'ประวัติการรักษา' : 'Treatment History', icon: Calendar },
+        canViewBilling && { id: 'billing', label: t('nav_billing'), icon: DollarSign, badge: unpaidTreatments.length > 0 ? unpaidTreatments.length : null },
+    ].filter(Boolean);
 
     return (
         <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -199,16 +214,16 @@ const PatientProfile = () => {
                         <div>
                             <h1 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{patient.name}</h1>
                             <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.875rem', color: 'var(--neutral-500)' }}>
-                                <span>{patient.id}</span> • <span>{patient.gender}</span> • <span>{patient.age} {t('pat_years')}</span>
+                                <span>{patient.id}</span> • <span>{patient.gender === 'Male' ? (language === 'TH' ? 'ชาย' : 'Male') : (language === 'TH' ? 'หญิง' : 'Female')}</span> • <span>{patient.age} {language === 'TH' ? 'ปี' : 'years old'}</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 <button className="btn btn-secondary" onClick={() => setIsEditModalOpen(true)}>
-                    <Edit2 size={18} style={{ marginRight: '0.5rem' }} /> {t('pat_edit')}
+                    <Edit2 size={18} style={{ marginRight: '0.5rem' }} /> {t('btn_edit_profile')}
                 </button>
                 <button className="btn btn-primary" onClick={() => setIsDocModalOpen(true)}>
-                    <FileText size={18} style={{ marginRight: '0.5rem' }} /> Documents
+                    <FileText size={18} style={{ marginRight: '0.5rem' }} /> {language === 'TH' ? 'เอกสาร' : 'Documents'}
                 </button>
             </div>
 
@@ -221,10 +236,10 @@ const PatientProfile = () => {
                         <h3 style={{ fontSize: '1rem', marginBottom: '1.25rem', color: 'var(--neutral-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pat_info')}</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <InfoItem icon={Phone} label={t('pat_form_phone')} value={patient.phone} />
-                            <InfoItem icon={Mail} label="Email" value={patient.email} />
+                            <InfoItem icon={Mail} label={t('pat_form_email')} value={patient.email} />
                             <InfoItem icon={MapPin} label={t('pat_form_address')} value={patient.address} />
-                            <InfoItem icon={Calendar} label="Last Visit" value={patient.lastVisit} />
-                            <InfoItem icon={Shield} label="Insurance" value={patient.insurance || '-'} />
+                            <InfoItem icon={Calendar} label={t('pat_form_last_visit')} value={patient.lastVisit} />
+                            <InfoItem icon={Shield} label={t('pat_form_insurance')} value={patient.insurance || '-'} />
                             {patient.insuranceType === 'SSO' && (() => {
                                 const currentYear = new Date().getFullYear();
                                 const used = (patient.treatments || [])
@@ -294,13 +309,6 @@ const PatientProfile = () => {
 
                     {/* Tab Content */}
                     <div style={{ background: 'white', border: '1px solid var(--neutral-200)', borderTop: 'none', borderRadius: '0 0 16px 16px', padding: '2rem', minHeight: '500px' }}>
-                        {activeTab === 'plans' && (
-                            <TreatmentPlanTab
-                                patient={patient}
-                                language={language}
-                                onUpdateToothStatus={handleUpdateToothStatus}
-                            />
-                        )}
                         {activeTab === 'ortho' && (
                             <OrthoChartTab patient={patient} language={language} onUpdate={updatePatient} />
                         )}

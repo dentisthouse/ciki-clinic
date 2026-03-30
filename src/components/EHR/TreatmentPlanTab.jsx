@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Printer, CheckCircle, FileText, ChevronRight, AlertCircle, ChevronDown, MoreVertical } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+import { useLanguage } from '../../context/LanguageContext';
 import DigitalToothChart from './DigitalToothChart';
 import TreatmentEntry from './TreatmentEntry';
 import HandwritingCanvas from '../Shared/HandwritingCanvas';
 import { PenTool } from 'lucide-react';
 
-const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
+const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus }) => {
+    const { t, language } = useLanguage();
     const { updatePatient } = useData();
     const [plans, setPlans] = useState(patient.treatmentPlans || []);
     const [activePlanId, setActivePlanId] = useState(null);
@@ -132,10 +134,10 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
     };
 
     const statusTools = [
-        { id: 'planning', label: language === 'TH' ? 'เพิ่มการรักษา' : 'Planning', icon: Plus, color: 'var(--primary-600)' },
-        { id: 'missing', label: language === 'TH' ? 'ถอนแล้ว/หลอ' : 'Missing', icon: Trash2, color: '#ef4444' },
-        { id: 'cavity', label: language === 'TH' ? 'ฟันผุ' : 'Cavity', icon: AlertCircle, color: '#f59e0b' },
-        { id: 'filled', label: language === 'TH' ? 'อุดแล้ว' : 'Filled', icon: CheckCircle, color: '#10b981' },
+        { id: 'planning', label: t('trt_btn_add_procedure'), icon: Plus, color: 'var(--primary-600)' },
+        { id: 'missing', label: t('missing') || 'Missing', icon: Trash2, color: '#ef4444' },
+        { id: 'cavity', label: t('cavity') || 'Cavity', icon: AlertCircle, color: '#f59e0b' },
+        { id: 'filled', label: t('filled') || 'Filled', icon: CheckCircle, color: '#10b981' },
     ];
 
     const activePlan = plans.find(p => p.id === activePlanId) || plans[0];
@@ -157,10 +159,10 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
     const handleDeletePlan = (planId, e) => {
         if (e) e.stopPropagation();
         if (plans.length === 1) {
-            alert("At least one plan must exist.");
+            alert(language === 'TH' ? "ต้องมีอย่างน้อยหนึ่งแผน" : "At least one plan must exist.");
             return;
         }
-        if (confirm('Delete this plan?')) {
+        if (confirm(language === 'TH' ? 'ลบแผนการรักษานี้?' : 'Delete this plan?')) {
             const updatedPlans = plans.filter(p => p.id !== planId);
             setPlans(updatedPlans);
             if (activePlanId === planId) {
@@ -239,7 +241,6 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
     const handleActivatePlan = () => {
         if (!activePlan || activePlan.items.length === 0) return;
 
-        if (confirm(`Activate "${activePlan.name}"? This will add ${activePlan.items.length} treatments to the patient's record.`)) {
             const newTreatments = activePlan.items.map(item => ({
                 id: `TRT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 procedure: item.procedure,
@@ -249,7 +250,7 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
                 paymentStatus: 'unpaid',
                 status: 'planned',
                 category: item.category,
-                note: `From Plan: ${activePlan.name}`
+                note: `${language === 'TH' ? 'จากแผน' : 'From Plan'}: ${activePlan.name}`
             }));
 
             const currentTreatments = patient.treatments || [];
@@ -263,8 +264,7 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
                 treatmentPlans: updatedPlans
             });
 
-            alert("Plan activated successfully! Refer to Charting/Billing tabs.");
-        }
+            alert(language === 'TH' ? "เริ่มการรักษาตามแผนเรียบร้อย! โปรดตรวจสอบที่หน้า ประวัติ/ชำระเงิน" : "Plan activated successfully! Refer to Charting/Billing tabs.");
     };
 
     if (!activePlan) return <div>Loading...</div>;
@@ -301,7 +301,7 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
                                 borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                 minWidth: '220px', zIndex: 50, padding: '4px'
                             }}>
-                                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', padding: '8px 12px' }}>SWITCH PLAN</div>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', padding: '8px 12px' }}>{language === 'TH' ? 'สลับแผนการรักษา' : 'SWITCH PLAN'}</div>
                                 {plans.map(p => (
                                     <div
                                         key={p.id}
@@ -329,7 +329,7 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
                                         display: 'flex', alignItems: 'center', gap: '8px'
                                     }}
                                 >
-                                    <Plus size={14} /> Create New Option
+                                    <Plus size={14} /> {language === 'TH' ? 'สร้างแผนใหม่' : 'Create New Option'}
                                 </button>
                             </div>
                         )}
@@ -339,8 +339,7 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
                     <input
                         type="text"
                         value={activePlan.name}
-                        onChange={(e) => handleUpdatePlanName(e.target.value)}
-                        placeholder="Rename Plan..."
+                        placeholder={language === 'TH' ? "เปลี่ยนชื่อแผน..." : "Rename Plan..."}
                         style={{
                             fontSize: '0.9rem', color: '#64748b', border: 'none', borderBottom: '1px solid transparent',
                             padding: '4px', background: 'transparent', outline: 'none', width: '200px',
@@ -350,7 +349,7 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
                         onBlur={(e) => e.target.style.borderColor = 'transparent'}
                     />
 
-                    <span style={{ padding: '4px 12px', background: '#fef3c7', color: '#d97706', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>Draft</span>
+                    <span style={{ padding: '4px 12px', background: '#fef3c7', color: '#d97706', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>{t('trt_draft')}</span>
 
                     {/* Delete Current Plan (if > 1) */}
                     {plans.length > 1 && (
@@ -369,11 +368,11 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
 
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div style={{ textAlign: 'right', marginRight: '1rem' }}>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>TOTAL ESTIMATE</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t('trt_total_estimate')}</div>
                         <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary-700)' }}>฿{totalCost.toLocaleString()}</div>
                     </div>
                     <button className="btn btn-primary" onClick={handleActivatePlan} style={{ background: '#059669', borderColor: '#059669' }}>
-                        <CheckCircle size={18} style={{ marginRight: '8px' }} /> Activate Plan
+                        <CheckCircle size={18} style={{ marginRight: '8px' }} /> {t('trt_btn_activate')}
                     </button>
                 </div>
             </div>
@@ -408,7 +407,7 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
                     {/* Tooth Selection */}
                     <div className="card" style={{ padding: '0' }}>
                         <div style={{ padding: '1rem', borderBottom: '1px solid var(--neutral-100)', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{activeTool === 'planning' ? '1. Select Teeth' : 'Select Teeth to Update Status'}</span>
+                            <span>{activeTool === 'planning' ? `1. ${language === 'TH' ? 'ขั้นตอนเลือกซี่ฟัน' : 'Select Teeth'}` : (language === 'TH' ? 'เลือกซี่ฟันเพื่ออัปเดตสถานะ' : 'Select Teeth to Update Status')}</span>
                             {activeTool !== 'planning' && <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{language === 'TH' ? 'คลิกที่ซี่ฟันเพื่อเปลี่ยนสถานะ' : 'Click tooth to toggle status'}</span>}
                         </div>
                         <DigitalToothChart
@@ -423,7 +422,7 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
                     {activeTool === 'planning' && (
                         <div className="card" style={{ padding: '0' }}>
                             <div style={{ padding: '1rem', borderBottom: '1px solid var(--neutral-100)', fontWeight: 600 }}>
-                                2. Add Procedures
+                                {t('trt_add_title')}
                             </div>
                             <div style={{ padding: '1rem' }}>
                                 <TreatmentEntry
@@ -440,24 +439,24 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
                 {/* Right: Plan Items */}
                 <div className="card" style={{ padding: '0', height: 'fit-content' }}>
                     <div style={{ padding: '1.5rem', background: '#f8fafc', borderBottom: '1px solid var(--neutral-200)', borderRadius: '16px 16px 0 0' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Plan Items: {activePlan.name}</h3>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--neutral-500)' }}>Review and activate treatments.</p>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{language === 'TH' ? 'รายการในแผน' : 'Plan Items'}: {activePlan.name}</h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--neutral-500)' }}>{language === 'TH' ? 'ตรวจสอบและยืนยันเริ่มการรักษา' : 'Review and activate treatments.'}</p>
                     </div>
 
                     <div style={{ padding: '1.5rem' }}>
                         {activePlan.items.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--neutral-400)' }}>
                                 <FileText size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                                <p>No items in this plan yet.</p>
-                                <p style={{ fontSize: '0.8rem' }}>Select teeth and add procedures to build the plan.</p>
+                                <p>{language === 'TH' ? 'ยังไม่มีรายการในแผนนี้' : 'No items in this plan yet.'}</p>
+                                <p style={{ fontSize: '0.8rem' }}>{t('prof_empty_plan')}</p>
                             </div>
                         ) : (
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ textAlign: 'left', fontSize: '0.85rem', color: 'var(--neutral-500)' }}>
-                                        <th style={{ paddingBottom: '0.5rem' }}>Tooth</th>
-                                        <th style={{ paddingBottom: '0.5rem' }}>Procedure</th>
-                                        <th style={{ paddingBottom: '0.5rem', textAlign: 'right' }}>Cost</th>
+                                        <th style={{ paddingBottom: '0.5rem' }}>{t('ehr_tooth_num')}</th>
+                                        <th style={{ paddingBottom: '0.5rem' }}>{t('trt_procedure')}</th>
+                                        <th style={{ paddingBottom: '0.5rem', textAlign: 'right' }}>{language === 'TH' ? 'ยอดรวม' : 'Cost'}</th>
                                         <th style={{ paddingBottom: '0.5rem' }}></th>
                                     </tr>
                                 </thead>
@@ -518,7 +517,7 @@ const TreatmentPlanTab = ({ patient, language, onUpdateToothStatus }) => {
             >
                 <PenTool size={24} />
             </button>
-        </div >
+        </div>
     );
 };
 

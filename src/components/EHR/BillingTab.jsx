@@ -3,8 +3,10 @@ import ReactDOM from 'react-dom';
 import { CheckCircle, Printer, CreditCard, DollarSign, Smartphone, FileText, Calendar, Plus, X } from 'lucide-react';
 import ReceiptModal from '../Billing/ReceiptModal';
 import { useData } from '../../context/DataContext';
+import { useLanguage } from '../../context/LanguageContext';
 
-const BillingTab = ({ patient, language }) => {
+const BillingTab = ({ patient }) => {
+    const { t, language } = useLanguage();
     const { updatePatient, deductStockForTreatment } = useData();
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [showReceipt, setShowReceipt] = useState(false);
@@ -157,9 +159,9 @@ const BillingTab = ({ patient, language }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                 {/* Pending Items */}
                 <div className="card" style={{ padding: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem' }}>Pending Items</h3>
+                    <h3 style={{ marginBottom: '1.5rem', fontWeight: 800 }}>{t('bill_pending_items')}</h3>
                     {unpaidTreatments.length === 0 ? (
-                        <div style={{ color: 'var(--neutral-400)', textAlign: 'center' }}>No pending items</div>
+                        <div style={{ color: 'var(--neutral-400)', textAlign: 'center' }}>{language === 'TH' ? 'ไม่มีรายการค้างชำระ' : 'No pending items'}</div>
                     ) : (
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <tbody>
@@ -177,9 +179,11 @@ const BillingTab = ({ patient, language }) => {
                 {/* Installment Plan Section */}
                 <div className="card" style={{ padding: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h3>Installment Plan</h3>
+                        <h3 style={{ fontWeight: 800 }}>{t('bill_installment_plan')}</h3>
                         {!hasInstallmentPlan && (
-                            <button className="btn btn-secondary" onClick={() => setShowInstallment(true)}><Plus size={16} /> New Plan</button>
+                            <button className="btn btn-secondary" onClick={() => setShowInstallment(true)} style={{ borderRadius: '12px' }}>
+                                <Plus size={16} /> {t('bill_new_plan')}
+                            </button>
                         )}
                     </div>
                     {hasInstallmentPlan ? (
@@ -195,25 +199,39 @@ const BillingTab = ({ patient, language }) => {
                                 <span>Paid: ฿{hasInstallmentPlan.paid.toLocaleString()}</span>
                                 <span>Total: ฿{hasInstallmentPlan.total.toLocaleString()}</span>
                             </div>
-                            <button className="btn btn-primary" onClick={handlePayInstallment} style={{ marginTop: '1rem', width: '100%' }}>Pay Installment</button>
+                            <button className="btn btn-primary" onClick={handlePayInstallment} style={{ marginTop: '1rem', width: '100%', borderRadius: '12px', fontWeight: 700 }}>{language === 'TH' ? 'ชำระงวดถัดไป' : 'Pay Next Installment'}</button>
                         </div>
                     ) : (
-                        <p style={{ color: 'var(--neutral-400)' }}>No active installment plan.</p>
+                        <p style={{ color: 'var(--neutral-400)' }}>{language === 'TH' ? 'ยังไม่มีแผนการผ่อนชำระ' : 'No active installment plan.'}</p>
                     )}
                 </div>
             </div>
 
             {/* Payment Summary Panel */}
-            <div className="card" style={{ padding: '2rem', height: 'fit-content', background: '#f8fafc' }}>
-                <h3>Summary</h3>
-                <div style={{ margin: '1rem 0', fontSize: '1.5rem', fontWeight: 800 }}>฿{totalAmount.toLocaleString()}</div>
+            <div className="card" style={{ padding: '2rem', height: 'fit-content', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '24px' }}>
+                <h3 style={{ fontWeight: 800, color: 'var(--neutral-900)' }}>{t('bill_summary')}</h3>
+                <div style={{ margin: '1rem 0', fontSize: '2.5rem', fontWeight: 900, color: 'var(--primary-700)', letterSpacing: '-0.025em' }}>฿{totalAmount.toLocaleString()}</div>
 
-                <label>Payment Method</label>
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--neutral-500)', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'block' }}>
+                    {t('bill_payment_method')}
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1.5rem' }}>
                     {['cash', 'transfer', 'card', 'claim'].map(m => (
                         <button key={m} onClick={() => setPaymentMethod(m)}
-                            style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: paymentMethod === m ? '2px solid var(--primary-500)' : '1px solid #ccc', background: 'white', textTransform: 'capitalize' }}>
-                            {m === 'claim' ? (language === 'TH' ? 'เคลมประกัน' : 'Insurance') : m}
+                            style={{ 
+                                padding: '0.75rem 0.5rem', 
+                                borderRadius: '12px', 
+                                fontSize: '0.9rem',
+                                fontWeight: paymentMethod === m ? 800 : 500,
+                                border: paymentMethod === m ? '2px solid var(--primary-600)' : '1.5px solid #ddd', 
+                                background: paymentMethod === m ? 'var(--primary-50)' : 'white',
+                                color: paymentMethod === m ? 'var(--primary-700)' : 'var(--neutral-600)',
+                                transition: 'all 0.2s ease'
+                            }}>
+                            {m === 'cash' && t('bill_cash')}
+                            {m === 'transfer' && t('bill_transfer')}
+                            {m === 'card' && t('bill_card')}
+                            {m === 'claim' && t('bill_insurance')}
                         </button>
                     ))}
                 </div>
@@ -316,19 +334,25 @@ const BillingTab = ({ patient, language }) => {
                                     onChange={(e) => setCopayMethod(e.target.value)}
                                     style={{ width: '100%' }}
                                 >
-                                    <option value="cash">Cash</option>
-                                    <option value="transfer">PromptPay / Transfer</option>
-                                    <option value="card">Credit Card</option>
+                                    <option value="cash">{t('bill_cash')}</option>
+                                    <option value="transfer">{t('bill_transfer')}</option>
+                                    <option value="card">{t('bill_card')}</option>
                                 </select>
                             </div>
                         )}
                     </div>
                 )}
 
-                <button className="btn btn-primary" onClick={handleCheckout} style={{ width: '100%', marginBottom: '1rem', padding: '1rem', fontSize: '1.1rem' }}>Confirm Payment</button>
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                    <button className="btn btn-secondary" onClick={handlePrintBill} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                        <Printer size={16} /> Print Bill
+                <button 
+                    className="btn btn-primary" 
+                    onClick={handleCheckout} 
+                    style={{ width: '100%', marginBottom: '1rem', padding: '1.25rem', fontSize: '1.1rem', fontWeight: 800, borderRadius: '16px', boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)' }}
+                >
+                    {t('bill_confirm_payment')}
+                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                    <button className="btn btn-secondary" onClick={handlePrintBill} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', borderRadius: '12px', padding: '0.75rem' }}>
+                        <Printer size={16} /> {t('bill_print_bill')}
                     </button>
                 </div>
 
@@ -342,11 +366,13 @@ const BillingTab = ({ patient, language }) => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '8px'
+                            gap: '8px',
+                            marginTop: '0.5rem',
+                            borderRadius: '12px'
                         }}
                     >
                         <FileText size={16} />
-                        ออกใบรับรองแพทย์
+                        {language === 'TH' ? 'ออกใบรับรองแพทย์' : 'Medical Certificate'}
                     </button>
 
                     {patient.treatments?.some(t => t.paymentStatus === 'paid') && (
@@ -356,7 +382,7 @@ const BillingTab = ({ patient, language }) => {
                                 setLastPaymentData({ items: [last], total: last.price, date: last.paidDate, patientName: patient.name });
                                 setShowReceipt(true);
                             }
-                        }} style={{ width: '100%', marginTop: '0.5rem' }}>Reprint Last Receipt</button>
+                        }} style={{ width: '100%', marginTop: '0.5rem', borderRadius: '12px' }}>{language === 'TH' ? 'พิมพ์ใบเสร็จล่าสุดอีกครั้ง' : 'Reprint Last Receipt'}</button>
                     )}
                 </div>
 

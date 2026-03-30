@@ -17,10 +17,16 @@ import {
     Wallet,
     Brain,
     BarChart3,
-    MessageCircle
+    MessageCircle,
+    Shield,
+    Layout,
+    Bell,
+    Target,
+    TrendingUp
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo.png';
 
 
@@ -28,28 +34,46 @@ import logo from '../../assets/logo.png';
 const Sidebar = ({ isOpen, onClose }) => {
     const { t, language } = useLanguage();
     const { inventory, clearAllData } = useData();
+    const { permissions, isAdmin, logout, staff } = useAuth();
 
     // Check for low stock items
     const hasLowStock = inventory && inventory.some(item => item.stock <= item.reorderPoint);
 
+    // Permission check helper
+    const canView = (key) => {
+        if (isAdmin) return true;
+        if (!key) return true;
+        return permissions[key]?.view || false;
+    };
+
     const navItems = [
-        { icon: LayoutDashboard, label: t('nav_dashboard'), path: '/' },
-        { icon: Users, label: t('nav_patients'), path: '/patients' },
-        { icon: Calendar, label: t('nav_schedule'), path: '/schedule' },
-        { icon: Activity, label: t('nav_queue'), path: '/queue' }, 
-        { icon: Package, label: t('nav_inventory'), path: '/inventory' },
-        { icon: Truck, label: t('nav_labs'), path: '/labs' },
+        { icon: LayoutDashboard, label: t('nav_dashboard'), path: '/', excludeRole: 'dentist' },
+        { icon: Users, label: t('nav_patients'), path: '/patients', pKey: 'patients' },
+        { icon: Calendar, label: t('nav_schedule'), path: '/schedule', pKey: 'schedule' },
+        { icon: Activity, label: t('nav_queue'), path: '/queue', role: 'receptionist' }, 
+        { icon: Layout, label: language === 'TH' ? 'สถานะคิวรายห้อง' : 'Floor Management', path: '/floor', pKey: 'schedule' },
+        { icon: TrendingUp, label: language === 'TH' ? 'รายงานประจำวัน' : 'Daily Report', path: '/daily-report', pKey: 'analytics', role: 'receptionist' },
+        { icon: Bell, label: language === 'TH' ? 'ตั้งค่าแจ้งเตือน' : 'Notification Settings', path: '/notification-settings', pKey: 'schedule', role: 'receptionist' },
+        { icon: Package, label: t('nav_inventory'), path: '/inventory', pKey: 'inventory' },
+        { icon: Truck, label: t('nav_labs'), path: '/labs', pKey: 'inventory' },
 
-
-        { icon: ShieldCheck, label: t('nav_sso'), path: '/sso' },
-        { icon: CreditCard, label: t('nav_billing'), path: '/billing' },
-        { icon: BarChart3, label: language === 'TH' ? 'วิเคราะห์พื้นฐาน' : 'Basic Analytics', path: '/analytics' },
-        { icon: Brain, label: language === 'TH' ? 'วิเคราะห์ขั้นสูง' : 'Advanced Analytics', path: '/advanced-analytics' },
-        { icon: MessageCircle, label: 'LINE Portal', path: '/line-portal' },
-        { icon: UserCog, label: language === 'TH' ? 'พนักงาน' : 'Staff', path: '/staff' },
-        { icon: Clock, label: language === 'TH' ? 'ลงเวลา' : 'Attendance', path: '/attendance' },
-        { icon: Wallet, label: language === 'TH' ? 'รายจ่าย' : 'Expenses', path: '/expenses' },
-    ];
+        { icon: ShieldCheck, label: t('nav_sso'), path: '/sso', pKey: 'sso' },
+        { icon: CreditCard, label: t('nav_billing'), path: '/billing', pKey: 'billing' },
+        { icon: BarChart3, label: language === 'TH' ? 'วิเคราะห์พื้นฐาน' : 'Basic Analytics', path: '/analytics', pKey: 'analytics', excludeRole: 'dentist' },
+        { icon: Brain, label: language === 'TH' ? 'วิเคราะห์ขั้นสูง' : 'Advanced Analytics', path: '/advanced-analytics', pKey: 'analytics', excludeRole: 'dentist' },
+        { icon: MessageCircle, label: 'LINE Portal', path: '/line-portal', pKey: 'staff' },
+        { icon: UserCog, label: language === 'TH' ? 'พนักงาน' : 'Staff', path: '/staff', pKey: 'staff' },
+        { icon: Clock, label: language === 'TH' ? 'ลงเวลา' : 'Attendance', path: '/attendance', excludeRole: 'dentist' },
+        { icon: Wallet, label: language === 'TH' ? 'รายจ่าย' : 'Expenses', path: '/expenses', pKey: 'expenses' },
+        ...(isAdmin ? [{ icon: Shield, label: language === 'TH' ? 'ตั้งค่าสิทธิ์' : 'Role Settings', path: '/role-settings' }] : []),
+    ].filter(item => {
+        const hasPermission = canView(item.pKey);
+        const hasRole = !item.role || staff?.role === item.role;
+        const isExcluded = item.excludeRole && staff?.role === item.excludeRole;
+        
+        if (isAdmin) return true;
+        return hasPermission && hasRole && !isExcluded;
+    });
 
     return (
         <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{ background: 'white' }}>
@@ -110,15 +134,30 @@ const Sidebar = ({ isOpen, onClose }) => {
 
             {/* Footer */}
             <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.25rem', background: 'transparent', borderTop: '1px solid var(--neutral-50)', display: 'grid', gap: '0.75rem' }}>
-                <button 
-                    onClick={clearAllData}
-                    className="logout-btn" 
-                    style={{ background: '#fef2f2', color: '#dc2626', fontWeight: 800, border: '1.5px solid #fee2e2' }}
-                >
-                    <X className="nav-icon" size={18} />
-                    <span>{language === 'TH' ? 'ล้างข้อมูลระบบ' : 'Reset System'}</span>
-                </button>
-                <button className="logout-btn" style={{ background: 'var(--neutral-50)', color: 'var(--neutral-500)', fontWeight: 700 }}>
+                {isAdmin && (
+                    <button 
+                        onClick={clearAllData}
+                        className="logout-btn" 
+                        style={{ background: '#fef2f2', color: '#dc2626', fontWeight: 800, border: '1.5px solid #fee2e2', marginBottom: '0.5rem' }}
+                    >
+                        <X className="nav-icon" size={18} />
+                        <span>{language === 'TH' ? 'ล้างข้อมูลระบบ' : 'Reset System'}</span>
+                    </button>
+                )}
+
+                {staff && (
+                    <div style={{ padding: '0.75rem', background: 'var(--neutral-50)', borderRadius: '12px', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-600)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
+                            {staff.name?.charAt(0)}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--neutral-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{staff.name}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--neutral-400)', textTransform: 'capitalize' }}>{staff.role}</div>
+                        </div>
+                    </div>
+                )}
+
+                <button onClick={logout} className="logout-btn" style={{ background: 'var(--neutral-50)', color: 'var(--neutral-500)', fontWeight: 700 }}>
                     <LogOut className="nav-icon" size={18} />
                     <span>{t('nav_signout')}</span>
                 </button>

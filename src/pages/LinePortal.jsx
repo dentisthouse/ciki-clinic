@@ -109,11 +109,29 @@ const LinePortal = () => {
         fetchPatientsFromDB();
     }, []);
 
-    // Sync LINE info if missing (for already logged-in users)
+    // Sync LINE info OR Auto-login if we have lineUserId
     useEffect(() => {
-        const syncLineInfo = async () => {
+        const checkAutoLogin = async () => {
+            // Priority 1: If we have lineUserId and no currentUser, try to find user by LINE ID
+            // Check if user manually logged out in this session
+            const manuallyLoggedOut = sessionStorage.getItem('ciki_portal_manual_logout');
+            
+            if (lineUserId && !currentUser && dbPatients.length > 0 && !manuallyLoggedOut) {
+                console.log('🔍 Checking for auto-login with LINE ID:', lineUserId);
+                const userByLine = dbPatients.find(p => p.line_user_id === lineUserId);
+                
+                if (userByLine) {
+                    console.log('✅ Auto-login success for:', userByLine.name);
+                    localStorage.setItem('ciki_portal_user', JSON.stringify(userByLine));
+                    setCurrentUser(userByLine);
+                    setPage('home');
+                    loadUserAppointments(userByLine);
+                    return;
+                }
+            }
+
+            // Priority 2: Sync LINE info if already logged in but missing LINE UID or picture
             if (currentUser && lineUserId) {
-                // Check if current user data matches LINE data
                 if (currentUser.line_user_id !== lineUserId || currentUser.line_picture_url !== linePictureUrl) {
                     console.log('🔄 Syncing LINE info automatically...');
                     
@@ -129,18 +147,15 @@ const LinePortal = () => {
 
                     if (!error && data) {
                         console.log('✅ LINE info synced successfully');
-                        // Update local state and storage
                         localStorage.setItem('ciki_portal_user', JSON.stringify(data));
                         setCurrentUser(data);
-                    } else if (error) {
-                        console.error('❌ Error syncing LINE info:', error);
                     }
                 }
             }
         };
 
-        syncLineInfo();
-    }, [currentUser, lineUserId, linePictureUrl]);
+        checkAutoLogin();
+    }, [currentUser, lineUserId, linePictureUrl, dbPatients]);
 
     // Fetch patients from database
     const fetchPatientsFromDB = async () => {
@@ -172,7 +187,10 @@ const LinePortal = () => {
         
         const userApts = allAppointments.filter((apt) => {
             // ค้นหาโดยใช้ phone, patientId, หรือ patientName
-            return apt.phone === user.phone || 
+            const aptCleanedPhone = apt.phone ? formatPhoneNumber(apt.phone) : '';
+            const userCleanedPhone = user.phone ? formatPhoneNumber(user.phone) : '';
+            
+            return (aptCleanedPhone && aptCleanedPhone === userCleanedPhone) || 
                    apt.patientId === user.id || 
                    apt.patientName === user.name;
         });
@@ -228,8 +246,20 @@ const LinePortal = () => {
             return;
         }
 
-        // หาผู้ใช้จากฐานข้อมูล
-        let user = dbPatients.find((p) => p.phone === phoneNum);
+        // หาผู้ใช้จากฐานข้อมูล (ใช้การล้างฟอร์แมตเบอร์โทรศัพท์เพื่อความแม่นยำ)
+        console.log('Searching for user with phone:', phoneNum, 'in', dbPatients.length, 'patients');
+        
+        let user = dbPatients.find((p) => {
+            if (!p.phone) return false;
+            const dbCleanedPhone = formatPhoneNumber(p.phone);
+            return dbCleanedPhone === phoneNum;
+        });
+
+        // Try searching for LINE ID as secondary check
+        if (!user && lineUserId) {
+            console.log('Phone match failed, searching by LINE ID:', lineUserId);
+            user = dbPatients.find(p => p.line_user_id === lineUserId);
+        }
         
         if (user) {
             // อัปเดต LINE User ID และรูปโปรไฟล์ ถ้ามี
@@ -260,6 +290,7 @@ const LinePortal = () => {
             }
 
             // บันทึก session และเข้าสู่ระบบ
+            sessionStorage.removeItem('ciki_portal_manual_logout'); // Reset logout flag if any
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
             loadUserAppointments(user);
@@ -323,6 +354,8 @@ const LinePortal = () => {
     };
 
     const handleLogout = () => {
+        // Mark as manual logout to prevent immediate auto-re-login by LINE ID
+        sessionStorage.setItem('ciki_portal_manual_logout', 'true');
         localStorage.removeItem('ciki_portal_user');
         setCurrentUser(null);
         setPage('login');
@@ -340,9 +373,9 @@ const LinePortal = () => {
         const service = getDentalServices(pt).find(s => s.id === bookingService);
         
         const getDoctorForService = (serviceId) => {
-            if (['braces', 'retainer'].includes(serviceId)) return 'หมอจัดฟัน';
-            if (['veneers', 'extraction'].includes(serviceId)) return 'หมอเฉพาะทาง';
-            return 'หมอทั่วไป';
+            if (['braces', 'retainer'].includes(serviceId)) return 'หมออ้อม'; // Default Ortho to Dr. Aom
+            if (['veneers', 'extraction'].includes(serviceId)) return 'หมอบิ๊ก'; // Default Extraction to Dr. Big
+            return 'หมอต้อง'; // Default General to Dr. Tong
         };
 
         const newAppointment = {

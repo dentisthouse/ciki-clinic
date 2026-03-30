@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Plus, Trash2 } from 'lucide-react';
+import { X, Save, Plus, Trash2, ShoppingBag, Package } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
 
 const InvoiceModal = ({ isOpen, onClose, onSave, initialPatientId = '', initialItems = [] }) => {
     const { t, language } = useLanguage();
-    const { patients } = useData();
+    const { patients, inventory, updateInventory } = useData();
+    const [showInventory, setShowInventory] = useState(false);
 
     // Default today
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -67,6 +68,16 @@ const InvoiceModal = ({ isOpen, onClose, onSave, initialPatientId = '', initialI
             paidBySSO: ssoTotal,
             paidByPatient: patientTotal,
             status: 'Pending'
+        });
+
+        // Deduct Inventory Stock
+        items.forEach(item => {
+            if (item.inventoryId) {
+                const stockItem = inventory.find(i => i.id === item.inventoryId);
+                if (stockItem) {
+                    updateInventory(item.inventoryId, { ...stockItem, stock: Math.max(0, stockItem.stock - 1) });
+                }
+            }
         });
 
         onClose();
@@ -162,12 +173,53 @@ const InvoiceModal = ({ isOpen, onClose, onSave, initialPatientId = '', initialI
                         </div>
 
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', alignItems: 'center' }}>
+                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', alignItems: 'center' }}>
                                 <label className="form-label" style={{ fontWeight: 800, fontSize: '1.1rem', margin: 0 }}>{t('bill_modal_items')}</label>
-                                <button type="button" className="btn btn-secondary" style={{ padding: '0.6rem 1.25rem', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 700 }} onClick={addItem}>
-                                    <Plus size={16} style={{ marginRight: '6px' }} /> {t('bill_modal_add_item')}
-                                </button>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <button type="button" className="btn btn-secondary" style={{ padding: '0.6rem 1rem', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700, background: '#f5f3ff', color: '#6d28d9', borderColor: '#ddd6fe' }} onClick={() => setShowInventory(true)}>
+                                        <ShoppingBag size={14} style={{ marginRight: '6px' }} /> {language === 'TH' ? 'เลือกสินค้าจากคลัง' : 'Product Stock'}
+                                    </button>
+                                    <button type="button" className="btn btn-secondary" style={{ padding: '0.6rem 1rem', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700 }} onClick={addItem}>
+                                        <Plus size={14} style={{ marginRight: '6px' }} /> {t('bill_modal_add_item')}
+                                    </button>
+                                </div>
                             </div>
+
+                            {/* Inventory Quick Picker Overlay */}
+                            {showInventory && (
+                                <div style={{ 
+                                    padding: '1.5rem', background: '#f8fafc', borderRadius: '24px', marginBottom: '1.5rem', 
+                                    border: '2px solid #e2e8f0', boxShadow: 'inset 0 2px 4px 0 rgba(0,0,0,0.06)' 
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                        <div style={{ fontWeight: 800, color: 'var(--neutral-900)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Package size={18} /> {language === 'TH' ? 'สินค้าพร้อมขาย' : 'Retail Products'}
+                                        </div>
+                                        <button type="button" onClick={() => setShowInventory(false)} style={{ border: 'none', background: 'transparent', color: 'var(--neutral-400)', cursor: 'pointer' }}>
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                                        {inventory.filter(item => item.stock > 0).map(item => (
+                                            <div key={item.id} 
+                                                onClick={() => {
+                                                    const newItem = { id: Date.now(), description: item.name, amount: item.price || 0, isSSO: false, inventoryId: item.id };
+                                                    setItems(items[0].description === '' ? [newItem] : [...items, newItem]);
+                                                    setShowInventory(false);
+                                                }}
+                                                style={{ 
+                                                    padding: '0.75rem 1rem', background: 'white', borderRadius: '16px', border: '1.5px solid #edf2f7', 
+                                                    cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', justifyContent: 'space-between' 
+                                                }}
+                                                className="hover:border-primary-500 hover:shadow-sm"
+                                            >
+                                                <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{item.name}</span>
+                                                <span style={{ color: 'var(--primary-700)', fontWeight: 800 }}>฿{item.price || 0}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 {items.map((item, index) => (

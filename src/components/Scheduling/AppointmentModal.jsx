@@ -13,7 +13,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
         time: '09:00',
         duration: 30,
         type: 'General Checkup',
-        dentist: 'หมอทั่วไป',
+        dentist: 'หมอต้อง',
         notes: ''
     });
     
@@ -189,7 +189,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
                                 </label>
                                 <select
                                     className="form-select"
-                                    value={formData.dentist || 'หมอทั่วไป'}
+                                    value={formData.dentist || 'หมอต้อง'}
                                     onChange={(e) => setFormData({ ...formData, dentist: e.target.value })}
                                 >
                                     <option value="หมอทั่วไป">หมอทั่วไป (General)</option>
@@ -383,7 +383,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
                                                     appointmentDate: formData.date,
                                                     appointmentTime: formData.time,
                                                     treatment: formData.type,
-                                                    doctor: formData.dentist || 'หมอทั่วไป',
+                                                    doctor: formData.dentist || 'หมอต้อง',
                                                     appointmentId: `APT-${Date.now()}`
                                                 });
                                                 setSending(false);
@@ -428,7 +428,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
                                                     appointmentDate: formData.date,
                                                     appointmentTime: formData.time,
                                                     treatment: formData.type,
-                                                    doctor: formData.dentist || 'หมอทั่วไป'
+                                                    doctor: formData.dentist || 'หมอต้อง'
                                                 });
                                                 setSending(false);
                                                 if (result.success) {

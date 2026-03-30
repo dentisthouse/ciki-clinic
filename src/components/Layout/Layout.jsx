@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import useSessionManager from '../../hooks/useSessionManager';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
 const Layout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
+
+    // Initialize session management (auto logout)
+    useSessionManager();
 
     // Close sidebar on route change (mobile)
     useEffect(() => {

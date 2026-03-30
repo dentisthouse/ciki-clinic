@@ -131,6 +131,8 @@ export const userService = {
         .from('appointments')
         .insert([{
           patient_id: appointmentData.patient_id,
+          patient_name: appointmentData.patient_name || 'ไม่ระบุชื่อ',
+          phone: appointmentData.phone || '',
           treatment: appointmentData.treatment,
           date: appointmentData.date,
           time: appointmentData.time,

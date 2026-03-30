@@ -5,11 +5,8 @@ import HandwritingPad from './HandwritingPad';
 
 // Medical terminology for tooth surfaces
 const SURFACE_NAMES = {
-    M: 'Mesial',
-    D: 'Distal',
-    B: 'Buccal',
-    L: 'Lingual',
-    O: 'Occlusal'
+    EN: { M: 'Mesial', D: 'Distal', B: 'Buccal', L: 'Lingual', O: 'Occlusal' },
+    TH: { M: 'ด้านใกล้กลาง', D: 'ด้านไกลกลาง', B: 'ด้านแก้ม', L: 'ด้านลิ้น', O: 'ด้านบดเคี้ยว' }
 };
 
 const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment }) => {
@@ -93,12 +90,12 @@ const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment }
 
     // Build descriptive selection text with medical terms
     const buildSelectionText = () => {
-        if (selectedTeeth.length === 0) return 'None';
+        if (selectedTeeth.length === 0) return t('trt_none') || 'None';
 
         return selectedTeeth.map(toothId => {
             const surfaces = selectedSurfaces[toothId];
             if (surfaces && surfaces.length > 0) {
-                const surfaceNames = surfaces.map(s => SURFACE_NAMES[s]).join(', ');
+                const surfaceNames = surfaces.map(s => SURFACE_NAMES[language][s] || s).join(', ');
                 return `#${toothId} (${surfaceNames})`;
             }
             return `#${toothId}`;
@@ -108,29 +105,29 @@ const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment }
     return (
         <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Category</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>{t('trt_category')}</label>
                 <select
                     style={inputStyle}
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                 >
-                    <option value="General">General / Preventive</option>
-                    <option value="Restorative">Restorative (Fillings)</option>
-                    <option value="Endodontics">Endodontics (Root Canal)</option>
-                    <option value="Surgery">Surgery (Extractions)</option>
-                    <option value="Prosthetics">Prosthetics (Crowns/Bridges)</option>
+                    <option value="General">{t('trt_category_general')}</option>
+                    <option value="Restorative">{t('trt_category_restorative')}</option>
+                    <option value="Endodontics">{t('trt_category_endo')}</option>
+                    <option value="Surgery">{t('trt_category_surgery')}</option>
+                    <option value="Prosthetics">{t('trt_category_prostho')}</option>
                 </select>
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Procedure</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>{t('trt_procedure')}</label>
                 <select
                     style={inputStyle}
                     value={procedure}
                     onChange={handleProcedureChange}
                     required
                 >
-                    <option value="">-- Select Procedure --</option>
+                    <option value="">{t('trt_select_proc')}</option>
                     {procedures[category]?.map(p => (
                         <option key={p.id} value={p.id}>
                             {language === 'TH' ? p.nameTh : p.name}
@@ -140,7 +137,7 @@ const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment }
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Price (THB)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>{t('trt_price')}</label>
                 <input
                     type="number"
                     style={inputStyle}
@@ -153,7 +150,7 @@ const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment }
 
             <div style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <label style={{ fontWeight: 600 }}>Notes</label>
+                    <label style={{ fontWeight: 600 }}>{t('trt_notes')}</label>
                     <button
                         type="button"
                         onClick={() => setShowHandwriting(!showHandwriting)}
@@ -200,7 +197,7 @@ const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment }
                 transition: 'all 0.3s ease'
             }}>
                 <div style={{ fontWeight: 700, marginBottom: '4px', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Selected Teeth
+                    {t('trt_selected_teeth')}
                 </div>
                 <div style={{ fontWeight: 500, lineHeight: 1.6 }}>
                     {buildSelectionText()}
@@ -213,7 +210,7 @@ const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment }
                 style={{ width: '100%', padding: '0.75rem', fontWeight: 600 }}
                 disabled={!procedure || selectedTeeth.length === 0}
             >
-                Add Treatment
+                {t('trt_btn_add')}
             </button>
         </form>
     );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, FileText, CheckCircle, TrendingUp } from 'lucide-react';
+import { Plus, FileText, CheckCircle, TrendingUp, Calculator, Wallet, Receipt } from 'lucide-react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -16,6 +16,8 @@ const Billing = () => {
     const [prePopulatedItems, setPrePopulatedItems] = useState([]);
 
     const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const [showShiftModal, setShowShiftModal] = useState(false);
+    const [shiftData, setShiftData] = useState({ openingFloat: 1000, expenses: 0, expenseNote: '' });
 
     useEffect(() => {
         const patientId = searchParams.get('patientId');
@@ -47,6 +49,11 @@ const Billing = () => {
     // Calculate Summary Stats
     const totalRevenue = invoices.filter(i => i.status === 'Paid').reduce((acc, i) => acc + (i.amount || 0), 0);
     const pendingAmount = invoices.filter(i => i.status === 'Pending').reduce((acc, i) => acc + (i.amount || 0), 0);
+    
+    // Today's specific totals
+    const todayStr = new Date().toLocaleDateString();
+    const todayInvoices = invoices.filter(i => i.date === todayStr && i.status === 'Paid');
+    const todayCashRevenue = todayInvoices.reduce((acc, i) => acc + (i.amount || 0), 0); // Simplified assuming all cash for now, or filter by paymentMethod if exists
 
     const financialSummary = [
         { label: t('dash_revenue'), value: `฿${totalRevenue.toLocaleString()}`, color: 'var(--primary-600)' },
@@ -80,11 +87,118 @@ const Billing = () => {
                     <h1>{t('bill_title')}</h1>
                     <p>{t('bill_subtitle')}</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-                    <Plus size={18} style={{ marginRight: '8px' }} />
-                    {language === 'EN' ? 'New Invoice' : 'เพิ่มใบแจ้งหนี้'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button className="btn btn-secondary" style={{ background: 'var(--primary-50)', color: 'var(--primary-700)', border: '1.5px solid var(--primary-100)' }} onClick={() => setShowShiftModal(true)}>
+                        <Calculator size={18} style={{ marginRight: '8px' }} />
+                        {language === 'EN' ? 'Daily Reconciliation' : 'สรุปยอดประจำวัน'}
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+                        <Plus size={18} style={{ marginRight: '8px' }} />
+                        {language === 'EN' ? 'New Invoice' : 'เพิ่มใบแจ้งหนี้'}
+                    </button>
+                </div>
             </div>
+
+            {/* Shift Closing Modal */}
+            {showShiftModal && (
+                <div 
+                    className="modal-overlay" 
+                    style={{ 
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+                        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)',
+                        display: 'flex', justifyContent: 'center', alignItems: 'flex-start', // Start from top with padding
+                        padding: '4rem 1rem', overflowY: 'auto', zIndex: 1000 
+                    }}
+                >
+                    <div 
+                        className="modal-content animate-slide-up" 
+                        style={{ 
+                            width: '450px', maxWidth: '100%', 
+                            background: 'white', borderRadius: '24px', padding: '2rem',
+                            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)', border: '1px solid var(--neutral-100)',
+                            margin: 'auto' // Crucial for vertical centering in scrollable area
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--neutral-100)', paddingBottom: '1.25rem' }}>
+                            <div style={{ background: 'var(--primary-600)', color: 'white', width: '48px', height: '48px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px -4px rgba(20, 184, 166, 0.3)' }}>
+                                <Calculator size={24} />
+                            </div>
+                            <div>
+                                <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: 'var(--neutral-900)' }}>{language === 'TH' ? 'สรุปยอดเงินสดประจำวัน' : 'Daily Cash Reconciliation'}</h2>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--neutral-500)', margin: 0, fontWeight: 500 }}>{new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.9rem', color: 'var(--neutral-700)', marginBottom: '0.5rem' }}>
+                                    <Wallet size={16} color="var(--primary-600)" /> {language === 'TH' ? 'เงินเงินทอน / ยอดตั้งต้น' : 'Opening Float'}
+                                </label>
+                                <input 
+                                    type="number" 
+                                    className="form-input" 
+                                    value={shiftData.openingFloat} 
+                                    onChange={(e) => setShiftData({ ...shiftData, openingFloat: parseFloat(e.target.value) || 0 })}
+                                    style={{ padding: '0.9rem', fontSize: '1rem', borderRadius: '12px' }}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.9rem', color: 'var(--success-700)', marginBottom: '0.5rem' }}>
+                                    <TrendingUp size={16} /> {language === 'TH' ? 'รายรับเงินสดวันนี้ (ตามระบบ)' : 'Today\'s Cash Revenue (System)'}
+                                </label>
+                                <div style={{ padding: '1rem', background: '#f0fdf4', color: '#16a34a', borderRadius: '12px', fontWeight: 800, fontSize: '1.4rem', border: '1px solid #bbfc7', textAlign: 'center' }}>
+                                    ฿{todayCashRevenue.toLocaleString()}
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.9rem', color: 'var(--danger-700)', marginBottom: '0.5rem' }}>
+                                    <Receipt size={16} /> {language === 'TH' ? 'รายจ่ายจิปาถะวันนี้' : 'Daily Expenses'}
+                                </label>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <input 
+                                        type="number" 
+                                        className="form-input" 
+                                        placeholder="฿"
+                                        value={shiftData.expenses} 
+                                        onChange={(e) => setShiftData({ ...shiftData, expenses: parseFloat(e.target.value) || 0 })}
+                                        style={{ borderColor: 'var(--danger-200)', flex: 1, padding: '0.9rem', fontSize: '1.1rem', borderRadius: '12px', fontWeight: 700 }}
+                                    />
+                                    <input 
+                                        type="text" 
+                                        className="form-input" 
+                                        placeholder={language === 'TH' ? 'จ่ายค่าอะไร? (เช่น ค่าน้ำ, ค่าของ)' : 'Description (e.g. Water, Supplies)'}
+                                        value={shiftData.expenseNote} 
+                                        onChange={(e) => setShiftData({ ...shiftData, expenseNote: e.target.value })}
+                                        style={{ flex: 2, padding: '0.9rem', fontSize: '1rem', borderRadius: '12px' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ marginTop: '0.5rem', padding: '1.5rem', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: 'white', borderRadius: '20px', textAlign: 'center', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)' }}>
+                                {shiftData.expenseNote && (
+                                    <div style={{ fontSize: '0.75rem', color: '#f87171', marginBottom: '0.5rem', opacity: 0.9 }}>
+                                        — {shiftData.expenseNote} —
+                                    </div>
+                                )}
+                                <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.25rem', fontWeight: 500 }}>{language === 'TH' ? 'เงินสดที่ต้องเหลือในลิ้นชัก' : 'Net Expected Cash'}</div>
+                                <div style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.025em' }}>฿{(shiftData.openingFloat + todayCashRevenue - shiftData.expenses).toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer" style={{ marginTop: '2.5rem', display: 'flex', gap: '1rem' }}>
+                            <button className="btn btn-secondary" style={{ flex: 1, padding: '0.8rem' }} onClick={() => setShowShiftModal(false)}>{t('btn_close')}</button>
+                            <button className="btn btn-primary" style={{ flex: 1.5, padding: '0.8rem', background: 'var(--primary-600)' }} onClick={() => {
+                                alert(language === 'TH' ? 'พิมพ์ใบสรุปยอดสำเร็จ' : 'Summary Printed Successfully');
+                                setShowShiftModal(false);
+                            }}>
+                                {language === 'TH' ? 'พิมพ์ใบสรุปยอด' : 'Print Summary'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Financial Overview */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>

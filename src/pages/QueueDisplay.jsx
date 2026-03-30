@@ -8,6 +8,7 @@ const QueueDisplay = () => {
     const { appointments } = useData();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [queueList, setQueueList] = useState([]);
+    const [lastAnnouncement, setLastAnnouncement] = useState(null);
 
     // Update time every second
     useEffect(() => {
@@ -31,6 +32,57 @@ const QueueDisplay = () => {
 
         setQueueList(todaysApts);
     }, [appointments]);
+
+    // Listen for queue calls from other pages (Schedule page)
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const announcementData = localStorage.getItem('lastQueueCall');
+            if (announcementData) {
+                const data = JSON.parse(announcementData);
+                // Check if this is a new announcement (within last 5 seconds)
+                const announcementTime = new Date(data.timestamp);
+                const now = new Date();
+                const diffSeconds = (now - announcementTime) / 1000;
+                
+                if (diffSeconds < 5 && (!lastAnnouncement || lastAnnouncement.timestamp !== data.timestamp)) {
+                    setLastAnnouncement(data);
+                    // Play voice announcement
+                    playVoiceAnnouncement(data);
+                }
+            }
+        };
+
+        // Check every 2 seconds for new announcements
+        const interval = setInterval(handleStorageChange, 2000);
+        
+        // Also listen for storage events from other tabs
+        window.addEventListener('storage', handleStorageChange);
+        
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, [lastAnnouncement, language]);
+
+    // Play voice announcement
+    const playVoiceAnnouncement = (data) => {
+        if ('speechSynthesis' in window) {
+            const roomText = data.room === 'Room 1' ? 'ห้องตรวจหนึ่ง' : 
+                            data.room === 'Room 2' ? 'ห้องตรวจสอง' : 
+                            data.room === 'Room 3' ? 'ห้องตรวจสาม' : data.room;
+            
+            const text = data.announcement || `ขอเชิญคุณ ${data.patientName} หมายเลขคิว ${data.queueNumber} กรุณาเข้ารับบริการที่ ${roomText}`;
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            
+            window.speechSynthesis.cancel(); // Stop any current speech
+            window.speechSynthesis.speak(utterance);
+        }
+    };
 
     // Current Queue: First one "In Progress"
     const currentQueue = queueList.find(q => q.queueStatus === 'In Progress');
@@ -89,7 +141,14 @@ const QueueDisplay = () => {
                             <div className="queue-number-large">{currentQueue.queueNumber}</div>
                             <div className="patient-name">{currentQueue.patientName}</div>
                             <div className="room-badge">
-                                {language === 'TH' ? 'ห้องตรวจ 1' : 'Room 1'}
+                                {currentQueue.room ? 
+                                    (language === 'TH' ? 
+                                        (currentQueue.room === 'Room 1' ? 'ห้องตรวจ 1' : 
+                                         currentQueue.room === 'Room 2' ? 'ห้องตรวจ 2' : 
+                                         currentQueue.room === 'Room 3' ? 'ห้องตรวจ 3' : currentQueue.room) : 
+                                        currentQueue.room) : 
+                                    (language === 'TH' ? 'ห้องตรวจ' : 'Exam Room')
+                                }
                             </div>
                         </div>
                     ) : (

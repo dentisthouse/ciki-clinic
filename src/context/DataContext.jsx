@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-// import { MOCK_PATIENTS } from '../data/mockPatients';
-import { supabase } from '../supabase';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { supabase, fetchPaginated } from '../supabase';
+import { softDelete, restoreSoftDelete, getActiveRecords, insertWithAudit, updateWithAudit } from '../utils/softDelete';
+import { parseSupabaseError } from '../utils/errorHandler';
+import { useAuth } from './AuthContext';
 
 const DataContext = createContext();
 
@@ -13,6 +15,9 @@ export const useData = () => {
 };
 
 export const DataProvider = ({ children }) => {
+    // Get user from AuthContext to trigger refetch on login
+    const { user } = useAuth();
+
     // --- Initial State Loaders (with localStorage as fallback) ---
     const loadState = (key, fallback) => {
         try {
@@ -38,6 +43,7 @@ export const DataProvider = ({ children }) => {
     const [attendanceRecords, setAttendanceRecords] = useState(() => loadState('ciki_attendance', []));
     const [staff, setStaff] = useState(() => loadState('ciki_staff', []));
     const [expenses, setExpenses] = useState(() => loadState('ciki_expenses', []));
+    const [alerts, setAlerts] = useState(() => loadState('ciki_alerts', []));
     const [isLoading, setIsLoading] = useState(true);
 
     // --- Supabase Data Sync (Initial Fetch) ---
@@ -45,7 +51,6 @@ export const DataProvider = ({ children }) => {
         const fetchAllFromSupabase = async () => {
             try {
                 setIsLoading(true);
-                // Map the results and update state only if successful
                 const tables = [
                     { name: 'patients', stateSet: setPatients },
                     { name: 'appointments', stateSet: setAppointments },
@@ -58,17 +63,22 @@ export const DataProvider = ({ children }) => {
                     { name: 'expenses', stateSet: setExpenses }
                 ];
 
-                for (const table of tables) {
-                    const { data, error } = await supabase.from(table.name).select('*');
-                    if (!error && data) {
-                        // Some tables need conversion from snake_case to camelCase
+                // Fetch all in parallel to avoid blocking
+                const res = await Promise.allSettled(
+                    tables.map(t => supabase.from(t.name).select('*'))
+                );
+
+                res.forEach((result, idx) => {
+                    const table = tables[idx];
+                    if (result.status === 'fulfilled' && !result.value.error && result.value.data) {
+                        const data = result.value.data;
                         if (table.name === 'patients') {
                             table.stateSet(data.map(p => ({ 
                                 ...p, 
                                 toothChart: p.tooth_chart || {}, 
                                 medicalHistory: p.medical_history || [], 
                                 vitals: p.vitals || {},
-                                lastVisit: p.last_visit // Map last_visit too
+                                lastVisit: p.last_visit 
                             })));
                         } else if (table.name === 'lab_orders') {
                             table.stateSet(data.map(l => ({ 
@@ -82,11 +92,14 @@ export const DataProvider = ({ children }) => {
                         } else {
                             table.stateSet(data);
                         }
+                    } else if (result.status === 'rejected' || result.value.error) {
+                        console.warn(`Table ${table.name} failed to load, using cache.`);
                     }
-                }
+                });
             } catch (err) {
                 console.error("Supabase sync failed:", err);
             } finally {
+                // Critical: always ensure loading stops
                 setIsLoading(false);
             }
         };
@@ -113,7 +126,7 @@ export const DataProvider = ({ children }) => {
             supabase.removeChannel(aptSubscription);
             supabase.removeChannel(patientSubscription);
         };
-    }, []);
+    }, [user]); // Refetch when user changes (login/logout)
 
     // --- Persist State to LocalStorage ---
     useEffect(() => localStorage.setItem('ciki_patients', JSON.stringify(patients)), [patients]);
@@ -127,6 +140,7 @@ export const DataProvider = ({ children }) => {
     useEffect(() => localStorage.setItem('ciki_attendance', JSON.stringify(attendanceRecords)), [attendanceRecords]);
     useEffect(() => localStorage.setItem('ciki_staff', JSON.stringify(staff)), [staff]);
     useEffect(() => localStorage.setItem('ciki_expenses', JSON.stringify(expenses)), [expenses]);
+    useEffect(() => localStorage.setItem('ciki_alerts', JSON.stringify(alerts)), [alerts]);
 
     // --- Actions ---
 
@@ -184,30 +198,76 @@ export const DataProvider = ({ children }) => {
         // Optimistic update
         setPatients(patients.map(p => p.id === id ? { ...p, ...updates } : p));
 
-        // Convert camelCase to snake_case for Supabase if needed
-        const supabaseUpdates = { ...updates };
-        if (updates.medicalHistory) { supabaseUpdates.medical_history = updates.medicalHistory; delete supabaseUpdates.medicalHistory; }
-        if (updates.toothChart) { supabaseUpdates.tooth_chart = updates.toothChart; delete supabaseUpdates.toothChart; }
-        if (updates.vitals) { supabaseUpdates.vitals = updates.vitals; delete supabaseUpdates.vitals; }
+        // Prepare object for Supabase (mapping camelCase to snake_case)
+        const supabaseUpdates = {};
+        if (updates.name !== undefined) supabaseUpdates.full_name = updates.name;
+        if (updates.phone !== undefined) supabaseUpdates.phone = updates.phone;
+        if (updates.email !== undefined) supabaseUpdates.email = updates.email;
+        if (updates.address !== undefined) supabaseUpdates.address = updates.address;
+        if (updates.age !== undefined) supabaseUpdates.age = updates.age;
+        if (updates.gender !== undefined) supabaseUpdates.gender = updates.gender;
+        if (updates.idCard !== undefined) supabaseUpdates.id_card = updates.idCard;
+        if (updates.medicalHistory !== undefined) supabaseUpdates.medical_history = updates.medicalHistory;
+        if (updates.treatments !== undefined) supabaseUpdates.treatments = updates.treatments;
+        if (updates.toothChart !== undefined) supabaseUpdates.tooth_chart = updates.toothChart;
+        if (updates.insurance !== undefined) supabaseUpdates.insurance = updates.insurance;
+        if (updates.insuranceType !== undefined) supabaseUpdates.insurance_type = updates.insuranceType;
+        if (updates.lastVisit !== undefined) supabaseUpdates.last_visit = updates.lastVisit;
+        
+        // Only include complex fields if specifically provided
+        if (updates.treatmentPlans !== undefined) supabaseUpdates.treatment_plans = updates.treatmentPlans;
+        if (updates.orthoPlans !== undefined) supabaseUpdates.ortho_plans = updates.orthoPlans;
+        if (updates.photos !== undefined) supabaseUpdates.photos = updates.photos;
+        if (updates.vitals !== undefined) supabaseUpdates.vitals = updates.vitals;
 
         const { error } = await supabase.from('patients').update(supabaseUpdates).eq('id', id);
         if (error) {
             console.error("❌ Error updating patient in Supabase:", error);
-            alert("ไม่สามารถอัปเดตข้อมูลไฟล์คนไข้ได้");
+            alert(`ไม่สามารถอัปเดตข้อมูลไฟล์คนไข้ได้\nรหัส Error: ${error.code}\nรายละเอียด: ${error.message}\n(ตรวจสอบว่าคอลัมน์ใน DB ครบถ้วนหรือไม่)`);
         }
     };
 
-    const deletePatient = async (id) => {
-        if (!window.confirm("ต้องการลบข้อมูลคนไข้รายนี้หรือไม่?")) return;
+    const deletePatient = async (id, userId = null) => {
+        if (!window.confirm("ต้องการลบข้อมูลคนไข้รายนี้หรือไม่? (ข้อมูลจะถูกย้ายไปถังขยะและสามารถกู้คืนได้ภายใน 30 วัน)")) return;
         
-        // Optimistic delete
-        setPatients(patients.filter(p => p.id !== id));
-        
-        const { error } = await supabase.from('patients').delete().eq('id', id);
-        if (error) {
-            console.error("❌ Error deleting patient from Supabase:", error);
-            alert("ไม่สามารถลบข้อมูลคนไข้ได้เนื่องจากข้อมูลนี้อาจถูกอ้างอิงอยู่ในส่วนอื่น (เช่น ตารางนัดหมายหรือบิล)");
-            // Optional: refetch to restore state
+        try {
+            // Use soft delete instead of hard delete
+            await softDelete('patients', id, userId);
+            
+            // Optimistic update - remove from current list
+            setPatients(patients.filter(p => p.id !== id));
+            
+            return true;
+        } catch (error) {
+            console.error("❌ Error soft-deleting patient:", error);
+            const parsedError = parseSupabaseError(error);
+            alert(parsedError?.message || "ไม่สามารถลบข้อมูลคนไข้ได้ กรุณาลองใหม่อีกครั้ง");
+            return false;
+        }
+    };
+
+    // Restore soft-deleted patient
+    const restorePatient = async (id, userId = null) => {
+        try {
+            await restoreSoftDelete('patients', id, userId);
+            
+            // Refetch to restore to list
+            const { data } = await supabase.from('patients').select('*').eq('id', id).single();
+            if (data) {
+                setPatients(prev => [...prev, {
+                    ...data,
+                    toothChart: data.tooth_chart || {},
+                    medicalHistory: data.medical_history || [],
+                    vitals: data.vitals || {},
+                    lastVisit: data.last_visit
+                }]);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error("❌ Error restoring patient:", error);
+            alert("ไม่สามารถกู้คืนข้อมูลคนไข้ได้");
+            return false;
         }
     };
 
@@ -321,7 +381,7 @@ export const DataProvider = ({ children }) => {
         if (error) console.error("Error updating appointment in Supabase:", error);
     };
 
-    const updateQueueStatus = async (id, status) => {
+    const updateQueueStatus = async (id, status, room = null) => {
         let checkInTime = null;
         setAppointments(appointments.map(a => {
             if (a.id === id) {
@@ -329,9 +389,12 @@ export const DataProvider = ({ children }) => {
                 if (status === 'In Progress' && !a.checkInTime) {
                     updates.checkInTime = new Date().toISOString();
                     updates.status = 'In Progress';
+                    // Use provided room or default to Room 1
+                    updates.room = room || a.room || 'Room 1';
                 }
                 if (status === 'Completed') {
                     updates.status = 'Completed';
+                    updates.room = 'Check Out';
                 }
                 checkInTime = updates.checkInTime || a.checkInTime;
                 return { ...a, ...updates };
@@ -339,12 +402,35 @@ export const DataProvider = ({ children }) => {
             return a;
         }));
 
-        const { error } = await supabase.from('appointments').update({ 
+        const updateData = { 
             queue_status: status, 
             status: (status === 'In Progress' || status === 'Completed') ? status : 'Pending',
             check_in_time: checkInTime
-        }).eq('id', id);
+        };
+        
+        // Include room if provided
+        if (room && status === 'In Progress') {
+            updateData.room = room;
+        }
+
+        const { error } = await supabase.from('appointments').update(updateData).eq('id', id);
         if (error) console.error("Error updating queue status in Supabase:", error);
+    };
+
+    const updateLocation = async (id, room) => {
+        setAppointments(appointments.map(a => a.id === id ? { ...a, room } : a));
+        const { error } = await supabase.from('appointments').update({ room }).eq('id', id);
+        if (error) console.error("Error updating room location:", error);
+    };
+
+    const addAlert = (alert) => {
+        const newAlert = { ...alert, id: Date.now(), time: new Date().toLocaleTimeString('th-TH'), status: 'active' };
+        setAlerts([newAlert, ...alerts]);
+        // Play notification sound logic can go here
+    };
+
+    const clearAlert = (id) => {
+        setAlerts(alerts.filter(a => a.id !== id));
     };
 
     const deleteAppointment = async (id) => {
@@ -678,7 +764,7 @@ export const DataProvider = ({ children }) => {
     };
 
     const value = {
-        patients, addPatient, updatePatient, deletePatient, updateToothChart, addTreatment,
+        patients, addPatient, updatePatient, deletePatient, restorePatient, updateToothChart, addTreatment,
         appointments, addAppointment, updateAppointment, deleteAppointment, updateQueueStatus,
         inventory, addInventoryItem, updateInventory, deductStockForTreatment,
         invoices, addInvoice, updateInvoice,
@@ -689,6 +775,7 @@ export const DataProvider = ({ children }) => {
         attendanceRecords, addAttendanceRecord,
         staff, addStaff, updateStaff, deleteStaff,
         expenses, addExpense, updateExpense, deleteExpense,
+        alerts, addAlert, clearAlert, updateLocation,
         getDailySummary, clearAllData, isLoading // Expose for use in UI
     };
 
