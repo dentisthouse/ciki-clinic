@@ -398,7 +398,8 @@ app.post('/api/line/webhook', async (req, res) => {
                 case 'reschedule':
                     dbStatus = 'Requested'; 
                     replyText = `📅 รับทราบครับคุณ ${patientNameVal}! คุณสามารถกดปุ่มด้านล่างเพื่อเลือกวันและเวลาใหม่ที่สะดวกได้ทันทีครับ`;
-                    rescheduleUrl = `${process.env.VITE_LIFF_URL || 'https://liff.line.me/' + process.env.VITE_LIFF_ID}?action=reschedule&apt=${appointmentId}`;
+                    // 🔥 Use '#' Fragment instead of '?' Query for better reliability in SPAs
+                    rescheduleUrl = `${process.env.VITE_LIFF_URL || 'https://liff.line.me/' + process.env.VITE_LIFF_ID}#action=reschedule&apt=${appointmentId}`;
                     break;
             }
 

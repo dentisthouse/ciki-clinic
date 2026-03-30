@@ -51,13 +51,20 @@ const LinePortal = () => {
 
     // Check existing session
     useEffect(() => {
-        // --- CHECK FOR RESCHEDULE PARAMS ---
-        const params = new URLSearchParams(window.location.search);
-        const action = params.get('action');
-        const aptId = params.get('apt');
+        // 🔥 DUAL-CHANNEL DETECTOR: Check both search (?) AND hash (#)
+        const getParams = () => {
+            const search = new URLSearchParams(window.location.search);
+            const hash = new URLSearchParams(window.location.hash.substring(1));
+            return {
+                action: search.get('action') || hash.get('action'),
+                apt: search.get('apt') || hash.get('apt')
+            };
+        };
+
+        const { action, apt: aptId } = getParams();
         
         if (action === 'reschedule' && aptId) {
-            console.log("URGENT: Reschedule detected in URL", aptId);
+            console.log("🎯 DETECTED ON DUAL-CHANNEL:", action, aptId);
             setRescheduleId(aptId);
             setPage('booking'); // Force 'booking' immediately!
             fetchRescheduleData(aptId);
@@ -985,8 +992,9 @@ const LineHeader = ({ title, onBack, showProfile = true }) => (
     // ===== HOME PAGE =====
     if (page === 'home') {
         const urlParams = new URLSearchParams(window.location.search);
-        const debugAction = urlParams.get('action');
-        const debugApt = urlParams.get('apt');
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const debugAction = urlParams.get('action') || hashParams.get('action');
+        const debugApt = urlParams.get('apt') || hashParams.get('apt');
 
         return (
             <div style={{ minHeight: '100vh', background: '#F3F4F6' }}>
