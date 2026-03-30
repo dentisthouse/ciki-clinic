@@ -23,7 +23,7 @@ const otpStore = new Map();
  * @param {string} message - ข้อความ
  * @param {string} sender - ชื่อผู้ส่ง (optional)
  */
-export const sendSMS = async (phone, message, sender = 'CIKI') => {
+export const sendSMS = async (phone, message, sender = 'DentistH') => {
     try {
         const response = await fetch(`${API_BASE_URL}/sms/send`, {
             method: 'POST',
@@ -69,7 +69,7 @@ export const sendOTP = async (phone, lineUserId = null) => {
     results.sms = { 
         success: true, 
         note: 'Demo Mode - SMS not actually sent',
-        message: `CIKI: Your OTP is ${otp}. Valid for 5 minutes. [DEMO]`
+        message: `Dentist's House: Your OTP is ${otp}. Valid for 5 minutes. [DEMO]`
     };
     
     // ถ้ามี LINE User ID ส่งผ่าน LINE ด้วย
@@ -290,7 +290,7 @@ export const sendAppointmentSMS = async (phone, appointmentDetails) => {
 กรุณามาก่อนเวลานัด 15 นาที
 โทรยกเลิก/เลื่อน: 02-XXX-XXXX`;
     
-    return sendSMS(phone, message, 'CIKI');
+    return sendSMS(phone, message, 'DentistH');
 };
 
 /**
@@ -306,7 +306,7 @@ export const sendAppointmentReminder = async (phone, appointmentDetails) => {
 รบกวนมาก่อนเวลานัด 15 นาที
 หากไม่สะดวกโทร 02-XXX-XXXX`;
     
-    return sendSMS(phone, message, 'CIKI');
+    return sendSMS(phone, message, 'DentistH');
 };
 
 // ==========================================

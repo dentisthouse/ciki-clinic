@@ -42,88 +42,84 @@ const LinePortal = () => {
     const [userAppointments, setUserAppointments] = useState([]);
     const [showProfileForm, setShowProfileForm] = useState(false);
     const [profileData, setProfileData] = useState({
-        name: '',
-        phone: '',
-        email: ''
+        name: '', phone: '', email: ''
     });
+
+    // Reschedule mode
+    const [rescheduleId, setRescheduleId] = useState(null);
+    const [rescheduleData, setRescheduleData] = useState(null);
 
     // Check existing session
     useEffect(() => {
+        // --- CHECK FOR RESCHEDULE PARAMS ---
+        const params = new URLSearchParams(window.location.search);
+        const action = params.get('action');
+        const aptId = params.get('apt');
+        
+        if (action === 'reschedule' && aptId) {
+            setRescheduleId(aptId);
+            fetchRescheduleData(aptId);
+        }
+
         const storedUser = localStorage.getItem('ciki_portal_user');
         if (storedUser) {
             const user = JSON.parse(storedUser);
-            console.log('Found stored user:', user);
-            
-            // ใช้ข้อมูลใน cache ก่อนเลย เพื่อไม่ให้หายไป
             setCurrentUser(user);
-            setPage('home');
-            loadUserAppointments(user);
+            // ถ้าไม่ใช้โหมดเลื่อนนัด ให้ไปหน้า home ปกติ
+            if (action !== 'reschedule') {
+                setPage('home');
+                loadUserAppointments(user);
+            }
             
-            // ค่อย sync ข้อมูลล่าสุดแบบ background
             const syncUserData = async () => {
                 try {
                     let latestUser;
-                    
-                    // ลองค้นจาก LINE ID ก่อน
                     if (user.line_id) {
                         const { data: userByLine } = await userService.findUserByLineId(user.line_id);
-                        if (userByLine) {
-                            latestUser = userByLine;
-                        }
+                        if (userByLine) latestUser = userByLine;
                     }
-                    
-                    // ถ้าไม่เจอ ลองค้นจากเบอร์โทรศัพท์
                     if (!latestUser && user.phone) {
                         const { data: userByPhone } = await userService.findUserByPhone(user.phone);
-                        if (userByPhone) {
-                            latestUser = userByPhone;
-                        }
+                        if (userByPhone) latestUser = userByPhone;
                     }
-                    
                     if (latestUser) {
-                        console.log('Synced latest user data:', latestUser);
-                        // อัปเดตข้อมูลใน state และ cache
                         setCurrentUser(latestUser);
                         localStorage.setItem('ciki_portal_user', JSON.stringify(latestUser));
                         await loadUserAppointments(latestUser);
-                    } else {
-                        // ถ้าไม่เจอข้อมูลในฐานข้อมูล คงข้อมูลใน cache และบันทึกลง Supabase
-                        console.log('User not found in database, creating from cache');
-                        try {
-                            const { data: createdUser, error: createError } = await userService.createUser(user);
-                            if (createError) {
-                                console.error('Error creating user from cache:', createError);
-                                // ถ้าสร้างไม่ได้ คงไว้ใน cache
-                                console.log('Keeping cached data due to creation error');
-                            } else {
-                                console.log('Created user from cache:', createdUser);
-                                // อัปเดตเป็นข้อมูลใหม่จาก Supabase
-                                setCurrentUser(createdUser);
-                                localStorage.setItem('ciki_portal_user', JSON.stringify(createdUser));
-                                await loadUserAppointments(createdUser);
-                            }
-                        } catch (err) {
-                            console.error('Error creating user from cache:', err);
-                            console.log('Keeping cached data due to error');
-                        }
                     }
-                } catch (error) {
-                    console.error('Error syncing user data:', error);
-                    // ถ้าเกิดข้อผิดพลาด คงไว้ใน cache
-                    console.log('Keeping cached data due to sync error');
-                }
+                } catch (error) {}
             };
-            
-            // รอ 2 วินาทีแล้วค่อย sync
             setTimeout(syncUserData, 2000);
         } else {
-            // ไม่มีข้อมูลใน cache แสดงหน้า login
             setPage('login');
         }
-        
-        // Initialize LIFF
         initLiff();
     }, []);
+
+    const fetchRescheduleData = async (id) => {
+        try {
+            const { data, error } = await userService.supabase
+                .from('appointments')
+                .select('*')
+                .eq('id', id)
+                .single();
+            
+            if (data) {
+                console.log('Found reschedule data:', data);
+                setRescheduleData(data);
+                // Pre-fill fields
+                const serviceMatch = DENTAL_SERVICES.find(s => s.name === data.treatment);
+                if (serviceMatch) {
+                    setBookingService(serviceMatch.id);
+                }
+                setBookingBranch(data.branch);
+                setBookingDate(data.date);
+                setPage('booking'); // Auto-navigate to booking page if rescheduling
+            }
+        } catch (e) {
+            console.error("Reschedule fetch error:", e);
+        }
+    };
 
     // LIFF Integration
     const initLiff = async () => {
@@ -388,42 +384,55 @@ const LinePortal = () => {
         try {
             const service = DENTAL_SERVICES.find(s => s.id === bookingService);
             
-            console.log('Creating appointment:', {
-                patient_id: currentUser.id,
-                treatment: service.name,
-                date: bookingDate,
-                time: bookingTime,
-                branch: bookingBranch
-            });
-            
-            // บันทึกนัดหมายลง Supabase
-            const { data: appointment, error } = await userService.createAppointment({
-                patient_id: currentUser.id,
-                patient_name: currentUser.name,
-                phone: currentUser.phone,
-                treatment: service.name,
-                date: bookingDate,
-                time: bookingTime,
-                branch: bookingBranch
-            });
-            
-            if (error) {
-                console.error('Error creating appointment:', error);
-                alert('เกิดข้อผิดพลาดในการจองนัดหมาย');
-                return;
+            if (rescheduleId) {
+                // UPDATE MODE
+                console.log('Updating existing appointment:', rescheduleId);
+                const oldDate = rescheduleData?.date || 'ไม่ทราบวันเดิม';
+                const { error } = await userService.supabase
+                    .from('appointments')
+                    .update({
+                        date: bookingDate,
+                        time: bookingTime,
+                        branch: bookingBranch,
+                        status: 'Confirmed', // Reset status to Confirmed
+                        notes: `📅 เลื่อนนัดมาจากวันที่ ${oldDate}` // บันทึกให้เห็นหน้า Schedule
+                    })
+                    .eq('id', rescheduleId);
+
+                if (error) {
+                    console.error('Update error:', error);
+                    alert('ไม่สามารถเลื่อนนัดหมายได้');
+                    return;
+                }
+                alert(`เลื่อนนัดหมายสำเร็จ! เป็นวันที่ ${bookingDate} เวลา ${bookingTime}`);
+                setRescheduleId(null);
+                setRescheduleData(null);
+            } else {
+                // INSERT MODE
+                const { data: appointment, error } = await userService.createAppointment({
+                    patient_id: currentUser.id,
+                    patient_name: currentUser.name,
+                    phone: currentUser.phone,
+                    treatment: service.name,
+                    date: bookingDate,
+                    time: bookingTime,
+                    branch: bookingBranch
+                });
+
+                if (error) {
+                    console.error('Error creating:', error);
+                    alert('เกิดข้อผิดพลาดในการจอง');
+                    return;
+                }
+                alert(`จองนัดหมายสำเร็จ! ${service?.name} วันที่ ${bookingDate} เวลา ${bookingTime}`);
             }
             
-            console.log('Appointment created:', appointment);
-            
-            // โหลดข้อมูลนัดหมายใหม่
             await loadUserAppointments(currentUser);
-            
-            alert(`จองนัดหมายสำเร็จ! ${service?.name} วันที่ ${bookingDate} เวลา ${bookingTime}`);
-            setPage('booking-confirm');
+            setPage('home');
             
         } catch (error) {
             console.error('Error in booking:', error);
-            alert('เกิดข้อผิดพลาดในการจองนัดหมาย');
+            alert('เกิดข้อผิดพลาด');
         }
     };
 
@@ -1332,6 +1341,7 @@ const LineHeader = ({ title, onBack, showProfile = true }) => (
                         <select 
                             value={bookingService}
                             onChange={e => setBookingService(e.target.value)}
+                            disabled={rescheduleId !== null}
                             style={{
                                 width: '100%',
                                 height: '3.5rem',
@@ -1339,7 +1349,8 @@ const LineHeader = ({ title, onBack, showProfile = true }) => (
                                 borderRadius: '0.75rem',
                                 border: '1px solid #E5E7EB',
                                 fontSize: '1rem',
-                                background: 'white'
+                                background: rescheduleId ? '#F3F4F6' : 'white',
+                                cursor: rescheduleId ? 'not-allowed' : 'default'
                             }}
                         >
                             <option value="">เลือกบริการ</option>
@@ -1359,6 +1370,7 @@ const LineHeader = ({ title, onBack, showProfile = true }) => (
                         <select 
                             value={bookingBranch}
                             onChange={e => setBookingBranch(e.target.value)}
+                            disabled={rescheduleId !== null}
                             style={{
                                 width: '100%',
                                 height: '3.5rem',
@@ -1366,7 +1378,8 @@ const LineHeader = ({ title, onBack, showProfile = true }) => (
                                 borderRadius: '0.75rem',
                                 border: '1px solid #E5E7EB',
                                 fontSize: '1rem',
-                                background: 'white'
+                                background: rescheduleId ? '#F3F4F6' : 'white',
+                                cursor: rescheduleId ? 'not-allowed' : 'default'
                             }}
                         >
                             {BRANCHES.map(branch => (
@@ -1440,7 +1453,7 @@ const LineHeader = ({ title, onBack, showProfile = true }) => (
                             cursor: !bookingService || !bookingTime ? 'not-allowed' : 'pointer'
                         }}
                     >
-                        ยืนยันการจอง
+                        {rescheduleId ? 'ยืนยันการเลื่อนนัด' : 'ยืนยันการจอง'}
                     </button>
                 </div>
             </div>

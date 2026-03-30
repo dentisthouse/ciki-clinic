@@ -30,6 +30,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
         e.preventDefault();
         onSave({
             ...formData,
+            treatment: formData.type, // Map the 'type' selection to 'treatment' for the DB
             patientName: patients.find(p => p.id === formData.patientId)?.name || 'Unknown'
         });
         onClose();

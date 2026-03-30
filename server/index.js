@@ -1,11 +1,28 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
+// Load .env from root directory as well
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Initialize Supabase - Use Admin/Service Role Key for background updates to bypass RLS
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.warn('⚠️ Supabase credentials missing in .env - Database features will be disabled');
+}
+
+const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+
+// สำหรับป้องกันการกดซ้ำซ้อนในเสี้ยววินาที (Cooldown 2 วินาที)
+const processedRequests = new Map();
 
 const PORT = process.env.PORT || 3001;
 const LINE_API_URL = 'https://api.line.me/v2/bot/message/push';
@@ -16,7 +33,7 @@ const USER_ID = process.env.VITE_LINE_USER_ID;
 app.get('/', (req, res) => {
     res.send(`
         <div style="font-family: sans-serif; padding: 20px; color: #1E3B34; background: #E6F4F1; border-radius: 12px; border: 2px solid #8CC1BA;">
-            <h1 style="color: #06C755;">🦷 CIKI Dental Clinic Backend Proxy</h1>
+            <h1 style="color: #06C755;">🦷 Dentist's House Dental Clinic Backend Proxy</h1>
             <p>สถานะเซิร์ฟเวอร์: <strong>ออนไลน์ (Running)</strong></p>
             <hr style="border: 0; border-top: 1px solid #8CC1BA; margin: 20px 0;">
             <p><strong>Endpoints ที่พร้อมใช้งาน:</strong></p>
@@ -46,7 +63,7 @@ app.post('/api/line/push', async (req, res) => {
     }
 
     const lineMessages = flex 
-        ? [{ type: 'flex', altText: 'แจ้งเตือนจาก CIKI Clinic', contents: flex }]
+        ? [{ type: 'flex', altText: 'แจ้งเตือนจาก Dentist\'s House Clinic', contents: flex }]
         : [{ type: 'text', text: message }];
 
     try {
@@ -271,7 +288,7 @@ app.post('/api/line/appointment', async (req, res) => {
                     action: {
                         type: "postback",
                         label: "✅ ยืนยันนัด",
-                        data: `action=confirm&apt=${appointmentId}&patient=${patientName}`
+                        data: `action=confirm&apt=${appointmentId}&patient=${encodeURIComponent(patientName)}`
                     },
                     color: "#06C755"
                 },
@@ -281,7 +298,7 @@ app.post('/api/line/appointment', async (req, res) => {
                     action: {
                         type: "postback",
                         label: "📅 ขอเลื่อน",
-                        data: `action=reschedule&apt=${appointmentId}&patient=${patientName}`
+                        data: `action=reschedule&apt=${appointmentId}&patient=${encodeURIComponent(patientName)}`
                     }
                 },
                 {
@@ -290,7 +307,7 @@ app.post('/api/line/appointment', async (req, res) => {
                     action: {
                         type: "postback",
                         label: "❌ ยกเลิก",
-                        data: `action=cancel&apt=${appointmentId}&patient=${patientName}`
+                        data: `action=cancel&apt=${appointmentId}&patient=${encodeURIComponent(patientName)}`
                     },
                     color: "#ff4444"
                 }
@@ -327,117 +344,118 @@ app.post('/api/line/appointment', async (req, res) => {
 // LINE Webhook Handler - รับการยืนยัน/เลื่อน/ยกเลิกนัด
 app.post('/api/line/webhook', async (req, res) => {
     const events = req.body.events;
+    if (!events || events.length === 0) return res.sendStatus(200);
 
     for (const event of events) {
-        // จัดการ Postback (กดปุ่ม)
         if (event.type === 'postback') {
             const data = event.postback.data;
             const params = new URLSearchParams(data);
             const action = params.get('action');
             const appointmentId = params.get('apt');
-            const patientName = params.get('patient');
+            const patientName = params.get('patient') || 'คุณคนไข้';
 
-            console.log('--- LINE POSTBACK RECEIVED ---');
-            console.log('Action:', action, 'Appointment:', appointmentId, 'Patient:', patientName);
+            // 🛑 1. COOLDOWN PROTECTION
+            if (processedRequests.has(appointmentId)) {
+                return res.json({ status: 'ok' });
+            }
+            processedRequests.set(appointmentId, true);
+            setTimeout(() => processedRequests.delete(appointmentId), 2000);
 
-            let replyText = "รับทราบคำขอของคุณแล้วครับ";
-            let replyFlex = null;
+            let replyText = "";
+            let dbStatus = null;
+            let patientNameVal = patientName;
+            let rescheduleUrl = null;
 
+            // 🛑 2. DATABASE STATUS CHECK
+            try {
+                const { data: currentApt } = await supabase.from('appointments').select('status, patient_name').eq('id', appointmentId).single();
+                if (currentApt) {
+                    patientNameVal = currentApt.patient_name || patientName;
+                    const isAlreadyHandled = (action === 'confirm' && currentApt.status === 'Confirmed') ||
+                                           (action === 'cancel' && currentApt.status === 'Cancelled') ||
+                                           (action === 'reschedule' && currentApt.status === 'Requested');
+
+                    if (isAlreadyHandled) {
+                        await axios.post('https://api.line.me/v2/bot/message/reply', {
+                            replyToken: event.replyToken,
+                            messages: [{ type: "text", text: `⚠️ ขอบคุณครับ รายการนี้ได้ ${currentApt.status === 'Confirmed' ? 'ยืนยัน' : currentApt.status === 'Cancelled' ? 'ยกเลิก' : 'ทำรายการเลื่อนนัด'} ไปเรียบร้อยแล้วครับ` }]
+                        }, { headers: { 'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}` } });
+                        return res.json({ status: 'ok' });
+                    }
+                }
+            } catch (err) {}
+
+            // 🛑 3. PROCESS THE ACTION
             switch (action) {
                 case 'confirm':
-                    replyText = `✅ ขอบคุณคุณ ${patientName} ที่ยืนยันนัดหมาย! เจ้าหน้าที่ได้รับข้อมูลเรียบร้อยแล้วครับ`;
-                    break;
-                case 'reschedule':
-                    replyText = `📅 รับทราบครับคุณ ${patientName}! เจ้าหน้าที่จะรีบติดต่อกลับเพื่อเลื่อนนัดหมายให้นะครับ`;
+                    dbStatus = 'Confirmed';
+                    replyText = `✅ ขอบคุณคุณ ${patientNameVal} ที่ยืนยันนัดหมาย! ระบบได้บันทึกสถานะเรียบร้อยแล้วครับ`;
                     break;
                 case 'cancel':
-                    replyText = `❌ รับทราบการขอยกเลิกนัดหมายครับคุณ ${patientName} หากต้องการจองใหม่ติดต่อได้เสมอครับ`;
+                    dbStatus = 'Cancelled';
+                    replyText = `❌ รับทราบครับคุณ ${patientNameVal} ทางคลินิกได้ยกเลิกนัดหมายให้เรียบร้อยแล้วครับ หวังว่าจะได้ให้บริการคุณในโอกาสหน้านะครับ`;
+                    break;
+                case 'reschedule':
+                    dbStatus = 'Requested'; 
+                    replyText = `📅 รับทราบครับคุณ ${patientNameVal}! คุณสามารถกดปุ่มด้านล่างเพื่อเลือกวันและเวลาใหม่ที่สะดวกได้ทันทีครับ`;
+                    rescheduleUrl = `${process.env.VITE_LIFF_URL || 'https://liff.line.me/' + process.env.VITE_LIFF_ID}?action=reschedule&apt=${appointmentId}`;
                     break;
             }
 
-            // ส่งตอบกลับผู้ใช้
-            try {
-                await axios.post(
-                    'https://api.line.me/v2/bot/message/reply',
-                    {
-                        replyToken: event.replyToken,
-                        messages: [{
-                            type: "flex",
-                            altText: replyText,
-                            contents: {
-                                type: "bubble",
-                                body: {
-                                    type: "box",
-                                    layout: "vertical",
-                                    contents: [
-                                        {
-                                            type: "text",
-                                            text: action === 'confirm' ? '✅ ยืนยันนัดสำเร็จ' : 
-                                                  action === 'reschedule' ? '📅 ขอเลื่อนนัด' : '❌ ยกเลิกนัด',
-                                            weight: "bold",
-                                            size: "lg",
-                                            color: action === 'confirm' ? '#06C755' : 
-                                                   action === 'reschedule' ? '#f59e0b' : '#ef4444'
-                                        },
-                                        {
-                                            type: "text",
-                                            text: replyText,
-                                            size: "sm",
-                                            margin: "md",
-                                            wrap: true
-                                        }
-                                    ]
-                                }
-                            }
-                        }]
-                    },
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}`
-                        }
-                    }
-                );
-                console.log('Reply sent to user:', replyText);
-            } catch (err) {
-                console.error('Failed to send webhook reply:', err.message);
+            // UPDATE DB
+            if (supabase && appointmentId && dbStatus) {
+                await supabase.from('appointments').update({ status: dbStatus }).eq('id', appointmentId);
             }
 
-            // TODO: อัพเดทสถานะนัดหมายในฐานข้อมูล (ผ่าน Supabase หรือ API)
-            // ส่งข้อมูลไปยัง frontend ผ่าน WebSocket หรือ Real-time subscription
+            // 🛑 4. FINAL REPLY (SINGLE FLEX MSG)
+            try {
+                const bubble = {
+                    type: "bubble",
+                    body: {
+                        type: "box",
+                        layout: "vertical",
+                        contents: [
+                            {
+                                type: "text", 
+                                text: action === 'confirm' ? '✅ ยืนยันนัดสำเร็จ' : action === 'reschedule' ? '📅 ขอเลื่อนนัด' : '❌ ยกเลิกนัด',
+                                weight: "bold", size: "lg", color: action === 'confirm' ? '#06C755' : action === 'reschedule' ? '#f59e0b' : '#ef4444'
+                            },
+                            { type: "text", text: replyText, size: "sm", margin: "md", wrap: true, color: "#666666" }
+                        ]
+                    }
+                };
+
+                if (action === 'reschedule' && rescheduleUrl) {
+                    bubble.footer = {
+                        type: "box",
+                        layout: "vertical",
+                        contents: [
+                            {
+                                type: "button", style: "primary", color: "#f59e0b",
+                                action: { type: "uri", label: "🗓️ เลือกวันนัดใหม่", uri: rescheduleUrl }
+                            }
+                        ]
+                    };
+                }
+
+                await axios.post('https://api.line.me/v2/bot/message/reply', {
+                    replyToken: event.replyToken,
+                    messages: [{ type: "flex", altText: "Dentist's House Update", contents: bubble }]
+                }, { headers: { 'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}` } });
+            } catch (err) { console.error('Reply failed:', err.message); }
         }
 
         // จัดการข้อความทั่วไป
         if (event.type === 'message' && event.message.type === 'text') {
             const userMessage = event.message.text;
-            console.log('Message from user:', userMessage);
-
-            // ตอบกลับอัตโนมัติ
             if (userMessage.includes('นัด') || userMessage.includes('appointment')) {
-                try {
-                    await axios.post(
-                        'https://api.line.me/v2/bot/message/reply',
-                        {
-                            replyToken: event.replyToken,
-                            messages: [{
-                                type: 'text',
-                                text: 'คุณสามารถดูนัดหมายและจองคิวใหม่ได้ที่ https://ciki-clinic.com/appointments'
-                            }]
-                        },
-                        {
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}`
-                            }
-                        }
-                    );
-                } catch (err) {
-                    console.error('Failed to send auto-reply:', err.message);
-                }
+                await axios.post('https://api.line.me/v2/bot/message/reply', {
+                    replyToken: event.replyToken,
+                    messages: [{ type: 'text', text: 'คุณสามารถดูนัดหมายและจองคิวใหม่ได้ที่เมนู "จองนัดหมาย" ได้เลยครับ' }]
+                }, { headers: { 'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}` } });
             }
         }
     }
-
     res.sendStatus(200);
 });
 

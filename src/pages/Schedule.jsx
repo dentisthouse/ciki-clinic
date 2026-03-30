@@ -14,7 +14,7 @@ const Schedule = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, staff, permissions } = useAuth();
-    const { patients, appointments, addAppointment, updateAppointment, updateQueueStatus } = useData();
+    const { patients, appointments, addAppointment, updateAppointment, updateQueueStatus, syncData } = useData();
     
     // Mapping for hardcoded doctors to filter match names
     const DOCTOR_MAP = {
@@ -56,7 +56,9 @@ const Schedule = () => {
             const result = await response.json();
 
             if (result.success) {
-                alert(language === 'TH' ? `ส่ง Flex Message ยืนยันนัดไปยัง LINE คุณ ${apt.patientName || apt.patient} เรียบร้อยแล้ว!` : `Sent Flex Message confirmation to ${apt.patientName || apt.patient} on LINE!`);
+                // อัพเดทสถานะว่าส่งข้อยืนยันแล้ว
+                updateAppointment(apt.id, { status: 'Sent' });
+                // alert(language === 'TH' ? `ส่ง Flex Message ยืนยันนัดไปยัง LINE คุณ ${apt.patientName || apt.patient} เรียบร้อยแล้ว!` : `Sent Flex Message confirmation to ${apt.patientName || apt.patient} on LINE!`);
             } else {
                 throw new Error(result.error || 'Failed to send');
             }
@@ -81,12 +83,19 @@ const Schedule = () => {
         }
     }, [staff, user]);
 
+    // --- AUTO-SYNC POLLING ---
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            syncData();
+        }, 7000); 
+        return () => clearInterval(intervalId);
+    }, [syncData]);
+
     // Check for query params (e.g., from Dashboard "New Appointment")
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         if (params.get('action') === 'new') {
             setIsModalOpen(true);
-            // Clean up URL
             navigate('/schedule', { replace: true });
         }
     }, [location, navigate]);
@@ -449,15 +458,45 @@ const Schedule = () => {
                                                 </div>
                                             </td>
                                             <td style={{ fontWeight: 600 }}>{apt.patientName || apt.patient}</td>
-                                            <td>{apt.procedure}</td>
+                                            <td>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                    <span style={{ fontWeight: 500 }}>{apt.treatment || apt.procedure}</span>
+                                                    {apt.notes && apt.notes.includes('เลื่อนนัดมาจาก') && (
+                                                        <div style={{ 
+                                                            display: 'inline-flex', 
+                                                            alignItems: 'center', 
+                                                            gap: '0.25rem', 
+                                                            padding: '0.15rem 0.5rem', 
+                                                            background: '#FFF7ED', 
+                                                            color: '#C2410C', 
+                                                            border: '1px solid #FFEDD5',
+                                                            borderRadius: '4px',
+                                                            fontSize: '0.65rem',
+                                                            fontWeight: 700,
+                                                            width: 'fit-content'
+                                                        }}>
+                                                            <span>🔄</span>
+                                                            {apt.notes}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td>
                                                 <span style={{
                                                     background:
                                                         apt.status === 'Completed' ? '#dcfce7' :
+                                                        apt.status === 'Confirmed' ? '#06C75520' :
+                                                        apt.status === 'Cancelled' ? '#fee2e2' :
+                                                        apt.status === 'Requested' ? '#fff7ed' :
+                                                        apt.status === 'Sent' ? '#f0f9ff' :
                                                             apt.status === 'In Progress' ? '#dbeafe' :
                                                                 '#f3f4f6',
                                                     color:
                                                         apt.status === 'Completed' ? '#166534' :
+                                                        apt.status === 'Confirmed' ? '#06C755' :
+                                                        apt.status === 'Cancelled' ? '#991b1b' :
+                                                        apt.status === 'Requested' ? '#c2410c' :
+                                                        apt.status === 'Sent' ? '#0369a1' :
                                                             apt.status === 'In Progress' ? '#1e40af' :
                                                                 '#4b5563',
                                                     padding: '0.25rem 0.75rem',
@@ -466,7 +505,11 @@ const Schedule = () => {
                                                     fontWeight: 600,
                                                     display: 'inline-block'
                                                 }}>
-                                                    {apt.status}
+                                                    {apt.status === 'Sent' ? (language === 'TH' ? 'ส่งแล้ว' : 'Sent') :
+                                                     apt.status === 'Confirmed' ? (language === 'TH' ? 'ยืนยันแล้ว' : 'Confirmed') :
+                                                     apt.status === 'Requested' ? (language === 'TH' ? 'ขอเลื่อน' : 'Rescheduling') :
+                                                     apt.status === 'Cancelled' ? (language === 'TH' ? 'ยกเลิกแล้ว' : 'Cancelled') :
+                                                     apt.status}
                                                 </span>
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
@@ -478,16 +521,31 @@ const Schedule = () => {
                                                                 style={{
                                                                     padding: '0.4rem 0.8rem',
                                                                     fontSize: '0.75rem',
-                                                                    backgroundColor: '#E0F2FE',
-                                                                    color: '#0369A1',
-                                                                    border: 'none',
+                                                                    backgroundColor: apt.status === 'Sent' ? '#F0F9FF' : 
+                                                                                      apt.status === 'Confirmed' ? '#dcfce7' : '#E0F2FE',
+                                                                    color: apt.status === 'Sent' ? '#0369A1' : 
+                                                                           apt.status === 'Confirmed' ? '#166534' : '#0369A1',
+                                                                    border: apt.status === 'Sent' ? '1px dashed #0369a1' : 'none',
                                                                     borderRadius: 'var(--radius-md)',
-                                                                    fontWeight: 600
+                                                                    fontWeight: 600,
+                                                                    cursor: (apt.status === 'Sent' || apt.status === 'Confirmed') ? 'default' : 'pointer',
+                                                                    opacity: (apt.status === 'Sent' || apt.status === 'Confirmed') ? 0.8 : 1
                                                                 }}
-                                                                onClick={() => handleSendLineConfirmation(apt)}
+                                                                onClick={() => {
+                                                                    if (apt.status !== 'Sent' && apt.status !== 'Confirmed') {
+                                                                        handleSendLineConfirmation(apt);
+                                                                    }
+                                                                }}
                                                             >
-                                                                <span style={{ marginRight: '4px' }}>💬</span>
-                                                                {language === 'TH' ? 'ส่งยืนยัน' : 'Send Conf.'}
+                                                                <span style={{ marginRight: '4px' }}>
+                                                                    {apt.status === 'Sent' ? '🕒' : 
+                                                                     apt.status === 'Confirmed' ? '✅' : 
+                                                                     apt.status === 'Requested' ? '📅' : '💬'}
+                                                                </span>
+                                                                {apt.status === 'Sent' ? (language === 'TH' ? 'ส่งแล้ว (รอ)' : 'Sent (Wait)') :
+                                                                 apt.status === 'Confirmed' ? (language === 'TH' ? 'ยืนยันแล้ว' : 'Confirmed') :
+                                                                 apt.status === 'Requested' ? (language === 'TH' ? 'ขอเลื่อน' : 'Rescheduling') :
+                                                                 (language === 'TH' ? 'ส่งยืนยัน' : 'Send Conf.')}
                                                             </button>
 
                                                             {(!apt.queueStatus || apt.queueStatus === 'Waiting' || apt.queueStatus === 'Skipped') && (

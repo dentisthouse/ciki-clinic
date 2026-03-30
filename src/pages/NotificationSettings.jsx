@@ -140,16 +140,16 @@ const NotificationSettings = () => {
         // ข้อความแบบกำหนดเอง
         customMessages: {
             confirmation: {
-                TH: 'แจ้งเตือนนัดหมาย CIKI Clinic\nคุณ {patientName}\nวันที่ {date} เวลา {time}\nรักษา: {treatment}\nทันตแพทย์: {doctor}\nกรุณายืนยันการนัดหมาย',
-                EN: 'Appointment Reminder - CIKI Clinic\nDear {patientName}\nDate: {date} Time: {time}\nTreatment: {treatment}\nDentist: {doctor}\nPlease confirm your appointment'
+                TH: 'แจ้งเตือนนัดหมาย Dentist\'s House\nคุณ {patientName}\nวันที่ {date} เวลา {time}\nรักษา: {treatment}\nทันตแพทย์: {doctor}\nกรุณายืนยันการนัดหมาย',
+                EN: 'Appointment Reminder - Dentist\'s House\nDear {patientName}\nDate: {date} Time: {time}\nTreatment: {treatment}\nDentist: {doctor}\nPlease confirm your appointment'
             },
             reminder: {
-                TH: 'แจ้งเตือนนัดพรุ่งนี้ - CIKI Clinic\nคุณ {patientName}\nวันพรุ่งนี้ ({date}) เวลา {time}\nรักษา: {treatment}\nรบกวนมาก่อนเวลานัด 15 นาที',
-                EN: 'Tomorrow\'s Appointment - CIKI Clinic\nDear {patientName}\nTomorrow ({date}) at {time}\nTreatment: {treatment}\nPlease arrive 15 minutes early'
+                TH: 'แจ้งเตือนนัดพรุ่งนี้ - Dentist\'s House\nคุณ {patientName}\nวันพรุ่งนี้ ({date}) เวลา {time}\nรักษา: {treatment}\nรบกวนมาก่อนเวลานัด 15 นาที',
+                EN: 'Tomorrow\'s Appointment - Dentist\'s House\nDear {patientName}\nTomorrow ({date}) at {time}\nTreatment: {treatment}\nPlease arrive 15 minutes early'
             },
             cancellation: {
-                TH: 'ยกเลิกนัดหมาย - CIKI Clinic\nคุณ {patientName}\nนัดหมายวันที่ {date} เวลา {time}\nถูกยกเลิกเรียบร้อยแล้ว\nกรุณาติดต่อเพื่อนัดหมายใหม่',
-                EN: 'Appointment Cancelled - CIKI Clinic\nDear {patientName}\nYour appointment on {date} at {time}\nhas been cancelled.\nPlease contact us to reschedule'
+                TH: 'ยกเลิกนัดหมาย - Dentist\'s House\nคุณ {patientName}\nนัดหมายวันที่ {date} เวลา {time}\nถูกยกเลิกเรียบร้อยแล้ว\nกรุณาติดต่อเพื่อนัดหมายใหม่',
+                EN: 'Appointment Cancelled - Dentist\'s House\nDear {patientName}\nYour appointment on {date} at {time}\nhas been cancelled.\nPlease contact us to reschedule'
             }
         },
         

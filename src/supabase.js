@@ -25,7 +25,7 @@ export const supabase = createClient(
         },
         global: {
             headers: {
-                'X-Client-Info': 'ciki-clinic'
+                'X-Client-Info': 'dentist-house'
             }
         }
     }
