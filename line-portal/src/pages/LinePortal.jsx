@@ -57,7 +57,9 @@ const LinePortal = () => {
         const aptId = params.get('apt');
         
         if (action === 'reschedule' && aptId) {
+            console.log("URGENT: Reschedule detected in URL", aptId);
             setRescheduleId(aptId);
+            setPage('booking'); // Force 'booking' immediately!
             fetchRescheduleData(aptId);
         }
 
@@ -982,8 +984,34 @@ const LineHeader = ({ title, onBack, showProfile = true }) => (
 
     // ===== HOME PAGE =====
     if (page === 'home') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const debugAction = urlParams.get('action');
+        const debugApt = urlParams.get('apt');
+
         return (
             <div style={{ minHeight: '100vh', background: '#F3F4F6' }}>
+                {/* 🚨 DEBUG BANNER 🚨 */}
+                {debugAction === 'reschedule' && (
+                    <div style={{ 
+                        background: '#FF9800', 
+                        color: 'white', 
+                        padding: '10px', 
+                        textAlign: 'center', 
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                        zIndex: 9999,
+                        position: 'fixed',
+                        top: 0, left: 0, right: 0
+                    }}>
+                        ⚠️ ACTION: {debugAction} | APT: {debugApt} FOUND! 
+                        <button 
+                            onClick={() => setPage('booking')}
+                            style={{ marginLeft: '10px', background: 'white', color: 'black', border: 'none', padding: '4px 8px', borderRadius: '4px' }}
+                        >
+                            GO TO BOOKING NOW
+                        </button>
+                    </div>
+                )}
                 <LineHeader title="CIKI Dental" showProfile={true} />
                 
                 {/* Profile Form Modal */}
