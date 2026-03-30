@@ -417,7 +417,12 @@ const LinePortal = () => {
             status: 'Pending'
         };
 
-        await addAppointment(newAppointment);
+        const bookingResult = await addAppointment(newAppointment);
+        
+        if (bookingResult && !bookingResult.success) {
+            // Already alerted in DataContext
+            return;
+        }
         
         alert(`${pt('book_success_alert')} ${service?.name} ${bookingDate} ${bookingTime}`);
 

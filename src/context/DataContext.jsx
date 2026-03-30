@@ -350,24 +350,32 @@ export const DataProvider = ({ children }) => {
         };
         setAppointments([...appointments, newApt]);
 
-        // Supabase Sync
+        // Supabase Sync - Map to correct column names from screenshot
         const { error } = await supabase.from('appointments').insert([{
             id: newApt.id,
             patient_id: newApt.patientId,
             patient_name: newApt.patientName,
-            dentist_name: newApt.dentist,
+            phone: newApt.phone, // Adding missing phone column
+            dentist: newApt.dentist, // Using correct 'dentist' column instead of 'dentist_name'
             date: newApt.date,
             time: newApt.time,
-            duration: newApt.duration || 30, // Default duration
+            duration: newApt.duration || 30,
             treatment: newApt.treatment,
-            status: newApt.status,
-            type: newApt.type,
+            status: newApt.status || 'Pending',
+            type: newApt.type || 'LINE Booking',
             queue_number: newApt.queueNumber,
             queue_status: newApt.queueStatus
         }]);
 
-        if (error) console.error("Error adding appointment to Supabase:", error);
-        return newApt;
+        if (error) {
+            console.error("❌ Error adding appointment to Supabase:", error);
+            // Optionally tell the user so we can debug RLS/Schema issues
+            alert(`🔥 Supabase Error: ${error.message} (Code: ${error.code})`);
+            return { success: false, error };
+        }
+
+        console.log("✅ Appointment saved to Supabase!");
+        return { success: true, data: newApt };
     };
 
     const updateAppointment = async (id, updates) => {
