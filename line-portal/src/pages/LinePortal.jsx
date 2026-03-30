@@ -62,8 +62,9 @@ const LinePortal = () => {
         };
 
         const { action, apt: aptId } = getParams();
+        const isRescheduling = action === 'reschedule' && aptId;
         
-        if (action === 'reschedule' && aptId) {
+        if (isRescheduling) {
             console.log("🎯 DETECTED ON DUAL-CHANNEL:", action, aptId);
             setRescheduleId(aptId);
             setPage('booking'); // Force 'booking' immediately!
@@ -75,7 +76,7 @@ const LinePortal = () => {
             const user = JSON.parse(storedUser);
             setCurrentUser(user);
             // ถ้าไม่ใช้โหมดเลื่อนนัด ให้ไปหน้า home ปกติ
-            if (action !== 'reschedule') {
+            if (!isRescheduling) {
                 setPage('home');
                 loadUserAppointments(user);
             }
@@ -99,7 +100,8 @@ const LinePortal = () => {
                 } catch (error) {}
             };
             setTimeout(syncUserData, 2000);
-        } else {
+        } else if (!isRescheduling) {
+            // ONLY set to login if we are NOT in reschedule mode
             setPage('login');
         }
         initLiff();
@@ -222,17 +224,22 @@ const LinePortal = () => {
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
             
-            // 🔥 DOUBLE LOCK: Check URL directly to avoid race conditions
             const urlParams = new URLSearchParams(window.location.search);
-            const isRescheduling = urlParams.get('action') === 'reschedule';
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const isRescheduling = (urlParams.get('action') === 'reschedule' || hashParams.get('action') === 'reschedule');
+            const aptId = urlParams.get('apt') || hashParams.get('apt');
             
             console.log("LOGIN SUCCESS: Rescheduling detected?", isRescheduling);
             
             if (!isRescheduling) {
                 setPage('home');
             } else {
-                console.log("REDIRECTING TO BOOKING PAGE AGGRESSIVELY");
-                // The page 'booking' is handled by fetchRescheduleData
+                console.log("FORCE BOOKING PAGE FOR RESCHEDULE");
+                setPage('booking');
+                if (aptId) {
+                    setRescheduleId(aptId);
+                    fetchRescheduleData(aptId);
+                }
             }
             
             await loadUserAppointments(user);
