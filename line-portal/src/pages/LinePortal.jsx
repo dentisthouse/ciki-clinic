@@ -213,9 +213,17 @@ const LinePortal = () => {
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
             
-            // IF Rescheduling, DO NOT go to home, stay on booking page (set by fetchRescheduleData)
-            if (!rescheduleId) {
+            // 🔥 DOUBLE LOCK: Check URL directly to avoid race conditions
+            const urlParams = new URLSearchParams(window.location.search);
+            const isRescheduling = urlParams.get('action') === 'reschedule';
+            
+            console.log("LOGIN SUCCESS: Rescheduling detected?", isRescheduling);
+            
+            if (!isRescheduling) {
                 setPage('home');
+            } else {
+                console.log("REDIRECTING TO BOOKING PAGE AGGRESSIVELY");
+                // The page 'booking' is handled by fetchRescheduleData
             }
             
             await loadUserAppointments(user);
@@ -359,8 +367,11 @@ const LinePortal = () => {
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
             
-            // IF Rescheduling, DO NOT go to home
-            if (!rescheduleId) {
+            // 🔥 DOUBLE LOCK: Check URL directly
+            const urlParams = new URLSearchParams(window.location.search);
+            const isRescheduling = urlParams.get('action') === 'reschedule';
+
+            if (!isRescheduling) {
                 setPage('home');
             }
             
