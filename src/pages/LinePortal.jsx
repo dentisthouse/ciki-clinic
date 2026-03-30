@@ -246,19 +246,45 @@ const LinePortal = () => {
             return;
         }
 
-        // หาผู้ใช้จากฐานข้อมูล (ใช้การล้างฟอร์แมตเบอร์โทรศัพท์เพื่อความแม่นยำ)
-        console.log('Searching for user with phone:', phoneNum, 'in', dbPatients.length, 'patients');
-        
-        let user = dbPatients.find((p) => {
-            if (!p.phone) return false;
-            const dbCleanedPhone = formatPhoneNumber(p.phone);
-            return dbCleanedPhone === phoneNum;
-        });
+        // 🔍 หาผู้ใช้จากฐานข้อมูลโดยตรงเพื่อความแม่นยำสูงสุด
+        console.log('Searching for user with phone:', phoneNum);
+        setAuthLoading(true);
 
-        // Try searching for LINE ID as secondary check
-        if (!user && lineUserId) {
-            console.log('Phone match failed, searching by LINE ID:', lineUserId);
-            user = dbPatients.find(p => p.line_user_id === lineUserId);
+        try {
+            // 1. ลองค้นหาด้วยเบอร์โทร (ทำความสะอาดเบอร์ก่อน)
+            const { data: phoneMatch, error: phoneError } = await supabase
+                .from('patients')
+                .select('*')
+                .or(`phone.eq.${phoneNum},phone.eq.${phoneNum.replace(/^0/, '66')},phone.eq.${phoneNum.replace(/^0/, '+66')}`);
+
+            let user = phoneMatch && phoneMatch.length > 0 ? phoneMatch[0] : null;
+
+            // 2. ถ้าไม่เจอด้วยเบอร์ ลองค้นด้วย LINE ID
+            if (!user && lineUserId) {
+                console.log('Phone match failed, searching by LINE ID:', lineUserId);
+                const { data: lineMatch } = await supabase
+                    .from('patients')
+                    .select('*')
+                    .eq('line_user_id', lineUserId)
+                    .maybeSingle();
+                user = lineMatch;
+            }
+
+            // 3. ถ้ายังไม่เจออีก ลองค้นหาแบบ Manual ในอาเรย์ที่โหลดมา (เผื่อกรณีเบอร์มีฟอร์แมตแปลกๆ ใน DB เช่น 091-xxx หรือ 091 7xx)
+            if (!user && dbPatients.length > 0) {
+                console.log('Final fallback: Searching in loaded patients array...');
+                user = dbPatients.find(p => {
+                    if (!p || !p.phone) return false;
+                    const cleanP = p.phone.replace(/\D/g, '');
+                    const cleanTarget = phoneNum.replace(/\D/g, '');
+                    // เปรียบเทียบ 9 หลักสุดท้าย (เพื่อเลี่ยงปัญหา 0 vs 66)
+                    return cleanP.endsWith(cleanTarget.slice(-9));
+                });
+            }
+        } catch (err) {
+            console.error('Lookup Error:', err);
+        } finally {
+            setAuthLoading(false);
         }
         
         if (user) {

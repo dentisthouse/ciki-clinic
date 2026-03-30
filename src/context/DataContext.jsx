@@ -337,9 +337,12 @@ export const DataProvider = ({ children }) => {
         const count = appointments.filter(a => a.date.startsWith(todayStr)).length + 1;
         const qNum = `${appointment.type === 'Walk-in' ? 'W' : 'A'}-${String(count).padStart(2, '0')}`;
 
+        // Create standard UUID for Supabase compatibility
+        const newAptId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : generateId('APT');
+
         const newApt = {
             ...appointment,
-            id: generateId('APT'),
+            id: newAptId,
             status: 'Pending',
             queueStatus: 'Waiting',
             queueNumber: qNum,
