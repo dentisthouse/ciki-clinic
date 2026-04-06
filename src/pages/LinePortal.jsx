@@ -34,12 +34,6 @@ const TIME_SLOTS = [
 ];
 const getBranches = (pt) => [pt('branch_prachinburi')];
 
-// Mock data for new sections
-const PROMOTIONS = [
-    { id: 1, title: 'อุดฟันราคาพิเศษ', price: '570', img: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=500&h=300&fit=crop' },
-    { id: 2, title: 'จัดฟันใส Invisalign', price: '49,000', img: 'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?w=500&h=300&fit=crop' },
-];
-
 const NEWS = [
     { id: 1, title: 'สุขภาพช่องปากที่ดีเป็นอย่างไร', img: 'https://images.unsplash.com/photo-1588776814546-1ffce47267a5?w=300&h=300&fit=crop' },
     { id: 2, title: 'ขูดหินปูนสำคัญอย่างไร?', img: 'https://images.unsplash.com/photo-1445527815219-ecbfec67492e?w=300&h=300&fit=crop' },
@@ -80,6 +74,7 @@ const LinePortal = () => {
     const [bookingBranch, setBookingBranch] = useState(getBranches(pt)[0]);
     const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
     const [bookingTime, setBookingTime] = useState('');
+    const [isBooking, setIsBooking] = useState(false); // Add this to prevent double booking
     const [userAppointments, setUserAppointments] = useState([]);
 
     // Initial LIFF and Session Check
@@ -787,20 +782,12 @@ const LinePortal = () => {
                                 alt="Profile" 
                             />
                             <div className="lp-profile-info-main">
-                                <p style={{ marginBottom: '2px', opacity: 0.8, fontSize: '0.9rem' }}>CN {currentUser?.hn || '620200'}</p>
-                                <h3>คุณ{currentUser?.name || pt('guest_user')}</h3>
-                                
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, marginBottom: '4px', color: 'white' }}>
+                                    คุณ{currentUser?.name || pt('guest_user')}
+                                </h3>
                                 <div className="lp-profile-details-grid">
                                     <div className="lp-detail-item">
-                                        <span style={{ opacity: 0.7 }}>เลขบัตรประชาชน</span>
-                                        <span>1924*************</span>
-                                    </div>
-                                    <div className="lp-detail-item">
-                                        <Droplets size={12} color="#ff4d4d" />
-                                        <span>กรุ๊ปเลือด B</span>
-                                    </div>
-                                    <div className="lp-detail-item">
-                                        <span>อายุ 24 ปี</span>
+                                        <span>เลขคนไข้ (HN): {currentUser?.hn || '620200'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -810,19 +797,6 @@ const LinePortal = () => {
                                 <Phone size={14} className="lp-contact-icon" />
                                 <span>{currentUser?.phone || '09x-xxx-xxxx'}</span>
                             </div>
-                            <div className="lp-contact-item">
-                                <Mail size={14} className="lp-contact-icon" />
-                                <span>{currentUser?.email || 'patient@email.com'}</span>
-                            </div>
-                            <div className="lp-contact-item">
-                                <Calendar size={14} className="lp-contact-icon" />
-                                <span>เริ่มใช้บริการ 20 ม.ค. 2560</span>
-                            </div>
-                            
-                            <button className="lp-btn-download">
-                                <Download size={14} />
-                                ดาวน์โหลดเอกสาร
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -830,19 +804,19 @@ const LinePortal = () => {
                 {/* Promotions Section */}
                 <div className="lp-section">
                     <div className="lp-section-header">
-                        <h3 className="lp-section-title">{language === 'TH' ? 'โปรโมชั่น' : 'Promotions'}</h3>
-                        <button className="lp-btn-see-all">
+                        <h3 className="lp-section-title">{language === 'TH' ? 'บริการแนะนำ' : 'Recommended'}</h3>
+                        <button className="lp-btn-see-all" onClick={() => setPage('services')}>
                             <MessageSquare size={12} />
-                            อ่านทั้งหมด
+                            ดูทั้งหมด
                         </button>
                     </div>
                     <div className="lp-promo-scroll">
-                        {PROMOTIONS.map(promo => (
-                            <div key={promo.id} className="lp-promo-card">
-                                <img src={promo.img} alt={promo.title} />
+                        {getDentalServices(pt).slice(0, 4).map(service => (
+                            <div key={service.id} className="lp-promo-card" onClick={() => { setBookingService(service.id); setPage('booking'); }}>
+                                <img src={`https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=500&h=300&fit=crop`} alt={service.name} />
                                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', padding: '1rem', color: 'white' }}>
-                                    <p style={{ fontSize: '0.8rem', fontWeight: 600 }}>{promo.title}</p>
-                                    <p style={{ fontWeight: 900 }}>ราคาเริ่มต้นที่ {promo.price} บาท</p>
+                                    <p style={{ fontSize: '0.8rem', fontWeight: 600 }}>{service.name}</p>
+                                    <p style={{ fontWeight: 900 }}>ราคา {service.price.toLocaleString()} บาท</p>
                                 </div>
                             </div>
                         ))}
@@ -878,8 +852,7 @@ const LinePortal = () => {
                         <Home size={22} />
                         <span>หน้าหลัก</span>
                     </button>
-                    <button className="lp-nav-item">
-                        <div className="lp-nav-badge">1</div>
+                    <button className={`lp-nav-item ${page === 'services' ? 'active' : ''}`} onClick={() => setPage('services')}>
                         <Percent size={22} />
                         <span>โปรโมชั่น</span>
                     </button>
@@ -890,14 +863,10 @@ const LinePortal = () => {
                         </div>
                     </button>
 
-                    <button className="lp-nav-item">
-                        <div className="lp-nav-badge">1</div>
+                    <button className={`lp-nav-item ${page === 'appointments' ? 'active' : ''}`} onClick={() => setPage('appointments')}>
+                        {userAppointments.length > 0 && <div className="lp-nav-badge">{userAppointments.length}</div>}
                         <Bell size={22} />
                         <span>แจ้งเตือน</span>
-                    </button>
-                    <button className="lp-nav-item" onClick={() => setPage('settings')}>
-                        <User size={22} />
-                        <span>ตั้งค่า</span>
                     </button>
                 </div>
             </div>
