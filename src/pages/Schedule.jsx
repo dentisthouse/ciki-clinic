@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, ChevronRight, Plus, List, ChevronLeft, User, Volume2 } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronRight, Plus, List, ChevronLeft, User, Volume2, RefreshCw } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { th, enUS } from 'date-fns/locale';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -290,6 +290,13 @@ const Schedule = () => {
                         </button>
                     )}
                     <button
+                        className="btn btn-secondary"
+                        onClick={() => syncData()}
+                        title="Force Sync Now"
+                    >
+                        <RefreshCw size={16} />
+                    </button>
+                    <button
                         className={`btn ${viewMode === 'calendar' ? 'btn-primary' : 'btn-secondary'}`}
                         onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
                     >
@@ -383,7 +390,7 @@ const Schedule = () => {
                                 </span>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#94a3b8' }}></div>
-                                    {language === 'TH' ? 'พนักงานลงนัด' : 'Staff Booking'}
+                                    {language === 'TH' ? 'ลงนัดโดยพนักงาน' : 'Staff Booking'}
                                 </span>
                             </div>
                         </div>
@@ -417,30 +424,33 @@ const Schedule = () => {
                                                             display: 'flex', 
                                                             alignItems: 'center', 
                                                             gap: '0.35rem', 
-                                                            padding: '0.25rem 0.6rem', 
-                                                            background: '#EFF6FF', 
-                                                            color: '#2563EB',
+                                                            padding: '0.25rem 0.75rem', 
+                                                            background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', 
+                                                            color: 'white',
                                                             borderRadius: '20px',
                                                             fontSize: '0.7rem',
-                                                            fontWeight: 600
+                                                            fontWeight: 800,
+                                                            boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
+                                                            border: '1px solid rgba(255,255,255,0.1)'
                                                         }}>
-                                                            <div style={{ fontSize: '1rem' }}>📱</div>
-                                                            {language === 'TH' ? 'จองเอง' : 'Portal'}
+                                                            <div style={{ fontSize: '0.9rem' }}>📱</div>
+                                                            {language === 'TH' ? 'จองผ่าน LINE' : 'LINE Booking'}
                                                         </div>
                                                     ) : (
                                                         <div style={{ 
                                                             display: 'flex', 
                                                             alignItems: 'center', 
                                                             gap: '0.35rem', 
-                                                            padding: '0.25rem 0.6rem', 
-                                                            background: '#F8FAFC', 
-                                                            color: '#64748B',
+                                                            padding: '0.25rem 0.75rem', 
+                                                            background: '#f8fafc', 
+                                                            color: '#64748b',
                                                             borderRadius: '20px',
                                                             fontSize: '0.7rem',
-                                                            fontWeight: 600
+                                                            fontWeight: 700,
+                                                            border: '1px solid #e2e8f0'
                                                         }}>
                                                             <User size={12} />
-                                                            {language === 'TH' ? 'ลงนัด' : 'Staff'}
+                                                            {language === 'TH' ? 'ลงนัด (Staff)' : 'Staff'}
                                                         </div>
                                                     )}
                                                 </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
     FileText, 
     DollarSign, 
@@ -7,41 +7,42 @@ import {
     Clock, 
     TrendingUp, 
     Download, 
-    Printer,
     CheckCircle,
     AlertCircle,
     CreditCard,
     Receipt,
     PiggyBank,
-    Activity
+    Activity,
+    ArrowRight,
+    Printer,
+    ChevronRight,
+    Search
 } from 'lucide-react';
-import { format, startOfDay, endOfDay, isToday, isYesterday } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import { th, enUS } from 'date-fns/locale';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import {
+    PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend
+} from 'recharts';
+import '../styles/dashboard.css'; // Reusing premium animations and glass styles
 
 const DailyReport = () => {
-    const { language } = useLanguage();
-    const { appointments, patients, billingRecords, expenses } = useData();
+    const { t, language } = useLanguage();
+    const { appointments = [], patients = [], billingRecords = [], expenses = [] } = useData();
     const { staff } = useAuth();
     
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [reportData, setReportData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
-    useEffect(() => {
-        generateReport();
-    }, [selectedDate, appointments, patients, billingRecords, expenses]);
-
-    const generateReport = () => {
-        setIsLoading(true);
-        
+    // Calculate report data using useMemo for performance
+    const reportData = useMemo(() => {
         const start = startOfDay(selectedDate);
         const end = endOfDay(selectedDate);
         
-        // กรองข้อมูลตามวันที่เลือก
+        // Filter data by selected date
         const dayAppointments = appointments.filter(apt => {
             const aptDate = new Date(apt.date);
             return aptDate >= start && aptDate <= end;
@@ -57,305 +58,286 @@ const DailyReport = () => {
             return expDate >= start && expDate <= end;
         });
 
-        // คำนวณสถิติ
+        // Statistics
         const totalRevenue = dayBilling.reduce((sum, bill) => sum + (bill.amount || 0), 0);
         const totalExpenses = dayExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
         const netProfit = totalRevenue - totalExpenses;
         
-        const completedAppointments = dayAppointments.filter(apt => apt.status === 'completed').length;
-        const cancelledAppointments = dayAppointments.filter(apt => apt.status === 'cancelled').length;
-        const noShowAppointments = dayAppointments.filter(apt => apt.status === 'no-show').length;
+        const completedAppointments = dayAppointments.filter(apt => apt.status === 'completed' || apt.status === 'Completed').length;
+        const cancelledAppointments = dayAppointments.filter(apt => apt.status === 'cancelled' || apt.status === 'Cancelled').length;
         
-        const paymentMethods = {
-            cash: dayBilling.filter(bill => bill.paymentMethod === 'cash').reduce((sum, bill) => sum + (bill.amount || 0), 0),
-            card: dayBilling.filter(bill => bill.paymentMethod === 'card').reduce((sum, bill) => sum + (bill.amount || 0), 0),
-            transfer: dayBilling.filter(bill => bill.paymentMethod === 'transfer').reduce((sum, bill) => sum + (bill.amount || 0), 0),
-            insurance: dayBilling.filter(bill => bill.paymentMethod === 'insurance').reduce((sum, bill) => sum + (bill.amount || 0), 0)
-        };
+        const paymentMethods = [
+            { name: t('bill_cash'), value: dayBilling.filter(b => b.paymentMethod === 'cash' || b.paymentMethod === 'Cash').reduce((s, b) => s + (b.amount || 0), 0), color: '#10b981' },
+            { name: t('bill_card'), value: dayBilling.filter(b => b.paymentMethod === 'card' || b.paymentMethod === 'Credit Card').reduce((s, b) => s + (b.amount || 0), 0), color: '#3b82f6' },
+            { name: t('bill_transfer'), value: dayBilling.filter(b => b.paymentMethod === 'transfer' || b.paymentMethod === 'Transfer').reduce((s, b) => s + (b.amount || 0), 0), color: '#f59e0b' },
+            { name: t('bill_insurance'), value: dayBilling.filter(b => b.paymentMethod === 'insurance' || b.paymentMethod === 'Claim').reduce((s, b) => s + (b.amount || 0), 0), color: '#8b5cf6' }
+        ].filter(method => method.value > 0);
 
-        const treatmentTypes = {};
+        const treatmentMap = {};
         dayAppointments.forEach(apt => {
             const treatment = apt.procedure || apt.treatment || 'General';
-            treatmentTypes[treatment] = (treatmentTypes[treatment] || 0) + 1;
+            treatmentMap[treatment] = (treatmentMap[treatment] || 0) + 1;
         });
+        const treatmentStats = Object.entries(treatmentMap).map(([name, value]) => ({ name, value }));
 
-        const report = {
-            date: selectedDate,
+        return {
             summary: {
                 totalPatients: dayAppointments.length,
                 completedAppointments,
-                cancelledAppointments,
-                noShowAppointments,
-                completionRate: dayAppointments.length > 0 ? (completedAppointments / dayAppointments.length * 100).toFixed(1) : 0
-            },
-            financial: {
                 totalRevenue,
                 totalExpenses,
-                netProfit,
-                averageTransaction: dayBilling.length > 0 ? (totalRevenue / dayBilling.length).toFixed(2) : 0,
-                paymentMethods
+                netProfit
             },
-            appointments: dayAppointments,
-            billing: dayBilling,
-            expenses: dayExpenses,
-            treatmentTypes,
-            staff: staff?.name || 'System'
+            appointments: dayAppointments.sort((a,b) => (a.time || '').localeCompare(b.time || '')),
+            paymentMethods,
+            treatmentStats,
+            staff: staff?.name || 'Admin'
         };
-
-        setReportData(report);
-        setIsLoading(false);
-    };
+    }, [selectedDate, appointments, billingRecords, expenses, staff, t]);
 
     const exportToPDF = () => {
-        // จำลองการพิมพ์ PDF (ใน production จะใช้ library จริง)
         window.print();
     };
 
     const closeDailyReport = async () => {
+        if (!window.confirm(t('rep_confirm_close'))) return;
+
         setIsClosing(true);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
-        // บันทึกรายงานปิดร้าน
         const closingReport = {
             ...reportData,
             closedAt: new Date().toISOString(),
-            closedBy: staff?.name || 'System',
+            closedBy: staff?.name || 'Admin',
             status: 'closed'
         };
 
-        // บันทึกลง localStorage (ใน production จะบันทึกลง database)
         const closedReports = JSON.parse(localStorage.getItem('closedDailyReports') || '[]');
         closedReports.push(closingReport);
         localStorage.setItem('closedDailyReports', JSON.stringify(closedReports));
 
-        // ส่งแจ้งเตือนไปยังผู้จัดการ (ถ้ามี)
-        console.log('Daily report closed:', closingReport);
-        
         setIsClosing(false);
-        alert(language === 'TH' ? 'ปิดรายงานประจำวันเรียบร้อยแล้ว' : 'Daily report closed successfully');
+        alert(t('rep_closed_success'));
     };
 
-    const StatCard = ({ title, value, icon: Icon, color, trend }) => (
-        <div className="glass-panel" style={{ 
-            padding: '1.5rem', 
-            background: 'white',
-            border: `1px solid ${color}20`,
-            borderRadius: '12px'
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                    <p style={{ color: 'var(--neutral-600)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
-                        {title}
-                    </p>
-                    <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--neutral-900)', margin: 0 }}>
-                        {value}
-                    </h3>
-                    {trend && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
-                            <TrendingUp size={14} color={trend > 0 ? '#10b981' : '#ef4444'} />
-                            <span style={{ fontSize: '0.75rem', color: trend > 0 ? '#10b981' : '#ef4444' }}>
-                                {Math.abs(trend)}%
-                            </span>
-                        </div>
-                    )}
+    const StatCard = ({ title, value, icon: Icon, colorVar, delay, unit = '฿' }) => (
+        <div className={`stat-card glass-panel-premium animate-slide-up ${delay}`} style={{ background: 'white' }}>
+            <div className="stat-header">
+                <div className="stat-info">
+                    <p>{title}</p>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                        {unit === '฿' && <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--neutral-400)' }}>฿</span>}
+                        <h3>{typeof value === 'number' ? value.toLocaleString() : value}</h3>
+                    </div>
                 </div>
-                <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    borderRadius: '12px', 
-                    background: `${color}10`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                <div className={`stat-icon-wrapper floating-icon`} style={{ 
+                    background: `linear-gradient(135deg, var(--neutral-50) 0%, white 100%)`, 
+                    color: `var(--${colorVar})`,
+                    border: `1px solid var(--neutral-100)`
                 }}>
-                    <Icon size={24} color={color} />
+                    <Icon size={24} />
                 </div>
             </div>
         </div>
     );
 
-    if (!reportData) {
-        return (
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <div className="spinner" />
-                <p>{language === 'TH' ? 'กำลังโหลดรายงาน...' : 'Loading report...'}</p>
-            </div>
-        );
-    }
-
     return (
-        <div className="daily-report" style={{ padding: '2rem' }}>
+        <div className="dashboard-container" style={{ padding: '1.5rem' }}>
             {/* Header */}
-            <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <div>
-                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <FileText size={32} color="var(--primary-600)" />
-                            {language === 'TH' ? 'รายงานประจำวัน' : 'Daily Report'}
-                        </h1>
-                        <p style={{ color: 'var(--neutral-600)', marginTop: '0.5rem' }}>
-                            {format(selectedDate, language === 'TH' ? 'd MMMM yyyy' : 'MMMM d, yyyy', { locale: language === 'TH' ? th : enUS })}
-                        </p>
+            <div className="dashboard-header animate-fade-in" style={{ marginBottom: '2rem' }}>
+                <div className="header-welcome">
+                    <h1>{t('rep_title')}</h1>
+                    <div className="header-date">
+                        <Calendar size={14} style={{ marginRight: '8px' }} />
+                        {format(selectedDate, language === 'TH' ? 'd MMMM yyyy' : 'MMMM d, yyyy', { locale: language === 'TH' ? th : enUS })}
                     </div>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+                </div>
+                <div className="header-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div className="glass-panel-premium" style={{ display: 'flex', alignItems: 'center', padding: '0.5rem 1rem', background: 'white', borderRadius: '16px' }}>
+                        <Clock size={16} style={{ color: 'var(--neutral-400)', marginRight: '0.5rem' }} />
                         <input
                             type="date"
                             value={format(selectedDate, 'yyyy-MM-dd')}
                             onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                            style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--neutral-200)' }}
+                            style={{ border: 'none', background: 'transparent', outline: 'none', fontWeight: 600, color: 'var(--neutral-700)' }}
                         />
-                        <button onClick={exportToPDF} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Download size={18} />
-                            {language === 'TH' ? 'ส่งออก' : 'Export'}
-                        </button>
-                        <button onClick={closeDailyReport} disabled={isClosing} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            {isClosing ? (
-                                <>
-                                    <div className="spinner" style={{ width: '18px', height: '18px' }} />
-                                    {language === 'TH' ? 'กำลังบันทึก...' : 'Saving...'}
-                                </>
-                            ) : (
-                                <>
-                                    <CheckCircle size={18} />
-                                    {language === 'TH' ? 'ปิดรายงาน' : 'Close Report'}
-                                </>
-                            )}
-                        </button>
                     </div>
+                    <button onClick={exportToPDF} className="btn" style={{ background: 'white', border: '1px solid var(--neutral-200)' }}>
+                        <Printer size={16} style={{ marginRight: '8px' }} />
+                        {t('rep_export')}
+                    </button>
+                    <button onClick={closeDailyReport} disabled={isClosing} className="btn btn-primary">
+                        {isClosing ? (
+                            <>
+                                <div className="spinner" style={{ width: '18px', height: '18px', marginRight: '8px' }} />
+                                {t('rep_closing')}
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle size={18} style={{ marginRight: '8px' }} />
+                                {t('rep_close_report')}
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
 
-            {/* Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            {/* Summary Grid */}
+            <div className="stats-grid">
                 <StatCard 
-                    title={language === 'TH' ? 'ผู้ป่วยทั้งหมด' : 'Total Patients'} 
+                    title={t('rep_stats_patients')} 
                     value={reportData.summary.totalPatients}
                     icon={Users}
-                    color="#3b82f6"
+                    colorVar="info"
+                    unit="qty"
+                    delay="delay-0"
                 />
                 <StatCard 
-                    title={language === 'TH' ? 'รักษาสำเร็จ' : 'Completed'} 
+                    title={t('rep_stats_completed')} 
                     value={reportData.summary.completedAppointments}
                     icon={CheckCircle}
-                    color="#10b981"
+                    colorVar="success"
+                    unit="qty"
+                    delay="delay-100"
                 />
                 <StatCard 
-                    title={language === 'TH' ? 'รายได้รวม' : 'Total Revenue'} 
-                    value={`฿${reportData.financial.totalRevenue.toLocaleString()}`}
+                    title={t('rep_stats_revenue')} 
+                    value={reportData.summary.totalRevenue}
                     icon={DollarSign}
-                    color="#22c55e"
+                    colorVar="primary-600"
+                    delay="delay-200"
                 />
                 <StatCard 
-                    title={language === 'TH' ? 'กำไรสุทธิ' : 'Net Profit'} 
-                    value={`฿${reportData.financial.netProfit.toLocaleString()}`}
+                    title={t('rep_stats_profit')} 
+                    value={reportData.summary.netProfit}
                     icon={PiggyBank}
-                    color={reportData.financial.netProfit >= 0 ? '#10b981' : '#ef4444'}
+                    colorVar={reportData.summary.netProfit >= 0 ? "success" : "danger"}
+                    delay="delay-300"
                 />
             </div>
 
-            {/* Detailed Sections */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-                {/* Appointments */}
-                <div className="glass-panel" style={{ padding: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Calendar size={20} color="var(--primary-600)" />
-                        {language === 'TH' ? 'นัดหมายวันนี้' : "Today's Appointments"}
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {reportData.appointments.length === 0 ? (
-                            <p style={{ color: 'var(--neutral-500)', textAlign: 'center', padding: '2rem' }}>
-                                {language === 'TH' ? 'ไม่มีนัดหมายวันนี้' : 'No appointments today'}
-                            </p>
-                        ) : (
-                            reportData.appointments.map(apt => (
-                                <div key={apt.id} style={{
-                                    padding: '1rem',
-                                    border: '1px solid var(--neutral-200)',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
-                                    <div>
-                                        <div style={{ fontWeight: 600 }}>{apt.patientName || apt.patient}</div>
-                                        <div style={{ fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
-                                            {apt.time} - {apt.procedure || apt.treatment}
-                                        </div>
-                                    </div>
-                                    <div style={{
-                                        padding: '0.25rem 0.75rem',
-                                        borderRadius: '20px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 600,
-                                        background: apt.status === 'completed' ? '#dcfce7' : 
-                                                   apt.status === 'cancelled' ? '#fee2e2' : '#fef3c7',
-                                        color: apt.status === 'completed' ? '#16a34a' : 
-                                               apt.status === 'cancelled' ? '#dc2626' : '#d97706'
-                                    }}>
-                                        {apt.status || 'pending'}
-                                    </div>
+            {/* Charts & Details Section */}
+            <div className="dashboard-main">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    {/* Appointments List */}
+                    <div className="glass-panel-premium animate-slide-up delay-100" style={{ overflow: 'hidden' }}>
+                        <div className="section-header" style={{ borderBottom: '1px solid var(--neutral-100)', padding: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary-50)', color: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Calendar size={20} />
                                 </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-
-                {/* Payment Methods */}
-                <div className="glass-panel" style={{ padding: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <CreditCard size={20} color="var(--primary-600)" />
-                        {language === 'TH' ? 'วิธีการชำระเงิน' : 'Payment Methods'}
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {Object.entries(reportData.financial.paymentMethods).map(([method, amount]) => (
-                            <div key={method} style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '1rem',
-                                background: 'var(--neutral-50)',
-                                borderRadius: '8px'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    {method === 'cash' && <DollarSign size={16} />}
-                                    {method === 'card' && <CreditCard size={16} />}
-                                    {method === 'transfer' && <Receipt size={16} />}
-                                    {method === 'insurance' && <FileText size={16} />}
-                                    <span style={{ textTransform: 'capitalize' }}>
-                                        {method === 'cash' ? (language === 'TH' ? 'เงินสด' : 'Cash') :
-                                         method === 'card' ? (language === 'TH' ? 'บัตร' : 'Card') :
-                                         method === 'transfer' ? (language === 'TH' ? 'โอนเงิน' : 'Transfer') :
-                                         (language === 'TH' ? 'ประกัน' : 'Insurance')}
-                                    </span>
-                                </div>
-                                <span style={{ fontWeight: 600 }}>฿{amount.toLocaleString()}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Treatment Types */}
-            <div className="glass-panel" style={{ padding: '2rem' }}>
-                <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Activity size={20} color="var(--primary-600)" />
-                    {language === 'TH' ? 'สถิติการรักษา' : 'Treatment Statistics'}
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                    {Object.entries(reportData.treatmentTypes).map(([treatment, count]) => (
-                        <div key={treatment} style={{
-                            padding: '1rem',
-                            background: 'var(--neutral-50)',
-                            borderRadius: '8px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary-600)' }}>
-                                {count}
-                            </div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
-                                {treatment}
+                                <h3 style={{ margin: 0 }}>{t('rep_appointments')}</h3>
                             </div>
                         </div>
-                    ))}
+                        <div className="appointment-list">
+                            {reportData.appointments.length === 0 ? (
+                                <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--neutral-400)' }}>
+                                    <Clock size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+                                    <p>{t('rep_no_data')}</p>
+                                </div>
+                            ) : (
+                                reportData.appointments.map((apt, idx) => (
+                                    <div key={idx} className="appointment-item" style={{ padding: '1.25rem 1.5rem' }}>
+                                        <div className="apt-time" style={{ color: 'var(--primary-600)', fontWeight: 700 }}>{apt.time}</div>
+                                        <div className="apt-info">
+                                            <div className="apt-name">{apt.patientName || apt.patient}</div>
+                                            <div className="apt-type">{apt.procedure || apt.treatment}</div>
+                                        </div>
+                                        <div style={{ 
+                                            padding: '0.35rem 0.85rem', 
+                                            borderRadius: '12px', 
+                                            fontSize: '0.75rem', 
+                                            fontWeight: 700,
+                                            background: apt.status?.toLowerCase() === 'completed' ? 'var(--success-light)' : 'var(--warning-light)',
+                                            color: apt.status?.toLowerCase() === 'completed' ? 'var(--success-700)' : 'var(--warning-700)'
+                                        }}>
+                                            {apt.status}
+                                        </div>
+                                        <ChevronRight size={16} style={{ marginLeft: '1rem', color: 'var(--neutral-300)' }} />
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Treatment Stats Chart */}
+                    <div className="glass-panel-premium animate-slide-up delay-200" style={{ padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--amber-50)', color: 'var(--amber-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Activity size={20} />
+                            </div>
+                            <h3 style={{ margin: 0 }}>{t('rep_treatments')}</h3>
+                        </div>
+                        <div style={{ height: '300px', width: '100%' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={reportData.treatmentStats} layout="vertical" margin={{ left: 20 }}>
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} fontSize={12} />
+                                    <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: 'var(--shadow-lg)' }} />
+                                    <Bar dataKey="value" fill="var(--primary-500)" radius={[0, 8, 8, 0]} barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    {/* Payment Breakdown Pie Chart */}
+                    <div className="glass-panel-premium animate-slide-up delay-200" style={{ padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--green-50)', color: 'var(--green-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <CreditCard size={20} />
+                            </div>
+                            <h3 style={{ margin: 0 }}>{t('rep_payments')}</h3>
+                        </div>
+                        <div style={{ height: '240px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={reportData.paymentMethods}
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {reportData.paymentMethods.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: 'var(--shadow-lg)' }} />
+                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                            {reportData.paymentMethods.map((method, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'var(--neutral-50)', borderRadius: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: method.color }} />
+                                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{method.name}</span>
+                                    </div>
+                                    <span style={{ fontWeight: 800 }}>฿{method.value.toLocaleString()}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Staff / System Info */}
+                    <div className="recall-card animate-slide-up delay-300" style={{ textAlign: 'left', padding: '2rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{ width: '56px', height: '56px', borderRadius: '20px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Users size={28} />
+                            </div>
+                            <div>
+                                <h4 style={{ margin: 0, fontSize: '1.1rem' }}>{reportData.staff}</h4>
+                                <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Reporting Officer</span>
+                            </div>
+                        </div>
+                        <p style={{ fontSize: '0.875rem', opacity: 0.9, lineHeight: 1.6 }}>
+                            This daily report summarizes all financial transactions and clinical patient records captured on {format(selectedDate, 'PPP')}.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

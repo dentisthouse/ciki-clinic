@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, FileText, CheckCircle, TrendingUp, Calculator, Wallet, Receipt } from 'lucide-react';
+import { Plus, FileText, CheckCircle, TrendingUp, Calculator, Wallet, Receipt, Clock } from 'lucide-react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -61,6 +61,9 @@ const Billing = () => {
         { label: t('bill_collected'), value: `฿${totalRevenue.toLocaleString()}`, color: 'var(--success)' },
     ];
 
+    // Identify patients who have unpaid treatments (Doctor sent to Counter) - Real-time Handoff
+    const pendingPatients = patients.filter(p => (p.treatments || []).some(t => t.paymentStatus === 'unpaid'));
+
     return (
         <div className="animate-slide-up">
             <InvoiceModal
@@ -98,6 +101,71 @@ const Billing = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Pending Billing Queue - REAL-TIME HANDOFF */}
+            {pendingPatients.length > 0 && (
+                <div className="animate-fade-in" style={{ marginBottom: '2.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <Clock size={18} color="var(--primary-600)" />
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
+                            {language === 'TH' ? 'รายการรอชำระเงิน (จากห้องตรวจ)' : 'Pending Payments (From Clinics)'}
+                        </h3>
+                        <span className="badge badge-info" style={{ marginLeft: 'auto' }}>{pendingPatients.length}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                        {pendingPatients.map(patient => (
+                            <div 
+                                key={patient.id} 
+                                className="card glass-panel-premium" 
+                                style={{ 
+                                    padding: '1.25rem', 
+                                    background: 'var(--primary-50)', 
+                                    border: '1.4px solid var(--primary-200)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '0.75rem',
+                                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+                                }}
+                                onClick={() => {
+                                    setPrePopulatedId(patient.id);
+                                    setPrePopulatedItems(patient.treatments.filter(t => t.paymentStatus === 'unpaid'));
+                                    setIsModalOpen(true);
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div style={{ minWidth: 0 }}>
+                                        <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--neutral-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{patient.name}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', marginTop: '0.2rem' }}>ID: {patient.id}</div>
+                                    </div>
+                                    <div style={{ 
+                                        background: 'white', 
+                                        color: 'var(--primary-600)', 
+                                        padding: '0.5rem', 
+                                        borderRadius: '12px',
+                                        boxShadow: 'var(--shadow-sm)',
+                                        border: '1px solid var(--primary-100)' 
+                                    }}>
+                                        <Receipt size={18} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                                    <span style={{ fontWeight: 700, color: 'var(--primary-700)', background: 'var(--primary-100)', padding: '0.1rem 0.5rem', borderRadius: '6px' }}>
+                                        {patient.treatments.filter(t => t.paymentStatus === 'unpaid').length} {language === 'TH' ? 'รายการ' : 'Items'}
+                                    </span>
+                                    <span style={{ color: 'var(--neutral-300)' }}>•</span>
+                                    <span style={{ fontWeight: 800, color: 'var(--neutral-900)', fontSize: '1rem' }}>
+                                        ฿{patient.treatments.filter(t => t.paymentStatus === 'unpaid').reduce((sum, t) => sum + (t.price || 0), 0).toLocaleString()}
+                                    </span>
+                                </div>
+                                <button className="btn btn-primary" style={{ width: '100%', padding: '0.6rem', fontSize: '0.85rem', marginTop: '0.25rem', boxShadow: '0 4px 12px rgba(20, 184, 166, 0.2)' }}>
+                                    {language === 'TH' ? 'ออกใบเรียกเก็บเงิน' : 'Process Payment'}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Shift Closing Modal */}
             {showShiftModal && (

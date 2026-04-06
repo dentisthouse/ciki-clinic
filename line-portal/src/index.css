@@ -3,13 +3,29 @@
 @tailwind utilities;
 
 /* Custom Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700;800&display=swap');
+
 body {
-  font-family: 'Sarabun', sans-serif;
+  font-family: 'Inter', 'Sarabun', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #F8FAFC;
+  overflow-x: hidden;
 }
 
-/* LINE Theme Colors */
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20;
+  }
+  .glass-dark {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10;
+  }
+  .text-premium {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-500;
+  }
+}
+
+/* Base Theme */
 .line-green {
   background: linear-gradient(135deg, #00C300, #00A000);
 }
@@ -18,81 +34,7 @@ body {
   color: #00C300;
 }
 
-/* Mobile Optimizations */
-@media (max-width: 640px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-}
-
-/* Animation Classes */
-.fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.slide-up {
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-/* Custom Components */
-.member-card {
-  background: linear-gradient(135deg, #00C300, #00A000);
-  border-radius: 1.5rem;
-  padding: 1.5rem;
-  color: white;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-}
-
-.service-card {
-  transition: all 0.3s ease;
-}
-
-.service-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.appointment-card {
-  transition: all 0.3s ease;
-}
-
-.appointment-card:hover {
-  transform: scale(1.02);
-}
-
-/* LIFF Specific Styles */
-.liff-container {
-  max-width: 100%;
-  margin: 0 auto;
-}
-
-.liff-button {
-  background: #00C300;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.liff-button:hover {
-  background: #00A000;
-}
-
-.liff-button:disabled {
-  background: #9CA3AF;
-  cursor: not-allowed;
+/* Clean UI Overrides */
+* {
+  -webkit-tap-highlight-color: transparent;
 }

@@ -15,6 +15,14 @@ export const translations = {
         nav_signout: "Sign Out",
         nav_history: "Treatment History",
 
+        // Sidebar Categories
+        nav_cat_overview: "OVERVIEW",
+        nav_cat_clinical: "CLINICAL",
+        nav_cat_financial: "FINANCIAL",
+        nav_cat_operations: "OPERATIONS",
+        nav_cat_analytics: "ANALYTICS",
+        nav_cat_system: "SYSTEM",
+
         // Header
         search_placeholder: "Search patients, files...",
 
@@ -358,6 +366,23 @@ export const translations = {
         sso_status_rejected: "Rejected",
         sso_status_paid: "Paid",
         sso_track_title: "Claim Tracking",
+
+        // Reports
+        rep_title: "Daily Report",
+        rep_subtitle: "Financial and patient summary for today",
+        rep_export: "Export PDF",
+        rep_close_report: "Close Day",
+        rep_stats_revenue: "Total Revenue",
+        rep_stats_patients: "Patients Seen",
+        rep_stats_completed: "Treatments Completed",
+        rep_stats_profit: "Net Profit",
+        rep_appointments: "Today's Agenda",
+        rep_payments: "Revenue Breakdown",
+        rep_treatments: "Treatment Statistics",
+        rep_no_data: "No data available for selected date",
+        rep_closing: "Closing day report...",
+        rep_closed_success: "Day closed successfully!",
+        rep_confirm_close: "Are you sure you want to close the day? This will archive today's records.",
     },
     TH: {
         // Sidebar
@@ -373,6 +398,14 @@ export const translations = {
         nav_help: "คู่มือการใช้งาน",
         nav_sso: "ประกันสังคม",
         nav_signout: "ออกจากระบบ",
+
+        // Sidebar Categories
+        nav_cat_overview: "ภาพรวม",
+        nav_cat_clinical: "หน้าคลินิก",
+        nav_cat_financial: "การเงิน",
+        nav_cat_operations: "การจัดการ",
+        nav_cat_analytics: "รายงาน/วิเคราะห์",
+        nav_cat_system: "ตั้งค่าระบบ",
 
         // Header
         search_placeholder: "ค้นหาคนไข้, ไฟล์...",
@@ -723,5 +756,22 @@ export const translations = {
         sso_status_rejected: "ถูกปฏิเสธ",
         sso_status_paid: "โอนเงินแล้ว",
         sso_track_title: "ติดตามสถานะการเบิก",
+
+        // Reports
+        rep_title: "รายงานประจำวัน",
+        rep_subtitle: "สรุปยอดการเงินและจำนวนคนไข้ประจำวัน",
+        rep_export: "ส่งออก PDF",
+        rep_close_report: "ปิดยอดประจำวัน",
+        rep_stats_revenue: "รายได้รวม",
+        rep_stats_patients: "คนไข้ที่รับบริการ",
+        rep_stats_completed: "รักษาสำเร็จ",
+        rep_stats_profit: "กำไรคงเหลือ",
+        rep_appointments: "รายการนัดหมายวันนี้",
+        rep_payments: "สรุปช่องทางการชำระ",
+        rep_treatments: "สถิติหัตถการ",
+        rep_no_data: "ไม่มีข้อมูลในวันที่เลือก",
+        rep_closing: "กำลังปิดยอดประจำวัน...",
+        rep_closed_success: "ปิดยอดประจำวันเรียบร้อยแล้ว!",
+        rep_confirm_close: "คุณแน่ใจหรือไม่ว่าต้องการปิดยอดประจำวัน? การดำเนินการนี้จะทำการจัดเก็บข้อมูลของวันนี้",
     }
 };

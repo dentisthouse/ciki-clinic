@@ -125,7 +125,17 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
                                 required
                                 className="form-select"
                                 value={formData.patientId}
-                                onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+                                onChange={(e) => {
+                                    const pId = e.target.value;
+                                    setFormData({ ...formData, patientId: pId });
+                                    
+                                    // Auto-fill LINE and Phone for notification
+                                    const patient = patients.find(p => p.id === pId);
+                                    if (patient) {
+                                        setLineUserId(patient.lineUserId || patient.line_user_id || '');
+                                        setPatientPhone(patient.phone || '');
+                                    }
+                                }}
                             >
                                 <option value="">{t('apt_select_patient')}</option>
                                 {patients.map(p => (

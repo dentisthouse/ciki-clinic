@@ -46,44 +46,74 @@ const Sidebar = ({ isOpen, onClose }) => {
         return permissions[key]?.view || false;
     };
 
-    const navItems = [
-        { icon: LayoutDashboard, label: t('nav_dashboard'), path: '/', excludeRole: 'dentist' },
-        { icon: Users, label: t('nav_patients'), path: '/patients', pKey: 'patients' },
-        { icon: Calendar, label: t('nav_schedule'), path: '/schedule', pKey: 'schedule' },
-        { icon: Activity, label: t('nav_queue'), path: '/queue', role: 'receptionist' }, 
-        { icon: Layout, label: language === 'TH' ? 'สถานะคิวรายห้อง' : 'Floor Management', path: '/floor', pKey: 'schedule' },
-        { icon: TrendingUp, label: language === 'TH' ? 'รายงานประจำวัน' : 'Daily Report', path: '/daily-report', pKey: 'analytics', role: 'receptionist' },
-        { icon: Bell, label: language === 'TH' ? 'ตั้งค่าแจ้งเตือน' : 'Notification Settings', path: '/notification-settings', pKey: 'schedule', role: 'receptionist' },
-        { icon: Package, label: t('nav_inventory'), path: '/inventory', pKey: 'inventory' },
-        { icon: Truck, label: t('nav_labs'), path: '/labs', pKey: 'inventory' },
-
-        { icon: ShieldCheck, label: t('nav_sso'), path: '/sso', pKey: 'sso' },
-        { icon: CreditCard, label: t('nav_billing'), path: '/billing', pKey: 'billing' },
-        { icon: BarChart3, label: language === 'TH' ? 'วิเคราะห์พื้นฐาน' : 'Basic Analytics', path: '/analytics', pKey: 'analytics', excludeRole: 'dentist' },
-        { icon: Brain, label: language === 'TH' ? 'วิเคราะห์ขั้นสูง' : 'Advanced Analytics', path: '/advanced-analytics', pKey: 'analytics', excludeRole: 'dentist' },
-        { icon: MessageCircle, label: 'LINE Portal', path: '/line-portal', pKey: 'staff' },
-        { icon: UserCog, label: language === 'TH' ? 'พนักงาน' : 'Staff', path: '/staff', pKey: 'staff' },
-        { icon: Clock, label: language === 'TH' ? 'ลงเวลา' : 'Attendance', path: '/attendance', excludeRole: 'dentist' },
-        { icon: Wallet, label: language === 'TH' ? 'รายจ่าย' : 'Expenses', path: '/expenses', pKey: 'expenses' },
-        ...(isAdmin ? [{ icon: Shield, label: language === 'TH' ? 'ตั้งค่าสิทธิ์' : 'Role Settings', path: '/role-settings' }] : []),
-    ].filter(item => {
-        const hasPermission = canView(item.pKey);
-        const hasRole = !item.role || staff?.role === item.role;
-        const isExcluded = item.excludeRole && staff?.role === item.excludeRole;
-        
-        if (isAdmin) return true;
-        return hasPermission && hasRole && !isExcluded;
-    });
+    const groupedItems = [
+        {
+            category: t('nav_cat_overview'),
+            items: [
+                { icon: LayoutDashboard, label: t('nav_dashboard'), path: '/', excludeRole: 'dentist' },
+            ]
+        },
+        {
+            category: t('nav_cat_clinical'),
+            items: [
+                { icon: Users, label: t('nav_patients'), path: '/patients', pKey: 'patients' },
+                { icon: Calendar, label: t('nav_schedule'), path: '/schedule', pKey: 'schedule' },
+                { icon: Activity, label: t('nav_queue'), path: '/queue', role: 'receptionist' }, 
+                { icon: Layout, label: language === 'TH' ? 'สถานะคิวรายห้อง' : 'Floor Management', path: '/floor', pKey: 'schedule' },
+            ]
+        },
+        {
+            category: t('nav_cat_financial'),
+            items: [
+                { icon: CreditCard, label: t('nav_billing'), path: '/billing', pKey: 'billing' },
+                { icon: ShieldCheck, label: t('nav_sso'), path: '/sso', pKey: 'sso' },
+                { icon: TrendingUp, label: language === 'TH' ? 'รายงานประจำวัน' : 'Daily Report', path: '/daily-report', pKey: 'analytics', role: 'receptionist' },
+                { icon: Wallet, label: language === 'TH' ? 'รายจ่าย' : 'Expenses', path: '/expenses', pKey: 'expenses' },
+            ]
+        },
+        {
+            category: t('nav_cat_operations'),
+            items: [
+                { icon: Package, label: t('nav_inventory'), path: '/inventory', pKey: 'inventory' },
+                { icon: Truck, label: t('nav_labs'), path: '/labs', pKey: 'inventory' },
+            ]
+        },
+        {
+            category: t('nav_cat_analytics'),
+            items: [
+                { icon: BarChart3, label: language === 'TH' ? 'วิเคราะห์พื้นฐาน' : 'Basic Analytics', path: '/analytics', pKey: 'analytics', excludeRole: 'dentist' },
+                { icon: Brain, label: language === 'TH' ? 'วิเคราะห์ขั้นสูง' : 'Advanced Analytics', path: '/advanced-analytics', pKey: 'analytics', excludeRole: 'dentist' },
+            ]
+        },
+        {
+            category: t('nav_cat_system'),
+            items: [
+                { icon: MessageCircle, label: 'LINE Portal', path: '/line-portal', pKey: 'staff' },
+                { icon: UserCog, label: language === 'TH' ? 'พนักงาน' : 'Staff', path: '/staff', pKey: 'staff' },
+                { icon: Clock, label: language === 'TH' ? 'ลงเวลา' : 'Attendance', path: '/attendance', excludeRole: 'dentist' },
+            ]
+        }
+    ].map(group => ({
+        ...group,
+        items: group.items.filter(item => {
+            const hasPermission = canView(item.pKey);
+            const hasRole = !item.role || staff?.role === item.role;
+            const isExcluded = item.excludeRole && staff?.role === item.excludeRole;
+            
+            if (isAdmin) return true;
+            return hasPermission && hasRole && !isExcluded;
+        })
+    })).filter(group => group.items.length > 0);
 
     return (
-        <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{ background: 'white' }}>
+        <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{ background: 'white', display: 'flex', flexDirection: 'column' }}>
             {/* Brand */}
-            <div className="brand" style={{ padding: '2rem 1.5rem', borderBottom: '1px solid var(--neutral-50)' }}>
+            <div className="brand" style={{ padding: '1.5rem', borderBottom: '1px solid var(--neutral-50)' }}>
                 <div className="brand-logo-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
                     <img 
                         src="/logo.png" 
                         alt="Logo" 
-                        style={{ width: '100%', maxWidth: '140px', height: 'auto', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.05))' }} 
+                        style={{ width: '100%', maxWidth: '120px', height: 'auto', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.05))' }} 
                     />
                 </div>
 
@@ -96,11 +126,11 @@ const Sidebar = ({ isOpen, onClose }) => {
                         position: 'absolute',
                         right: '1rem',
                         top: '1.5rem',
-                        background: 'var(--neutral-50)',
-                        border: '1px solid var(--neutral-100)',
+                        background: 'var(--neutral-100)',
+                        border: 'none',
                         cursor: 'pointer',
                         padding: '0.4rem',
-                        color: 'var(--neutral-400)',
+                        color: 'var(--neutral-500)',
                         borderRadius: '12px'
                     }}
                 >
@@ -109,57 +139,107 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
 
             {/* Navigation */}
-            <nav className="nav-menu" style={{ padding: '1.5rem 0.75rem' }}>
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                            isActive ? 'nav-item active' : 'nav-item'
-                        }
-                        onClick={onClose}
-                    >
-                        <item.icon className="nav-icon" size={18} />
-                        <span style={{ fontSize: '0.9rem' }}>{item.label}</span>
-                        {item.path === '/inventory' && hasLowStock && (
-                            <span style={{
-                                position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)',
-                                width: '6px', height: '6px', background: 'var(--danger)', borderRadius: '50%',
-                                boxShadow: '0 0 0 2px white'
-                            }} />
-                        )}
-                    </NavLink>
+            <nav className="nav-menu" style={{ padding: '1.25rem 0.75rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {groupedItems.map((group) => (
+                    <div key={group.category} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <div style={{ 
+                            fontSize: '0.65rem', 
+                            fontWeight: 800, 
+                            color: 'var(--neutral-400)', 
+                            padding: '0 0.75rem', 
+                            marginBottom: '0.5rem',
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase'
+                        }}>
+                            {group.category}
+                        </div>
+                        {group.items.map((item) => (
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                className={({ isActive }) =>
+                                    isActive ? 'nav-item active' : 'nav-item'
+                                }
+                                onClick={onClose}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.75rem',
+                                    padding: '0.75rem',
+                                    borderRadius: '12px',
+                                    textDecoration: 'none',
+                                    position: 'relative',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <item.icon className="nav-icon" size={18} />
+                                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{item.label}</span>
+                                {item.path === '/inventory' && hasLowStock && (
+                                    <span style={{
+                                        position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)',
+                                        width: '6px', height: '6px', background: 'var(--danger)', borderRadius: '50%',
+                                        boxShadow: '0 0 0 2px white'
+                                    }} />
+                                )}
+                            </NavLink>
+                        ))}
+                    </div>
                 ))}
             </nav>
 
             {/* Footer */}
-            <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.25rem', background: 'transparent', borderTop: '1px solid var(--neutral-50)', display: 'grid', gap: '0.75rem' }}>
+            <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.25rem', background: 'white', borderTop: '1px solid var(--neutral-50)', display: 'grid', gap: '0.75rem' }}>
                 {isAdmin && (
                     <button 
                         onClick={clearAllData}
                         className="logout-btn" 
-                        style={{ background: '#fef2f2', color: '#dc2626', fontWeight: 800, border: '1.5px solid #fee2e2', marginBottom: '0.5rem' }}
+                        style={{ background: '#fef2f2', color: '#dc2626', fontWeight: 800, border: '1.5px solid #fee2e2', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', borderRadius: '12px', width: '100%', cursor: 'pointer' }}
                     >
-                        <X className="nav-icon" size={18} />
-                        <span>{language === 'TH' ? 'ล้างข้อมูลระบบ' : 'Reset System'}</span>
+                        <X size={18} />
+                        <span style={{ fontSize: '0.85rem' }}>{language === 'TH' ? 'ล้างข้อมูลระบบ' : 'Reset System'}</span>
                     </button>
                 )}
 
                 {staff && (
-                    <div style={{ padding: '0.75rem', background: 'var(--neutral-50)', borderRadius: '12px', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-600)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
+                    <div style={{ padding: '0.75rem', background: 'var(--neutral-50)', borderRadius: '14px', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ 
+                            width: 36, 
+                            height: 36, 
+                            borderRadius: '12px', 
+                            background: 'var(--primary-600)', 
+                            color: 'white', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            fontSize: '0.9rem', 
+                            fontWeight: 800,
+                            boxShadow: '0 4px 10px rgba(13, 148, 136, 0.2)'
+                        }}>
                             {staff.name?.charAt(0)}
                         </div>
                         <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--neutral-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{staff.name}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--neutral-400)', textTransform: 'capitalize' }}>{staff.role}</div>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--neutral-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{staff.name}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--neutral-500)', textTransform: 'capitalize', fontWeight: 600 }}>{staff.role}</div>
                         </div>
                     </div>
                 )}
 
-                <button onClick={logout} className="logout-btn" style={{ background: 'var(--neutral-50)', color: 'var(--neutral-500)', fontWeight: 700 }}>
-                    <LogOut className="nav-icon" size={18} />
-                    <span>{t('nav_signout')}</span>
+                <button onClick={logout} className="logout-btn" style={{ 
+                    background: 'var(--neutral-50)', 
+                    color: 'var(--neutral-600)', 
+                    fontWeight: 700, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    padding: '0.75rem', 
+                    border: 'none', 
+                    borderRadius: '12px', 
+                    width: '100%', 
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                }}>
+                    <LogOut size={18} />
+                    <span style={{ fontSize: '0.85rem' }}>{t('nav_signout')}</span>
                 </button>
             </div>
 
@@ -169,6 +249,20 @@ const Sidebar = ({ isOpen, onClose }) => {
                     .mobile-close-btn {
                         display: flex !important;
                     }
+                }
+                .nav-item {
+                    color: var(--neutral-500);
+                }
+                .nav-item:hover {
+                    background: var(--neutral-50);
+                    color: var(--primary-600);
+                }
+                .nav-item.active {
+                    background: var(--primary-50) !important;
+                    color: var(--primary-700) !important;
+                }
+                .nav-item.active .nav-icon {
+                    color: var(--primary-600);
                 }
             `}</style>
         </aside>

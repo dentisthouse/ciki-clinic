@@ -4,7 +4,9 @@ import {
     Calendar, CheckCircle2, Clock, Bell, User, LogOut,
     Stethoscope, Sparkles, Heart, Star, XCircle, Check,
     Loader2, Phone, ArrowLeft, ShieldCheck, Mail, MapPin,
-    CreditCard, ChevronRight, History, Settings, MonitorSmartphone
+    CreditCard, ChevronRight, History, Settings, MonitorSmartphone,
+    Download, Home, Percent, Newspaper, MessageSquare, Menu, HelpCircle,
+    Activity, FlaskConical, Droplets
 } from "lucide-react";
 import "./LinePortal.css";
 import { useData } from "../context/DataContext";
@@ -31,6 +33,18 @@ const TIME_SLOTS = [
     '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
 ];
 const getBranches = (pt) => [pt('branch_prachinburi')];
+
+// Mock data for new sections
+const PROMOTIONS = [
+    { id: 1, title: 'อุดฟันราคาพิเศษ', price: '570', img: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=500&h=300&fit=crop' },
+    { id: 2, title: 'จัดฟันใส Invisalign', price: '49,000', img: 'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?w=500&h=300&fit=crop' },
+];
+
+const NEWS = [
+    { id: 1, title: 'สุขภาพช่องปากที่ดีเป็นอย่างไร', img: 'https://images.unsplash.com/photo-1588776814546-1ffce47267a5?w=300&h=300&fit=crop' },
+    { id: 2, title: 'ขูดหินปูนสำคัญอย่างไร?', img: 'https://images.unsplash.com/photo-1445527815219-ecbfec67492e?w=300&h=300&fit=crop' },
+    { id: 3, title: 'การดูแลหลังถอนฟัน', img: 'https://images.unsplash.com/photo-1468493858157-0da44aaf1d13?w=300&h=300&fit=crop' },
+];
 
 const LinePortal = () => {
     const { language, setLanguage } = useLanguage();
@@ -391,43 +405,53 @@ const LinePortal = () => {
     };
 
     const handleBooking = async () => {
+        if (isBooking) return; // Prevent double clicks
+        
         if (!bookingService || !bookingTime) {
             alert(pt('err_sel_service'));
             return;
         }
 
-        const service = getDentalServices(pt).find(s => s.id === bookingService);
-        
-        const getDoctorForService = (serviceId) => {
-            if (['braces', 'retainer'].includes(serviceId)) return 'หมออ้อม'; // Default Ortho to Dr. Aom
-            if (['veneers', 'extraction'].includes(serviceId)) return 'หมอบิ๊ก'; // Default Extraction to Dr. Big
-            return 'หมอต้อง'; // Default General to Dr. Tong
-        };
+        setIsBooking(true);
+        try {
+            const service = getDentalServices(pt).find(s => s.id === bookingService);
+            
+            const getDoctorForService = (serviceId) => {
+                if (['braces', 'retainer'].includes(serviceId)) return 'หมออ้อม'; // Default Ortho to Dr. Aom
+                if (['veneers', 'extraction'].includes(serviceId)) return 'หมอบิ๊ก'; // Default Extraction to Dr. Big
+                return 'หมอต้อง'; // Default General to Dr. Tong
+            };
 
-        const newAppointment = {
-            patientId: currentUser?.id,
-            patientName: currentUser?.name || 'ลูกค้า LINE',
-            phone: currentUser?.phone,
-            date: bookingDate,
-            time: bookingTime,
-            treatment: service?.name,
-            dentist: getDoctorForService(bookingService),
-            branch: bookingBranch,
-            type: 'LINE Booking',
-            status: 'Pending'
-        };
+            const newAppointment = {
+                patientId: currentUser?.id,
+                patientName: currentUser?.name || 'ลูกค้า LINE',
+                phone: currentUser?.phone,
+                date: bookingDate,
+                time: bookingTime,
+                treatment: service?.name,
+                dentist: getDoctorForService(bookingService),
+                branch: bookingBranch,
+                type: 'LINE Booking',
+                status: 'Pending'
+            };
 
-        const bookingResult = await addAppointment(newAppointment);
-        
-        if (bookingResult && !bookingResult.success) {
-            // Already alerted in DataContext
-            return;
+            const bookingResult = await addAppointment(newAppointment);
+            
+            if (bookingResult && !bookingResult.success) {
+                // Already alerted in DataContext
+                return;
+            }
+            
+            alert(`${pt('book_success_alert')} ${service?.name} ${bookingDate} ${bookingTime}`);
+
+            loadUserAppointments(currentUser);
+            setPage('booking-confirm');
+        } catch (error) {
+            console.error("Booking failed:", error);
+            alert("จองไม่สำเร็จกรุณาลองใหม่อีกครั้ง");
+        } finally {
+            setIsBooking(false);
         }
-        
-        alert(`${pt('book_success_alert')} ${service?.name} ${bookingDate} ${bookingTime}`);
-
-        loadUserAppointments(currentUser);
-        setPage('booking-confirm');
     };
 
     const LineHeader = ({ title, onBack, showProfile = true }) => (
@@ -744,134 +768,137 @@ const LinePortal = () => {
         );
     }
 
-    // ===== HOME PAGE =====
+    // ===== HOME PAGE V2 =====
     if (page === 'home') {
-        const nextAppointment = userAppointments.find(a => a.status !== 'Completed');
-
         return (
             <div className="lp-container">
-                <LineHeader title={pt('dashboard')} showProfile={true} />
-                
-                <div className="lp-content">
-                    {/* Premium Member Card */}
-                    <div className="lp-member-card">
-                        <div className="shiny-effect"></div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
-                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <div style={{ 
-                                    width: '60px', 
-                                    height: '60px', 
-                                    borderRadius: '50%', 
-                                    overflow: 'hidden',
-                                    border: '2px solid rgba(255,255,255,0.3)',
-                                    background: 'white' 
-                                }}>
-                                    {linePictureUrl ? (
-                                        <img src={linePictureUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Profile" />
-                                    ) : (
-                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--lp-primary)', color: 'white', fontWeight: 700, fontSize: '1.5rem' }}>
-                                            {currentUser?.name?.charAt(0) || 'C'}
-                                        </div>
-                                    )}
-                                </div>
-                                <div style={{ color: 'white' }}>
-                                    <h3 style={{ color: 'white', fontSize: '1.25rem', fontWeight: 900, marginBottom: '0.1rem', letterSpacing: '-0.02em' }}>
-                                        {currentUser?.name || pt('guest_user')}
-                                    </h3>
-                                    <div style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: 0.9, fontSize: '0.75rem' }}>
-                                        <ShieldCheck size={12} color="#10b981" />
-                                        <span style={{ color: 'white' }}>{pt('verified_patient')}</span>
+                {/* Header Teal */}
+                <div className="lp-header-main">
+                    <h2>{language === 'TH' ? 'หน้าหลัก' : 'Dashboard'}</h2>
+                </div>
+
+                {/* Split Profile Card */}
+                <div className="lp-profile-card-wrapper animate-pop">
+                    <div className="lp-profile-card">
+                        <div className="lp-profile-top">
+                            <img 
+                                src={linePictureUrl || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop"} 
+                                className="lp-profile-img" 
+                                alt="Profile" 
+                            />
+                            <div className="lp-profile-info-main">
+                                <p style={{ marginBottom: '2px', opacity: 0.8, fontSize: '0.9rem' }}>CN {currentUser?.hn || '620200'}</p>
+                                <h3>คุณ{currentUser?.name || pt('guest_user')}</h3>
+                                
+                                <div className="lp-profile-details-grid">
+                                    <div className="lp-detail-item">
+                                        <span style={{ opacity: 0.7 }}>เลขบัตรประชาชน</span>
+                                        <span>1924*************</span>
+                                    </div>
+                                    <div className="lp-detail-item">
+                                        <Droplets size={12} color="#ff4d4d" />
+                                        <span>กรุ๊ปเลือด B</span>
+                                    </div>
+                                    <div className="lp-detail-item">
+                                        <span>อายุ 24 ปี</span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="lp-pill" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                {pt('tier_' + (currentUser?.tier?.toLowerCase() || 'standard'))}
-                            </div>
                         </div>
-                        
-                        <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative', zIndex: 1 }}>
-                            <div>
-                                <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.6, marginBottom: '0.25rem' }}>{pt('reward_points')}</p>
-                                <p style={{ fontSize: '2.25rem', fontWeight: 900, display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-                                    {(currentUser?.points || 0).toLocaleString()} 
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.8 }}>{pt('pts')}</span>
-                                </p>
+                        <div className="lp-profile-bottom">
+                            <div className="lp-contact-item">
+                                <Phone size={14} className="lp-contact-icon" />
+                                <span>{currentUser?.phone || '09x-xxx-xxxx'}</span>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <CreditCard size={24} style={{ opacity: 0.5 }} />
+                            <div className="lp-contact-item">
+                                <Mail size={14} className="lp-contact-icon" />
+                                <span>{currentUser?.email || 'patient@email.com'}</span>
                             </div>
+                            <div className="lp-contact-item">
+                                <Calendar size={14} className="lp-contact-icon" />
+                                <span>เริ่มใช้บริการ 20 ม.ค. 2560</span>
+                            </div>
+                            
+                            <button className="lp-btn-download">
+                                <Download size={14} />
+                                ดาวน์โหลดเอกสาร
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    {/* Quick Actions Grid */}
-                    <div className="lp-grid-actions">
-                        {[
-                            { label: pt('booking'), icon: Calendar, pg: 'booking' },
-                            { label: pt('services'), icon: Stethoscope, pg: 'services' },
-                            { label: pt('timeline'), icon: History, pg: 'appointments' },
-                        ].map(item => (
-                            <button key={item.label} onClick={() => setPage(item.pg)} className="lp-action-btn" style={{ border: 'none' }}>
-                                <div className="lp-icon-circle">
-                                    <item.icon size={24} />
+                {/* Promotions Section */}
+                <div className="lp-section">
+                    <div className="lp-section-header">
+                        <h3 className="lp-section-title">{language === 'TH' ? 'โปรโมชั่น' : 'Promotions'}</h3>
+                        <button className="lp-btn-see-all">
+                            <MessageSquare size={12} />
+                            อ่านทั้งหมด
+                        </button>
+                    </div>
+                    <div className="lp-promo-scroll">
+                        {PROMOTIONS.map(promo => (
+                            <div key={promo.id} className="lp-promo-card">
+                                <img src={promo.img} alt={promo.title} />
+                                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', padding: '1rem', color: 'white' }}>
+                                    <p style={{ fontSize: '0.8rem', fontWeight: 600 }}>{promo.title}</p>
+                                    <p style={{ fontWeight: 900 }}>ราคาเริ่มต้นที่ {promo.price} บาท</p>
                                 </div>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--lp-text-main)' }}>{item.label}</span>
-                            </button>
+                            </div>
                         ))}
                     </div>
+                </div>
 
-                    {/* Next Appointment Section */}
-                    {nextAppointment && (
-                        <div className="lp-card lp-glass" style={{ border: 'none', background: 'white' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                <h4 style={{ fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Bell size={16} color="var(--lp-primary)" />
-                                    Next Appointment
-                                </h4>
-                                <div className="lp-pill" style={{ background: '#ecfdf5', color: '#059669', fontSize: '0.65rem' }}>
-                                    Confirmed
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--lp-background)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Clock size={20} color="var(--lp-secondary)" />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <p style={{ fontWeight: 700, fontSize: '1rem' }}>{nextAppointment.treatment}</p>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--lp-text-muted)' }}>{nextAppointment.date} at {nextAppointment.time}</p>
-                                </div>
-                                <ChevronRight size={18} style={{ color: '#ccc' }} />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Services Preview */}
-                    <div style={{ marginTop: '2.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                            <h3 style={{ fontWeight: 900, fontSize: '1.1rem' }}>{pt('premium_services')}</h3>
-                            <button onClick={() => setPage('services')} style={{ fontSize: '0.85rem', color: 'var(--lp-secondary)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
-                                {pt('see_all')}
-                            </button>
-                        </div>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            {getDentalServices(pt).slice(0, 3).map(service => (
-                                <div key={service.id} onClick={() => { setBookingService(service.id); setPage('booking'); }} className="lp-service-card" style={{ cursor: 'pointer' }}>
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--lp-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <service.icon size={22} />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <p style={{ fontWeight: 800, fontSize: '0.95rem' }}>{service.name}</p>
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--lp-text-muted)' }}>{service.duration}</p>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <p style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--lp-primary)' }}>
-                                            ฿{service.price.toLocaleString()}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                {/* News Section */}
+                <div className="lp-section">
+                    <div className="lp-section-header">
+                        <h3 className="lp-section-title">{language === 'TH' ? 'ข่าวสาร' : 'News'}</h3>
+                        <button className="lp-btn-see-all">
+                            <MessageSquare size={12} />
+                            อ่านทั้งหมด
+                        </button>
                     </div>
+                    <div className="lp-news-grid">
+                        {NEWS.map(n => (
+                            <div key={n.id} className="lp-news-card">
+                                <div className="lp-news-thumb">
+                                    <img src={n.img} alt={n.title} />
+                                </div>
+                                <div style={{ padding: '0.75rem' }}>
+                                    <p style={{ fontSize: '0.7rem', fontWeight: 800, lineHeight: 1.2 }}>{n.title}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Navigation Bottom */}
+                <div className="lp-bottom-nav">
+                    <button className={`lp-nav-item ${page === 'home' ? 'active' : ''}`} onClick={() => setPage('home')}>
+                        <Home size={22} />
+                        <span>หน้าหลัก</span>
+                    </button>
+                    <button className="lp-nav-item">
+                        <div className="lp-nav-badge">1</div>
+                        <Percent size={22} />
+                        <span>โปรโมชั่น</span>
+                    </button>
+                    
+                    <button className="lp-nav-item lp-nav-fab" onClick={() => setPage('booking')}>
+                        <div className="lp-nav-fab-inner">
+                            <Calendar size={24} />
+                        </div>
+                    </button>
+
+                    <button className="lp-nav-item">
+                        <div className="lp-nav-badge">1</div>
+                        <Bell size={22} />
+                        <span>แจ้งเตือน</span>
+                    </button>
+                    <button className="lp-nav-item" onClick={() => setPage('settings')}>
+                        <User size={22} />
+                        <span>ตั้งค่า</span>
+                    </button>
                 </div>
             </div>
         );
@@ -1022,10 +1049,15 @@ const LinePortal = () => {
                         <button
                             className="lp-btn-primary"
                             onClick={handleBooking}
-                            disabled={!bookingService || !bookingTime}
-                            style={{ marginTop: '1rem', height: '4rem' }}
+                            disabled={!bookingService || !bookingTime || isBooking}
+                            style={{ 
+                                marginTop: '1rem', 
+                                height: '4rem',
+                                opacity: isBooking ? 0.7 : 1,
+                                filter: isBooking ? 'grayscale(0.5)' : 'none'
+                            }}
                         >
-                            {pt('confirm_booking')}
+                            {isBooking ? 'Processing...' : pt('confirm_booking')}
                         </button>
                     </div>
                 </div>

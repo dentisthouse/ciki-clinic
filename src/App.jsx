@@ -21,14 +21,12 @@ import LinePortal from './pages/LinePortal';
 import Attendance from './pages/Attendance';
 import Staff from './pages/Staff';
 import Expenses from './pages/Expenses';
-import RoleSettings from './pages/RoleSettings';
 import CustomerRelationship from './pages/CustomerRelationship';
 
 import HelpCenter from './pages/HelpCenter';
 import QueueDisplay from './pages/QueueDisplay';
 import FloorManagement from './pages/FloorManagement';
 import DailyReport from './pages/DailyReport';
-import NotificationSettings from './pages/NotificationSettings';
 
 import { AuthProvider } from './context/AuthContext';
 import AuthGuard from './components/System/AuthGuard';
@@ -81,9 +79,7 @@ function App() {
                         <Route path="staff" element={<Staff />} />
                         <Route path="floor" element={<FloorManagement />} />
                         <Route path="daily-report" element={<DailyReport />} />
-                        <Route path="notification-settings" element={<NotificationSettings />} />
                         <Route path="expenses" element={<Expenses />} />
-                        <Route path="role-settings" element={<RoleSettings />} />
                         <Route path="crm" element={<CustomerRelationship />} />
 
                         <Route path="help" element={<HelpCenter />} />

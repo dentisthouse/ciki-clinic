@@ -16,6 +16,7 @@ import OrthoChartTab from '../components/Ortho/OrthoChartTab';
 import PhotoGalleryTab from '../components/Ortho/PhotoGalleryTab';
 import InstallmentPlan from '../components/Billing/InstallmentPlan';
 import ImagingTab from '../components/EHR/ImagingTab';
+import TreatmentPlanTab from '../components/EHR/TreatmentPlanTab';
 import LoadingSpinner from '../components/System/LoadingSpinner';
 import DocumentModal from '../components/Documents/DocumentModal';
 
@@ -99,20 +100,20 @@ const InfoItem = ({ icon: Icon, label, value }) => (
 // MAIN COMPONENT
 const PatientProfile = () => {
     const { t, language } = useLanguage();
-    const { permissions } = useAuth();
+    const { permissions, isAdmin } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const { patients, updatePatient } = useData();
     const patient = patients.find(p => p.id === id);
     const [searchParams] = useSearchParams();
 
-    // Check permissions
-    const canViewClinical = permissions?.patients?.clinical || false;
-    const canViewHistory = permissions?.patients?.history || false;
-    const canViewBilling = permissions?.billing?.view || false;
+    // Check permissions (Bypass for Admin/Owner)
+    const canViewClinical = isAdmin || permissions?.patients?.clinical || false;
+    const canViewHistory = isAdmin || permissions?.patients?.history || false;
+    const canViewBilling = isAdmin || permissions?.billing?.view || false;
 
     const [activeTab, setActiveTab] = useState(
-        searchParams.get('tab') || (canViewClinical ? 'plans' : 'billing')
+        searchParams.get('tab') || (canViewClinical ? 'history' : 'billing')
     );
 
     // Sync tab when permissions finish loading (Prevent getting stuck on billing tab)
@@ -191,6 +192,7 @@ const PatientProfile = () => {
 
     // Only show tabs the user has permission for
     const tabs = [
+        canViewClinical && { id: 'plans', label: language === 'TH' ? 'แผนการรักษา' : 'Treatment Plan', icon: FileText },
         canViewClinical && { id: 'ortho', label: language === 'TH' ? 'จัดฟัน' : 'Ortho Chart', icon: Ruler },
         canViewClinical && { id: 'gallery', label: language === 'TH' ? 'รูปถ่าย' : 'Gallery', icon: ImageIcon },
         canViewClinical && { id: 'imaging', label: t('prof_imaging'), icon: ImageIcon },
@@ -309,6 +311,9 @@ const PatientProfile = () => {
 
                     {/* Tab Content */}
                     <div style={{ background: 'white', border: '1px solid var(--neutral-200)', borderTop: 'none', borderRadius: '0 0 16px 16px', padding: '2rem', minHeight: '500px' }}>
+                        {activeTab === 'plans' && (
+                            <TreatmentPlanTab patient={patient} language={language} onUpdateToothStatus={handleUpdateToothStatus} />
+                        )}
                         {activeTab === 'ortho' && (
                             <OrthoChartTab patient={patient} language={language} onUpdate={updatePatient} />
                         )}

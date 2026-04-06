@@ -3,7 +3,8 @@
 // สำหรับ CIKI Dental Clinic
 // ==========================================
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+const API_BASE_URL = `${SERVER_URL}/api`;
 
 // สร้าง OTP แบบสุ่ม 6 หลัก
 export const generateOTP = () => {
