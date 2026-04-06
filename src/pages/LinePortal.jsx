@@ -449,53 +449,28 @@ const LinePortal = () => {
         }
     };
 
-    const LineHeader = ({ title, onBack, showProfile = true }) => (
-        <div className="lp-header lp-glass">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {onBack && (
-                    <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}>
-                        <ArrowLeft size={22} color="var(--lp-text-main)" />
-                    </button>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <img src="/logo.png" className="lp-logo" alt={pt("ciki_dental")} />
-                    <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.015em' }}>{pt("ciki_dental")}</span>
-                </div>
-            </div>
-            
-            {showProfile && (
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <button 
-                        onClick={() => {
-                            if (language === 'TH') setLanguage('EN');
-                            else if (language === 'EN') setLanguage('CN');
-                            else setLanguage('TH');
-                        }}
-                        style={{ 
-                            background: 'white', 
-                            border: '1px solid #eee', 
-                            cursor: 'pointer', 
-                            padding: '0.4rem 0.6rem', 
-                            borderRadius: '12px',
-                            fontWeight: 800,
-                            color: 'var(--lp-text-main)',
-                            fontSize: '0.8rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            minWidth: '40px'
-                        }}
-                    >
-                        {language === 'CN' ? '中文' : language === 'EN' ? 'EN' : 'TH'}
-                    </button>
-                    <button 
-                        onClick={handleLogout}
-                        style={{ background: 'white', border: '1px solid #eee', cursor: 'pointer', padding: '0.5rem', borderRadius: '12px', display: 'flex', alignItems: 'center' }}
-                    >
-                        <LogOut size={16} color="#ef4444" />
-                    </button>
-                </div>
+    const LineHeader = ({ title, onBack }) => (
+        <div className="lp-header-main" style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            position: 'relative',
+            padding: '1.25rem 1rem 1.25rem 1rem'
+        }}>
+            {onBack && (
+                <button 
+                    onClick={onBack}
+                    style={{ 
+                        position: 'absolute', left: '1rem', 
+                        background: 'none', border: 'none', color: 'white',
+                        padding: '0.4rem', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center'
+                    }}
+                >
+                    <ArrowLeft size={22} />
+                </button>
             )}
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{title}</h2>
         </div>
     );
 
@@ -768,8 +743,44 @@ const LinePortal = () => {
         return (
             <div className="lp-container">
                 {/* Header Teal */}
-                <div className="lp-header-main">
+                <div className="lp-header-main" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
                     <h2>{language === 'TH' ? 'หน้าหลัก' : 'Dashboard'}</h2>
+                    
+                    {/* Top Right Notification */}
+                    <button 
+                        onClick={() => setPage('appointments')}
+                        style={{ 
+                            position: 'absolute', right: '1rem', top: '1.25rem',
+                            background: 'none', border: 'none', color: 'white',
+                            padding: '0.5rem', cursor: 'pointer'
+                        }}
+                    >
+                        <div style={{ position: 'relative' }}>
+                            <Bell size={24} />
+                            {userAppointments.length > 0 && (
+                                <div style={{
+                                    position: 'absolute', top: -4, right: -4,
+                                    background: '#ef4444', border: '2px solid white',
+                                    borderRadius: '50%', width: 18, height: 18,
+                                    fontSize: '0.65rem', fontWeight: 900,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>
+                                    {userAppointments.length}
+                                </div>
+                            )}
+                        </div>
+                    </button>
+                    
+                    <button 
+                        onClick={handleLogout}
+                        style={{ 
+                            position: 'absolute', left: '1rem', top: '1.25rem',
+                            background: 'none', border: 'none', color: 'white',
+                            opacity: 0.8, cursor: 'pointer'
+                        }}
+                    >
+                        <LogOut size={20} />
+                    </button>
                 </div>
 
                 {/* Split Profile Card */}
@@ -863,10 +874,9 @@ const LinePortal = () => {
                         </div>
                     </button>
 
-                    <button className={`lp-nav-item ${page === 'appointments' ? 'active' : ''}`} onClick={() => setPage('appointments')}>
-                        {userAppointments.length > 0 && <div className="lp-nav-badge">{userAppointments.length}</div>}
-                        <Bell size={22} />
-                        <span>แจ้งเตือน</span>
+                    <button className="lp-nav-item" onClick={handleLogout} style={{ opacity: 0.5 }}>
+                        <Menu size={22} />
+                        <span>ตัวเลือก</span>
                     </button>
                 </div>
             </div>
@@ -879,33 +889,29 @@ const LinePortal = () => {
             <div className="lp-container">
                 <LineHeader title={pt('premium_services')} onBack={() => setPage('home')} />
                 
-                <div className="lp-content">
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '1rem', flex: 1, overflowY: 'auto' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {getDentalServices(pt).map(service => (
-                            <div key={service.id} onClick={() => { setBookingService(service.id); setPage('booking'); }} className="lp-service-card" style={{ padding: '1.25rem', cursor: 'pointer' }}>
+                            <div key={service.id} onClick={() => { setBookingService(service.id); setPage('booking'); }} 
+                                className="lp-service-card" 
+                                style={{ margin: 0, padding: '1rem', borderRadius: '1.25rem', border: '1px solid #f1f5f9' }}
+                            >
                                 <div style={{ 
-                                    width: '56px', 
-                                    height: '56px', 
-                                    background: 'rgba(59, 130, 246, 0.1)', 
-                                    borderRadius: '16px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'var(--lp-secondary)'
+                                    width: '46px', height: '46px', 
+                                    background: 'var(--lp-primary-light)', 
+                                    borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--lp-primary)'
                                 }}>
-                                    <service.icon size={28} />
+                                    <service.icon size={22} />
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <p style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--lp-text-main)' }}>{service.name}</p>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--lp-text-muted)', marginTop: '2px' }}>{service.duration}</p>
+                                    <p style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--lp-text-main)' }}>{service.name}</p>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--lp-text-muted)', marginTop: '2px' }}>{service.duration}</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <p style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--lp-primary)' }}>
+                                    <p style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--lp-primary)' }}>
                                         ฿{service.price.toLocaleString()}
                                     </p>
-                                    <button className="lp-btn-accent" style={{ marginTop: '0.75rem', padding: '0.5rem 1rem', fontSize: '0.75rem', borderRadius: '10px' }}>
-                                        Book Now
-                                    </button>
+                                    <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 800 }}>จองเลย</span>
                                 </div>
                             </div>
                         ))}
@@ -921,109 +927,65 @@ const LinePortal = () => {
             <div className="lp-container">
                 <LineHeader title={pt('book_apt')} onBack={() => setPage('home')} />
                 
-                <div className="lp-content">
-                    <div className="lp-glass" style={{ borderRadius: '2rem', padding: '1.5rem', marginBottom: '1.5rem' }}>
-                        {/* Select Service */}
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Stethoscope size={16} color="var(--lp-primary)" />
+                <div style={{ padding: '1.25rem', flex: 1, overflowY: 'auto' }}>
+                    <div style={{ background: 'white', borderRadius: '1.5rem', padding: '1.25rem', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                        <div style={{ marginBottom: '1.25rem' }}>
+                            <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.5rem', display: 'block' }}>
                                 {pt('select_service_label')}
                             </label>
-                            <select 
-                                value={bookingService}
-                                onChange={e => setBookingService(e.target.value)}
-                                className="lp-input"
-                                style={{ paddingLeft: '1.25rem' }}
-                            >
+                            <select value={bookingService} onChange={e => setBookingService(e.target.value)} className="lp-input-v2">
                                 <option value="">{pt('choose_treatment')}</option>
                                 {getDentalServices(pt).map(service => (
-                                    <option key={service.id} value={service.id}>
-                                        {service.name} (฿{service.price.toLocaleString()})
-                                    </option>
+                                    <option key={service.id} value={service.id}>{service.name} (฿{service.price.toLocaleString()})</option>
                                 ))}
                             </select>
                         </div>
 
-                        {/* Select Branch */}
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <MapPin size={16} color="var(--lp-secondary)" />
+                        <div style={{ marginBottom: '1.25rem' }}>
+                            <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.5rem', display: 'block' }}>
                                 {pt('select_branch_label')}
                             </label>
-                            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', padding: '0.5rem 0.25rem 1.5rem 0.25rem' }}>
-                                {getBranches(pt).map(branch => (
-                                    <button
-                                        key={branch}
-                                        onClick={() => setBookingBranch(branch)}
-                                        className={`lp-time-slot ${bookingBranch === branch ? 'selected' : ''}`}
-                                        style={{ width: 'auto', padding: '0.75rem 1.5rem', flex: '0 0 auto', aspectRatio: 'auto' }}
+                            <select value={bookingBranch} onChange={e => setBookingBranch(e.target.value)} className="lp-input-v2">
+                                {getBranches(pt).map(b => <option key={b} value={b}>{b}</option>)}
+                            </select>
+                        </div>
+
+                        <div style={{ marginBottom: '1.25rem' }}>
+                            <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.5rem', display: 'block' }}>
+                                {pt('sel_date')}
+                            </label>
+                            <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} className="lp-input-v2" min={new Date().toISOString().split('T')[0]} />
+                        </div>
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '1rem', display: 'block' }}>
+                                {pt('sel_time')}
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                                {TIME_SLOTS.map(t => (
+                                    <button key={t} onClick={() => setBookingTime(t)}
+                                        style={{
+                                            padding: '0.65rem 0.25rem', borderRadius: '0.75rem', fontSize: '0.75rem', fontWeight: 800,
+                                            border: '1.5px solid #f1f5f9',
+                                            background: bookingTime === t ? 'var(--lp-primary)' : '#f8fafc',
+                                            color: bookingTime === t ? 'white' : 'var(--lp-text-main)',
+                                            transition: 'all 0.2s ease'
+                                        }}
                                     >
-                                        {branch}
+                                        {t}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Select Date */}
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Calendar size={16} color="var(--lp-primary)" />
-                                {pt('choose_date')}
-                            </label>
-                            <input 
-                                type="date"
-                                className="lp-input"
-                                style={{ paddingLeft: '1.25rem' }}
-                                value={bookingDate}
-                                onChange={e => setBookingDate(e.target.value)}
-                                min={new Date().toISOString().split('T')[0]}
-                            />
-                        </div>
-
-                        {/* Select Time */}
-                        <div style={{ marginBottom: '2rem' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Clock size={16} color="var(--lp-secondary)" />
-                                {pt('avail_slots')}
-                            </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.65rem' }}>
-                                {TIME_SLOTS.map(time => {
-                                    const isTaken = appointments.some(apt => {
-                                        const aptTime = apt.time ? String(apt.time).substring(0, 5) : '';
-                                        const targetTime = time.substring(0, 5);
-                                        return apt.date === bookingDate && aptTime === targetTime && apt.status !== 'Cancelled';
-                                    });
-
-                                    return (
-                                        <button
-                                            key={time}
-                                            onClick={() => !isTaken && setBookingTime(time)}
-                                            className={`lp-time-slot ${bookingTime === time ? 'selected' : ''} ${isTaken ? 'taken' : ''}`}
-                                            disabled={isTaken}
-                                            style={isTaken ? { 
-                                                opacity: 0.4, 
-                                                cursor: 'not-allowed', 
-                                                background: '#f1f5f9',
-                                                textDecoration: 'line-through' 
-                                            } : {}}
-                                        >
-                                            {time}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Submit Button */}
-                        <button
-                            className="lp-btn-primary"
-                            onClick={handleBooking}
+                        <button 
+                            className="lp-btn-accent"
                             disabled={!bookingService || !bookingTime || isBooking}
+                            onClick={handleBooking}
                             style={{ 
-                                marginTop: '1rem', 
-                                height: '4rem',
-                                opacity: isBooking ? 0.7 : 1,
-                                filter: isBooking ? 'grayscale(0.5)' : 'none'
+                                width: '100%', padding: '1.25rem', borderRadius: '1rem', 
+                                fontSize: '1.1rem', opacity: isBooking ? 0.7 : 1, transition: 'all 0.2s ease',
+                                boxShadow: '0 10px 20px rgba(16, 185, 129, 0.15)'
                             }}
                         >
                             {isBooking ? 'Processing...' : pt('confirm_booking')}
