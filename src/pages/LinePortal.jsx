@@ -42,7 +42,13 @@ const NEWS = [
 
 const LinePortal = () => {
     const { language, setLanguage } = useLanguage();
-    const pt = (key) => PORTAL_TRANS[language]?.[key] || PORTAL_TRANS["EN"]?.[key] || key;
+    const pt = (key) => {
+        const currentVal = PORTAL_TRANS[language]?.[key];
+        if (currentVal !== undefined) return currentVal;
+        const fallbackVal = PORTAL_TRANS["EN"]?.[key];
+        if (fallbackVal !== undefined) return fallbackVal;
+        return key;
+    };
     const { patients, appointments, addAppointment } = useData();
     const [dbPatients, setDbPatients] = useState([]);
     
@@ -1014,7 +1020,7 @@ const LinePortal = () => {
                                 color: 'white', border: 'none', fontWeight: 900
                             }}
                         >
-                            {isBooking ? 'Processing...' : pt('confirm_booking')}
+                            {isBooking ? pt('processing') : pt('confirm_booking')}
                         </button>
                     </div>
 
@@ -1054,7 +1060,7 @@ const LinePortal = () => {
                     
                     <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.75rem' }}>{pt('booking_success')}</h2>
                     <p style={{ color: 'var(--lp-text-muted)', textAlign: 'center', marginBottom: '2.5rem', fontSize: '0.9rem' }}>
-                        Your appointment has been scheduled. Our team will contact you shortly.
+                        {pt('booking_success_desc')}
                     </p>
 
                     <div style={{ 
@@ -1081,7 +1087,7 @@ const LinePortal = () => {
                     </div>
 
                     <button className="lp-btn-primary" onClick={() => setPage('home')}>
-                        Back to Dashboard
+                        {pt('back_to_dashboard_btn')}
                     </button>
                 </div>
             </div>
@@ -1116,7 +1122,7 @@ const LinePortal = () => {
                                 onClick={() => setPage('booking')}
                                 style={{ marginTop: '1.5rem' }}
                             >
-                                Book Your First Slot
+                                    {pt('book_first')}
                             </button>
                         </div>
                     ) : (
@@ -1146,7 +1152,8 @@ const LinePortal = () => {
                                                           apt.status === 'Pending' ? '#d97706' : '#6b7280',
                                                     fontSize: '0.65rem'
                                                 }}>
-                                                    {apt.status}
+                                                    {apt.status === 'Confirmed' ? pt('status_confirmed') : 
+                                                     apt.status === 'Pending' ? pt('status_pending') : apt.status}
                                                 </div>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--lp-text-muted)', fontSize: '0.8rem', marginTop: '0.5rem' }}>

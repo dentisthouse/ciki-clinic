@@ -41,7 +41,7 @@ export const PORTAL_TRANS = {
         "book_apt_desc": "Schedule your next visit easily.",
 
         "our_services": "Our Services",
-        "premium_services": "Premium Dental Services",
+        "premium_services": "Dental Services",
         "book_now": "Book Now",
 
         "book_apt": "Book Appointment",
@@ -114,6 +114,10 @@ export const PORTAL_TRANS = {
         "not_specified": "Not Specified",
         "hn_label": "HN:",
         "greeting_prefix": "",
+        "sel_date": "SELECT DATE",
+        "sel_time": "SELECT TIME",
+        "processing": "Processing...",
+        "back_to_dashboard_btn": "Back to Dashboard",
     },
     TH: {
         "ciki_dental": "บ้านหมอฟัน",
@@ -157,7 +161,7 @@ export const PORTAL_TRANS = {
         "book_apt_desc": "เลือกวันเวลาที่สะดวกได้ทันที",
 
         "our_services": "บริการของเรา",
-        "premium_services": "บริการทันตกรรมพรีเมียม",
+        "premium_services": "บริการทันตกรรม",
         "book_now": "จองเลย",
 
         "book_apt": "จองคิวทำฟัน",
@@ -230,6 +234,10 @@ export const PORTAL_TRANS = {
         "not_specified": "ไม่ระบุ",
         "hn_label": "HN:",
         "greeting_prefix": "คุณ",
+        "sel_date": "เลือกวันที่",
+        "sel_time": "เลือกเวลา",
+        "processing": "กำลังประมวลผล...",
+        "back_to_dashboard_btn": "กลับสู่หน้าหลัก",
     },
     CN: {
         "ciki_dental": "บ้านหมอฟัน (牙科)",
