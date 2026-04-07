@@ -93,28 +93,30 @@ const Patients = () => {
                     textAlign: searchTerm ? 'left' : 'center'
                 }}>
                     {!searchTerm && (
-                        <div style={{ marginBottom: '2rem', color: 'var(--neutral-400)' }}>
+                        <div style={{ marginBottom: '3rem', color: 'var(--neutral-400)' }}>
                             <div style={{
-                                width: '80px', height: '80px', background: 'var(--primary-50)',
-                                borderRadius: '50%', display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', margin: '0 auto 1rem auto'
+                                width: '100px', height: '100px', background: 'var(--primary-50)',
+                                borderRadius: 'var(--radius-3xl)', display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', margin: '0 auto 1.5rem auto',
+                                boxShadow: 'var(--shadow-glow)'
                             }}>
-                                <Search size={40} color="var(--primary-500)" />
+                                <Search size={48} color="var(--primary-500)" />
                             </div>
-                            <h2 style={{ color: 'var(--neutral-700)', marginBottom: '0.5rem' }}>
+                            <h2 style={{ color: 'var(--neutral-900)', marginBottom: '0.75rem', fontSize: '2rem', fontWeight: 800 }}>
                                 {language === 'TH' ? 'ค้นหาผู้ป่วย' : 'Find a Patient'}
                             </h2>
-                            <p>{language === 'TH' ? 'พิมพ์ชื่อ หรือ รหัสผู้ป่วยเพื่อค้นหา' : 'Enter name or ID to search'}</p>
+                            <p style={{ fontSize: '1.1rem', color: 'var(--neutral-500)' }}>{language === 'TH' ? 'พิมพ์ชื่อ หรือ รหัสผู้ป่วยเพื่อค้นหา' : 'Enter name or ID to search our patient database'}</p>
                         </div>
                     )}
 
                     <div className="search-wrapper" style={{
-                        maxWidth: searchTerm ? '100%' : '500px',
+                        maxWidth: searchTerm ? '100%' : '600px',
                         margin: searchTerm ? '0' : '0 auto',
-                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                        boxShadow: 'var(--shadow-xl)',
                         position: 'relative',
-                        borderRadius: '20px',
-                        overflow: 'hidden'
+                        borderRadius: 'var(--radius-xl)',
+                        overflow: 'hidden',
+                        transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
                     }}>
                         <input
                             type="text"
@@ -122,27 +124,28 @@ const Patients = () => {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             autoFocus
+                            className="form-input"
                             style={{
                                 width: '100%',
-                                padding: searchTerm ? '0.75rem 3rem 0.75rem 1rem' : '1rem 3rem 1rem 1.5rem',
+                                padding: searchTerm ? '1rem 3.5rem 1rem 1.5rem' : '1.25rem 4rem 1.25rem 2rem',
                                 border: '1px solid var(--neutral-200)',
                                 borderRadius: 'inherit',
-                                fontSize: '1rem',
+                                fontSize: '1.1rem',
                                 outline: 'none',
-                                transition: 'all 0.3s'
+                                background: 'white'
                             }}
                         />
                         <div style={{
                             position: 'absolute',
-                            right: '1rem',
+                            right: '1.5rem',
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            color: 'var(--neutral-400)',
+                            color: 'var(--primary-500)',
                             display: 'flex',
                             alignItems: 'center',
                             pointerEvents: 'none'
                         }}>
-                            <Search size={20} />
+                            <Search size={24} strokeWidth={2.5} />
                         </div>
                     </div>
                 </div>
@@ -150,17 +153,17 @@ const Patients = () => {
                 {/* Recall Dashboard - Visible when NOT searching */}
                 {!searchTerm && (
                     <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
                             {/* Recall Stats Card */}
-                            <div className="card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)', color: 'white' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div className="card" style={{ padding: '2rem', background: 'var(--gradient-primary)', color: 'white', border: 'none' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div>
-                                        <div style={{ fontSize: '0.875rem', opacity: 0.8, fontWeight: 600 }}>{language === 'TH' ? 'คนไข้ที่ต้องนัดตรวจซ้ำ' : 'Patients Due for Recall'}</div>
-                                        <div style={{ fontSize: '2.5rem', fontWeight: 900, margin: '0.5rem 0' }}>{recallPatients.length}</div>
-                                        <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>{language === 'TH' ? 'อัปเดตล่าสุด: วันนี้' : 'Last update: Today'}</div>
+                                        <div style={{ fontSize: '1rem', opacity: 0.9, fontWeight: 700, letterSpacing: '0.05em' }}>{language === 'TH' ? 'คนไข้ที่ต้องนัดตรวจซ้ำ' : 'RECALL NECESSARY'}</div>
+                                        <div style={{ fontSize: '3.5rem', fontWeight: 900, margin: '0.5rem 0' }}>{recallPatients.length}</div>
+                                        <div style={{ fontSize: '0.85rem', opacity: 0.8, fontWeight: 500 }}>{language === 'TH' ? 'คนไข้ในระบบทั้งหมด' : 'Total patients waiting'}</div>
                                     </div>
-                                    <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.2)', borderRadius: '16px' }}>
-                                        <Calendar size={28} />
+                                    <div style={{ width: '64px', height: '64px', background: 'rgba(255,255,255,0.2)', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
+                                        <Calendar size={32} />
                                     </div>
                                 </div>
                             </div>

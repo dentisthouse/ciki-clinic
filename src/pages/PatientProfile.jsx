@@ -204,29 +204,56 @@ const PatientProfile = () => {
         <div className="animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
             {/* Header */}
-            <div className="page-header" style={{ marginBottom: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button className="btn btn-secondary" onClick={() => navigate('/patients')} style={{ padding: '0.5rem', borderRadius: '50%' }}>
+            <div className="glass-panel-premium animate-fade-in" style={{ 
+                padding: '2.5rem', marginBottom: '2.5rem', 
+                borderRadius: 'var(--radius-xl)', border: '1px solid var(--neutral-100)',
+                background: 'linear-gradient(135deg, white 0%, var(--primary-50) 100%)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
+                    <button className="btn btn-secondary" onClick={() => navigate('/patients')} style={{ 
+                        padding: '0.75rem', borderRadius: '50%', background: 'white', border: '1.5px solid var(--neutral-200)' 
+                    }}>
                         <ArrowLeft size={20} />
                     </button>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--primary-100)', color: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                        <div style={{ 
+                            width: '72px', height: '72px', borderRadius: '24px', 
+                            background: 'var(--gradient-primary)', color: 'white', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                            fontSize: '2rem', fontWeight: 900, boxShadow: 'var(--shadow-md)'
+                        }}>
                             {patient.name.charAt(0)}
                         </div>
                         <div>
-                            <h1 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{patient.name}</h1>
-                            <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.875rem', color: 'var(--neutral-500)' }}>
-                                <span>{patient.id}</span> • <span>{patient.gender === 'Male' ? (language === 'TH' ? 'ชาย' : 'Male') : (language === 'TH' ? 'หญิง' : 'Female')}</span> • <span>{patient.age} {language === 'TH' ? 'ปี' : 'years old'}</span>
+                            <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.35rem', color: 'var(--neutral-900)', letterSpacing: '-0.04em' }}>{patient.name}</h1>
+                            <div style={{ display: 'flex', gap: '1rem', fontSize: '1rem', color: 'var(--neutral-500)', fontWeight: 600 }}>
+                                <span style={{ color: 'var(--primary-600)', fontWeight: 800 }}>{patient.id}</span>
+                                <span>•</span>
+                                <span>{patient.gender === 'Male' ? (language === 'TH' ? 'ชาย' : 'Male') : (language === 'TH' ? 'หญิง' : 'Female')}</span>
+                                <span>•</span>
+                                <span>{patient.age} {language === 'TH' ? 'ปี' : 'years old'}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button className="btn btn-secondary" onClick={() => setIsEditModalOpen(true)}>
-                    <Edit2 size={18} style={{ marginRight: '0.5rem' }} /> {t('btn_edit_profile')}
-                </button>
-                <button className="btn btn-primary" onClick={() => setIsDocModalOpen(true)}>
-                    <FileText size={18} style={{ marginRight: '0.5rem' }} /> {language === 'TH' ? 'เอกสาร' : 'Documents'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button className="btn btn-secondary" style={{ 
+                        padding: '0.8rem 1.25rem', borderRadius: '14px', fontWeight: 700,
+                        background: 'white', border: '1.5px solid var(--neutral-200)',
+                        display: 'flex', alignItems: 'center', gap: '0.5rem'
+                    }} onClick={() => setIsEditModalOpen(true)}>
+                        <Edit2 size={18} />
+                        {t('btn_edit_profile')}
+                    </button>
+                    <button className="btn btn-primary" style={{ 
+                        padding: '0.8rem 1.5rem', borderRadius: '14px', fontWeight: 800,
+                        display: 'flex', alignItems: 'center', gap: '0.5rem', border: 'none'
+                    }} onClick={() => setIsDocModalOpen(true)}>
+                        <FileText size={20} />
+                        {language === 'TH' ? 'จัดการเอกสาร' : 'Docs'}
+                    </button>
+                </div>
             </div>
 
             {/* Main Layout */}
@@ -234,9 +261,12 @@ const PatientProfile = () => {
                 {/* Left Sidebar */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     {/* Patient Info Card */}
-                    <div className="card" style={{ padding: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1rem', marginBottom: '1.25rem', color: 'var(--neutral-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pat_info')}</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div className="card glass-panel-premium" style={{ 
+                        padding: '1.75rem', background: 'white', borderRadius: 'var(--radius-xl)', 
+                        border: '1px solid var(--neutral-100)', boxShadow: 'var(--shadow-sm)'
+                    }}>
+                        <h3 style={{ fontSize: '0.8rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--neutral-400)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('pat_info')}</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                             <InfoItem icon={Phone} label={t('pat_form_phone')} value={patient.phone} />
                             <InfoItem icon={Mail} label={t('pat_form_email')} value={patient.email} />
                             <InfoItem icon={MapPin} label={t('pat_form_address')} value={patient.address} />
@@ -249,16 +279,16 @@ const PatientProfile = () => {
                                     .reduce((sum, t) => sum + (t.insuranceClaimAmount || 0), 0);
                                 const remaining = Math.max(0, 900 - used);
                                 return (
-                                    <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                                            <span style={{ fontSize: '0.75rem', color: '#166534', fontWeight: 600 }}>SSO Dental Rights</span>
-                                            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: remaining > 0 ? '#166534' : '#b91c1c' }}>฿{remaining}</span>
+                                    <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'var(--success-50)', borderRadius: '12px', border: '1px solid var(--success-100)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--success-700)', fontWeight: 800 }}>SSO Dental Balance</span>
+                                            <span style={{ fontSize: '1rem', fontWeight: 900, color: remaining > 0 ? 'var(--success-600)' : 'var(--danger-700)' }}>฿{remaining}</span>
                                         </div>
-                                        <div style={{ width: '100%', height: '6px', background: '#dcfce7', borderRadius: '3px', overflow: 'hidden' }}>
-                                            <div style={{ width: `${Math.min(100, (used / 900) * 100)}%`, height: '100%', background: remaining > 0 ? '#166534' : '#ef4444' }} />
+                                        <div style={{ width: '100%', height: '8px', background: 'var(--success-100)', borderRadius: '4px', overflow: 'hidden' }}>
+                                            <div style={{ width: `${Math.min(100, (used / 900) * 100)}%`, height: '100%', background: remaining > 0 ? 'var(--success-500)' : 'var(--danger-500)' }} />
                                         </div>
-                                        <div style={{ textAlign: 'right', fontSize: '0.7rem', color: '#166534', marginTop: '2px' }}>
-                                            Used: ฿{used} / 900
+                                        <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--success-600)', marginTop: '4px', fontWeight: 600 }}>
+                                            Allocated: ฿{used} / 900
                                         </div>
                                     </div>
                                 );
@@ -281,26 +311,31 @@ const PatientProfile = () => {
                 {/* Right Content */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                     {/* Tabs */}
-                    <div style={{ display: 'flex', gap: '1px', background: 'var(--neutral-200)', padding: '1px', borderRadius: '12px 12px 0 0', overflow: 'hidden' }}>
+                    <div style={{ 
+                        display: 'flex', gap: '0.5rem', background: 'var(--neutral-50)', 
+                        padding: '0.5rem', borderRadius: '16px 16px 0 0', border: '1px solid var(--neutral-100)', borderBottom: 'none'
+                    }}>
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 style={{
-                                    flex: 1, padding: '1rem', border: 'none', cursor: 'pointer',
-                                    background: activeTab === tab.id ? 'white' : 'var(--neutral-50)',
-                                    color: activeTab === tab.id ? 'var(--primary-700)' : 'var(--neutral-500)',
-                                    fontWeight: activeTab === tab.id ? 700 : 500,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                                    position: 'relative'
+                                    flex: 1, padding: '0.85rem', border: 'none', cursor: 'pointer',
+                                    borderRadius: '12px',
+                                    background: activeTab === tab.id ? 'var(--neutral-900)' : 'transparent',
+                                    color: activeTab === tab.id ? 'white' : 'var(--neutral-500)',
+                                    fontWeight: 800,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem',
+                                    position: 'relative', transition: 'all 0.2s ease',
+                                    boxShadow: activeTab === tab.id ? 'var(--shadow-md)' : 'none'
                                 }}
                             >
-                                <tab.icon size={18} />
+                                <tab.icon size={16} />
                                 {tab.label}
                                 {tab.badge && (
                                     <span style={{
-                                        background: '#ef4444', color: 'white', fontSize: '0.7rem',
-                                        padding: '2px 6px', borderRadius: '10px', marginLeft: '4px'
+                                        background: 'var(--danger-500)', color: 'white', fontSize: '0.7rem',
+                                        padding: '2px 8px', borderRadius: '20px', marginLeft: '4px', fontWeight: 900
                                     }}>
                                         {tab.badge}
                                     </span>

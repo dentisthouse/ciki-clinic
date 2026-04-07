@@ -190,57 +190,57 @@ const FinancialManagement = () => {
     const forecast = generateForecast();
 
     const MetricCard = ({ title, value, icon: Icon, color, trend, subtitle, format = 'number' }) => (
-        <div className="glass-panel" style={{ 
-            padding: '1.5rem', 
-            background: 'white',
-            border: `1px solid ${color}20`,
-            borderRadius: '12px'
+        <div className="card glass-panel-premium animate-slide-up" style={{ 
+            padding: '1.75rem', 
+            background: 'var(--glass-premium-bg)',
+            border: `1px solid ${color}30`,
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--shadow-sm)'
         }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1.25rem' }}>
                 <div>
-                    <p style={{ color: 'var(--neutral-600)', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                    <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 700 }}>
                         {title}
                     </p>
-                    <h3 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, color: 'var(--neutral-900)' }}>
+                    <h3 style={{ fontSize: '2rem', fontWeight: 900, margin: 0, color: 'var(--neutral-900)', letterSpacing: '-0.03em' }}>
                         {format === 'currency' ? `฿${value.toLocaleString()}` : 
                          format === 'percent' ? `${value}%` : 
                          value.toLocaleString()}
                     </h3>
                     {subtitle && (
-                        <p style={{ color: 'var(--neutral-500)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                        <p style={{ color: 'var(--neutral-400)', fontSize: '0.75rem', marginTop: '0.35rem', fontWeight: 600 }}>
                             {subtitle}
                         </p>
                     )}
                 </div>
-                <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    borderRadius: '12px', 
+                <div className="floating-icon" style={{ 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '16px', 
                     background: `${color}10`,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    boxShadow: `inset 0 0 0 1px ${color}20`
                 }}>
-                    <Icon size={24} color={color} />
+                    <Icon size={28} color={color} />
                 </div>
             </div>
             
             {trend !== undefined && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {trend > 0 ? (
-                        <ArrowUpRight size={16} color="#10b981" />
-                    ) : trend < 0 ? (
-                        <ArrowDownRight size={16} color="#ef4444" />
-                    ) : null}
-                    <span style={{ 
-                        fontSize: '0.875rem', 
-                        fontWeight: 600,
-                        color: trend > 0 ? '#10b981' : trend < 0 ? '#ef4444' : '#6b7280'
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '0.25rem',
+                        padding: '0.25rem 0.65rem', borderRadius: '8px',
+                        background: trend > 0 ? 'var(--success-light)' : 'var(--danger-light)',
+                        color: trend > 0 ? 'var(--success)' : 'var(--danger)',
+                        fontSize: '0.85rem', fontWeight: 800
                     }}>
-                        {trend > 0 ? '+' : ''}{trend}%
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--neutral-500)' }}>
-                        {language === 'TH' ? 'จากเดือนที่แล้ว' : 'vs last month'}
+                        {trend > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                        {Math.abs(trend)}%
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 600 }}>
+                        {language === 'TH' ? 'เทียบกับระยะเวลาที่แล้ว' : 'vs previous period'}
                     </span>
                 </div>
             )}
@@ -264,21 +264,71 @@ const FinancialManagement = () => {
     return (
         <div className="financial-management" style={{ padding: '2rem' }}>
             {/* Header */}
-            <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <DollarSign size={32} color="var(--primary-600)" />
-                        {language === 'TH' ? 'การจัดการการเงิน' : 'Financial Management'}
-                    </h1>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="glass-panel-premium animate-fade-in" style={{ 
+                padding: '2.5rem', marginBottom: '2.5rem', 
+                borderRadius: 'var(--radius-xl)', border: '1px solid var(--neutral-100)',
+                background: 'linear-gradient(135deg, white 0%, var(--primary-50) 100%)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                    <div>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--neutral-900)', letterSpacing: '-0.04em' }}>
+                            <div style={{ padding: '0.75rem', background: 'var(--primary-600)', borderRadius: '16px', color: 'white', boxShadow: 'var(--shadow-md)' }}>
+                                <DollarSign size={32} />
+                            </div>
+                            {language === 'TH' ? 'บริหารจัดการการเงิน' : 'Corporate Finance'}
+                        </h1>
+                        <p style={{ color: 'var(--neutral-500)', fontWeight: 600, marginTop: '0.5rem', fontSize: '1.1rem', marginLeft: '4.5rem' }}>
+                            {language === 'TH' ? 'พยากรณ์รายได้และกำไรอย่างมืออาชีพ' : 'Insightful financial forecasting and reporting'}
+                        </p>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+                    {/* Tabs */}
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        {[
+                            { id: 'overview', label: { TH: 'ภาพรวม', EN: 'Overview' }, icon: Activity },
+                            { id: 'p&l', label: { TH: 'กำไร-ขาดทุน', EN: 'P&L Statement' }, icon: Receipt },
+                            { id: 'forecast', label: { TH: 'พยากรณ์', EN: 'Forecast' }, icon: Target },
+                            { id: 'expenses', label: { TH: 'รายจ่าย', EN: 'CapEx/OpEx' }, icon: Wallet },
+                            { id: 'reports', label: { TH: 'รายงาน', EN: 'BI Reports' }, icon: BarChart3 }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                style={{
+                                    padding: '0.85rem 1.5rem',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    background: activeTab === tab.id ? 'var(--neutral-900)' : 'transparent',
+                                    color: activeTab === tab.id ? 'white' : 'var(--neutral-500)',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: activeTab === tab.id ? 'var(--shadow-md)' : 'none'
+                                }}
+                            >
+                                <tab.icon size={16} />
+                                {tab.label[language]}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
                         <select
                             value={selectedBranch}
                             onChange={(e) => setSelectedBranch(e.target.value)}
                             style={{ 
-                                padding: '0.75rem', 
-                                borderRadius: '8px', 
-                                border: '1px solid var(--neutral-200)',
-                                background: 'white'
+                                padding: '0.75rem 1rem', 
+                                borderRadius: '12px', 
+                                border: '1.5px solid var(--neutral-200)',
+                                background: 'white',
+                                fontWeight: 700,
+                                fontSize: '0.9rem',
+                                color: 'var(--neutral-700)'
                             }}
                         >
                             {branches.map(branch => (
@@ -292,49 +342,20 @@ const FinancialManagement = () => {
                             value={selectedPeriod}
                             onChange={(e) => setSelectedPeriod(e.target.value)}
                             style={{ 
-                                padding: '0.75rem', 
-                                borderRadius: '8px', 
-                                border: '1px solid var(--neutral-200)',
-                                background: 'white'
+                                padding: '0.75rem 1rem', 
+                                borderRadius: '12px', 
+                                border: '1.5px solid var(--neutral-200)',
+                                background: 'white',
+                                fontWeight: 700,
+                                fontSize: '0.9rem',
+                                color: 'var(--neutral-700)'
                             }}
                         >
                             <option value="month">{language === 'TH' ? 'เดือนนี้' : 'This Month'}</option>
                             <option value="quarter">{language === 'TH' ? 'ไตรมาสนี้' : 'This Quarter'}</option>
                             <option value="year">{language === 'TH' ? 'ปีนี้' : 'This Year'}</option>
                         </select>
-                        
-                        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Download size={18} />
-                            {language === 'TH' ? 'ส่งออกรายงาน' : 'Export Report'}
-                        </button>
                     </div>
-                </div>
-
-                {/* Tabs */}
-                <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--neutral-200)' }}>
-                    {[
-                        { id: 'overview', label: { TH: 'ภาพรวม', EN: 'Overview' } },
-                        { id: 'p&l', label: { TH: 'กำไร-ขาดทุน', EN: 'P&L Statement' } },
-                        { id: 'forecast', label: { TH: 'พยากรณ์', EN: 'Forecast' } },
-                        { id: 'expenses', label: { TH: 'รายจ่าย', EN: 'Expenses' } },
-                        { id: 'reports', label: { TH: 'รายงาน', EN: 'Reports' } }
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            style={{
-                                padding: '0.75rem 1.5rem',
-                                border: 'none',
-                                background: activeTab === tab.id ? 'var(--primary-50)' : 'transparent',
-                                color: activeTab === tab.id ? 'var(--primary-700)' : 'var(--neutral-600)',
-                                borderBottom: activeTab === tab.id ? '2px solid var(--primary-600)' : '2px solid transparent',
-                                fontWeight: 600,
-                                cursor: 'pointer'
-                            }}
-                        >
-                            {tab.label[language]}
-                        </button>
-                    ))}
                 </div>
             </div>
 

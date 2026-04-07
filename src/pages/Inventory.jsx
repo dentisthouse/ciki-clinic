@@ -56,43 +56,75 @@ const Inventory = () => {
             />
 
             {/* Page Header */}
-            <div className="page-header">
+            <div className="page-header" style={{ marginBottom: '3rem' }}>
                 <div className="page-title-group">
-                    <h1>{t('inv_title')}</h1>
-                    <p>{t('inv_subtitle')}</p>
+                    <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--neutral-900)', letterSpacing: '-0.04em', marginBottom: '0.5rem' }}>
+                        {t('inv_title')}
+                    </h1>
+                    <p style={{ fontSize: '1.1rem', color: 'var(--neutral-500)', fontWeight: 500 }}>{t('inv_subtitle')}</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => { setEditingItem(null); setIsModalOpen(true); }}>
-                    <Plus size={18} style={{ marginRight: '8px' }} />
+                <button className="btn btn-primary" style={{ 
+                    padding: '0.8rem 1.75rem', 
+                    borderRadius: 'var(--radius-lg)', 
+                    fontWeight: 800,
+                    background: 'var(--gradient-primary)',
+                    boxShadow: 'var(--shadow-md)',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                }} onClick={() => { setEditingItem(null); setIsModalOpen(true); }}>
+                    <Plus size={20} />
                     {t('btn_add')}
                 </button>
             </div>
 
             {/* Overview Grid */}
-            <div className="grid-cols-3" style={{ marginBottom: '2.5rem' }}>
-                <div className="card glass-panel-premium animate-slide-up delay-100" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+            <div className="grid-cols-3" style={{ marginBottom: '3rem', gap: '1.5rem' }}>
+                <div className="card glass-panel-premium animate-slide-up delay-100" style={{ 
+                    padding: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                    background: 'var(--glass-premium-bg)', border: '1px solid var(--neutral-100)', borderRadius: 'var(--radius-xl)'
+                }}>
                     <div>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('inv_total_items')}</p>
-                        <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>{inventory.length}</h3>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--neutral-500)', fontWeight: 700, marginBottom: '0.5rem' }}>{t('inv_total_items')}</p>
+                        <h3 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--neutral-900)', letterSpacing: '-0.02em' }}>{inventory.length}</h3>
                     </div>
-                    <div className="floating-icon" style={{ padding: '1rem', background: 'var(--primary-50)', color: 'var(--primary-600)', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(20, 184, 166, 0.2)' }}>
+                    <div className="floating-icon" style={{ 
+                        padding: '1rem', background: 'var(--primary-50)', color: 'var(--primary-600)', 
+                        borderRadius: '18px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--primary-100)'
+                    }}>
                         <Package size={28} />
                     </div>
                 </div>
-                <div className="card glass-panel-premium animate-slide-up delay-200" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+                <div className="card glass-panel-premium animate-slide-up delay-200" style={{ 
+                    padding: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                    background: 'var(--glass-premium-bg)', border: '1px solid var(--warning-100)', borderRadius: 'var(--radius-xl)'
+                }}>
                     <div>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('inv_low_stock')}</p>
-                        <h3 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--warning)' }}>{inventory.filter(i => i.stock < i.reorderPoint).length}</h3>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--warning-700)', fontWeight: 700, marginBottom: '0.5rem' }}>{t('inv_low_stock')}</p>
+                        <h3 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--warning-600)', letterSpacing: '-0.02em' }}>
+                            {inventory.filter(i => i.stock < i.reorderPoint).length}
+                        </h3>
                     </div>
-                    <div className="floating-icon" style={{ padding: '1rem', background: '#fff7ed', color: '#ea580c', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(234, 88, 12, 0.2)' }}>
+                    <div className="floating-icon" style={{ 
+                        padding: '1rem', background: 'var(--warning-50)', color: 'var(--warning-600)', 
+                        borderRadius: '18px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--warning-100)'
+                    }}>
                         <AlertTriangle size={28} />
                     </div>
                 </div>
-                <div className="card glass-panel-premium animate-slide-up delay-300" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+                <div className="card glass-panel-premium animate-slide-up delay-300" style={{ 
+                    padding: '1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                    background: 'var(--glass-premium-bg)', border: '1px solid var(--success-100)', borderRadius: 'var(--radius-xl)'
+                }}>
                     <div>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('inv_stock_value')}</p>
-                        <h3 style={{ fontSize: '2rem', fontWeight: 800 }}>฿{stockValue.toLocaleString()}</h3>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--success-700)', fontWeight: 700, marginBottom: '0.5rem' }}>{t('inv_stock_value')}</p>
+                        <h3 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--success-600)', letterSpacing: '-0.02em' }}>฿{stockValue.toLocaleString()}</h3>
                     </div>
-                    <div className="floating-icon" style={{ padding: '1rem', background: '#f0fdf4', color: '#16a34a', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(22, 163, 74, 0.2)' }}>
+                    <div className="floating-icon" style={{ 
+                        padding: '1rem', background: 'var(--success-50)', color: 'var(--success-600)', 
+                        borderRadius: '18px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--success-100)'
+                    }}>
                         <TrendingUp size={28} />
                     </div>
                 </div>

@@ -4,16 +4,17 @@
 .app-shell {
     display: flex;
     min-height: 100vh;
-    background: radial-gradient(circle at 10% 20%, rgba(240, 253, 250, 0.5) 0%, rgba(248, 250, 252, 1) 90%);
+    background: var(--neutral-50);
 }
 
 .main-content {
     flex: 1;
-    margin-left: 260px;
+    margin-left: 280px;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
+    position: relative;
 }
 
 /* =============================================
@@ -24,9 +25,9 @@
     top: 0;
     left: 0;
     height: 100vh;
-    width: 260px;
-    background: var(--gradient-sidebar);
-    border-right: 1px solid var(--neutral-100);
+    width: 280px;
+    background: var(--neutral-50);
+    border-right: 1px solid var(--neutral-200);
     display: flex;
     flex-direction: column;
     z-index: 50;
@@ -35,35 +36,36 @@
 
 /* Brand Header */
 .brand {
-    height: 100px;
+    height: 120px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid #f1f5f9;
+    padding: 2rem;
+    border-bottom: 1px solid var(--neutral-100);
+    gap: 0.75rem;
 }
 
 .brand-logo {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
     background: var(--gradient-primary);
     border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 0.5rem;
     color: white;
-    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+    box-shadow: var(--shadow-glow);
     flex-shrink: 0;
 }
 
 .brand-text {
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 1.2rem;
-    color: var(--neutral-800);
-    letter-spacing: -0.02em;
+    font-size: 1.4rem;
+    color: var(--neutral-900);
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
 }
 
 /* Navigation Menu */
@@ -79,42 +81,39 @@
 .nav-item {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1rem;
-    border-radius: 16px;
+    padding: 0.85rem 1.25rem;
+    border-radius: var(--radius-lg);
     color: var(--neutral-500);
     text-decoration: none;
-    transition: all 0.3s var(--transition-base);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     position: relative;
-    border: 1px solid transparent;
-    margin: 0.15rem 0.5rem;
+    margin: 0.25rem 0.75rem;
 }
 
 .nav-item:hover {
-    background-color: var(--neutral-50);
-    color: var(--neutral-900);
-    transform: translateX(4px);
+    background-color: var(--neutral-100);
+    color: var(--primary-600);
+    transform: translateX(5px);
 }
 
 .nav-item.active {
     background: var(--primary-50);
     color: var(--primary-600);
     font-weight: 700;
-    border-color: var(--primary-100);
-    box-shadow: 0 4px 12px -2px rgba(20, 184, 166, 0.1);
+    box-shadow: var(--shadow-sm);
 }
 
-.nav-item.active::before {
+.nav-item.active::after {
     content: '';
     position: absolute;
-    left: -0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 20px;
-    background: var(--primary-600);
-    border-radius: 0 4px 4px 0;
+    right: 0.75rem;
+    width: 6px;
+    height: 6px;
+    background: var(--primary-500);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--primary-400);
 }
 
 .nav-icon {
@@ -157,27 +156,27 @@
    TOP HEADER — Frosted glass effect
    ============================================= */
 .top-header {
-    height: 80px;
+    height: 90px;
     background: var(--glass-premium-bg);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border-bottom: 1px solid var(--glass-premium-border);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: 1px solid var(--neutral-200);
     position: sticky;
     top: 0;
     z-index: 40;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 2.5rem;
-    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.03);
+    padding: 0 3rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
 }
 
 .page-title {
     font-family: var(--font-display);
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    color: #1e293b; /* Slate-800 */
-    letter-spacing: -0.02em;
+    color: var(--neutral-900);
+    letter-spacing: -0.03em;
 }
 
 .header-actions {

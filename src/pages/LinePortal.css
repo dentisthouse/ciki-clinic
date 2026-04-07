@@ -1,24 +1,26 @@
 :root {
-  --lp-primary: #10b981;
-  --lp-primary-dark: #069669;
-  --lp-primary-light: #e6f4f1;
-  --lp-secondary: #3b82f6;
-  --lp-accent: #14b8a6;
-  --lp-background: #f1f5f9;
+  /* Use Premium Luxury Tokens */
+  --lp-primary: var(--primary-600, #0d9488);
+  --lp-primary-dark: var(--primary-800, #115e59);
+  --lp-primary-light: var(--primary-50, #f0fdfa);
+  --lp-secondary: var(--accent-500, #c5a059);
+  --lp-accent: var(--primary-400, #2dd4bf);
+  --lp-background: var(--neutral-100, #f8fafc);
   --lp-card-bg: #ffffff;
-  --lp-text-main: #1e293b;
-  --lp-text-muted: #64748b;
-  --lp-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --lp-text-main: var(--neutral-800, #1e293b);
+  --lp-text-muted: var(--neutral-500, #64748b);
+  --lp-shadow: var(--shadow-md, 0 10px 25px -5px rgba(0, 0, 0, 0.05));
+  --lp-font-sans: 'Outfit', 'Inter', 'Prompt', sans-serif;
 }
 
 .lp-container {
   min-height: 100vh;
-  font-family: 'Inter', 'Prompt', sans-serif;
+  font-family: var(--lp-font-sans);
   color: var(--lp-text-main);
   background-color: var(--lp-background);
   display: flex;
   flex-direction: column;
-  padding-bottom: 90px; /* Space for bottom nav */
+  padding-bottom: 90px;
   position: relative;
   overflow-x: hidden;
 }
@@ -26,8 +28,8 @@
 /* --- Premium Header --- */
 .lp-header-main {
   background: var(--lp-primary);
-  background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
-  padding: 1.5rem 1rem 3rem 1rem;
+  background: var(--gradient-hero, linear-gradient(135deg, #0d9488 0%, #14b8a6 100%));
+  padding: 1.5rem 1rem 3.5rem 1rem;
   color: white;
   text-align: center;
   position: relative;

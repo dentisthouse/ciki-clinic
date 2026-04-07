@@ -283,81 +283,92 @@ const StaffManagement = () => {
     const StaffCard = ({ employee }) => (
         <div style={{
             padding: '1.5rem',
-            border: '1px solid var(--neutral-200)',
-            borderRadius: '12px',
-            background: 'white',
+            border: '1px solid var(--neutral-100)',
+            borderRadius: 'var(--radius-xl)',
+            background: 'var(--glass-premium-bg)',
+            backdropFilter: 'blur(12px)',
             cursor: 'pointer',
-            transition: 'all 0.2s'
+            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            boxShadow: 'var(--shadow-sm)'
         }}
         onClick={() => setSelectedStaff(employee)}
         onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = 'var(--primary-300)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+            e.currentTarget.style.transform = 'translateY(-4px)';
         }}
         onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--neutral-200)';
-            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.borderColor = 'var(--neutral-100)';
+            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+            e.currentTarget.style.transform = 'translateY(0)';
         }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.25rem' }}>
                 <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    background: employee.avatar || '#3b82f6',
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '20px',
+                    background: `linear-gradient(135deg, ${employee.avatar || '#3b82f6'} 0%, var(--neutral-900) 100%)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'white',
-                    fontWeight: 700,
-                    fontSize: '1.2rem'
+                    fontWeight: 800,
+                    fontSize: '1.5rem',
+                    boxShadow: 'var(--shadow-md)'
                 }}>
                     {employee.name.charAt(0)}
                 </div>
                 <div style={{ flex: 1 }}>
-                    <h4 style={{ margin: 0, fontSize: '1.1rem' }}>{employee.name}</h4>
-                    <p style={{ margin: '0.25rem 0', fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
+                    <h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--neutral-900)', letterSpacing: '-0.02em' }}>{employee.name}</h4>
+                    <p style={{ margin: '0.15rem 0 0.5rem', fontSize: '0.85rem', color: 'var(--neutral-400)', fontWeight: 600 }}>
                         {employee.email}
                     </p>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <span style={{
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '20px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            background: `${roles[employee.role]?.color}10`,
-                            color: roles[employee.role]?.color
+                            padding: '0.35rem 0.85rem',
+                            borderRadius: '10px',
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            background: `${roles[employee.role]?.color}15`,
+                            color: roles[employee.role]?.color,
+                            border: `1px solid ${roles[employee.role]?.color}30`
                         }}>
                             {roles[employee.role]?.[language]}
                         </span>
                         <span style={{
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '20px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            background: employee.status === 'active' ? '#dcfce7' : '#fee2e2',
-                            color: employee.status === 'active' ? '#16a34a' : '#dc2626'
+                            padding: '0.35rem 0.85rem',
+                            borderRadius: '10px',
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            background: employee.status === 'active' ? 'var(--success-light)' : 'var(--danger-light)',
+                            color: employee.status === 'active' ? 'var(--success)' : 'var(--danger)',
+                            border: `1px solid ${employee.status === 'active' ? 'var(--success)' : 'var(--danger)'}30`
                         }}>
-                            {employee.status === 'active' ? (language === 'TH' ? 'ทำงาน' : 'Active') : (language === 'TH' ? 'ลา' : 'Leave')}
+                            {employee.status === 'active' ? (language === 'TH' ? 'ปฏิบัติงาน' : 'Active') : (language === 'TH' ? 'พักงาน' : 'On Leave')}
                         </span>
                     </div>
                 </div>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', fontSize: '0.875rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Phone size={14} color="var(--neutral-500)" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', fontSize: '0.85rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--neutral-600)', fontWeight: 600 }}>
+                    <Phone size={16} color="var(--primary-600)" />
                     <span>{employee.phone}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <MapPin size={14} color="var(--neutral-500)" />
-                    <span>{employee.address}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <DollarSign size={14} color="var(--neutral-500)" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--neutral-600)', fontWeight: 600 }}>
+                    <DollarSign size={16} color="var(--primary-600)" />
                     <span>฿{employee.salary.toLocaleString()}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Calendar size={14} color="var(--neutral-500)" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--neutral-600)', fontWeight: 600 }}>
+                    <MapPin size={16} color="var(--primary-600)" />
+                    <span>{employee.address}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--neutral-600)', fontWeight: 600 }}>
+                    <Calendar size={16} color="var(--primary-600)" />
                     <span>{format(new Date(employee.hireDate), language === 'TH' ? 'dd/MM/yyyy' : 'MM/dd/yyyy')}</span>
                 </div>
             </div>
@@ -476,50 +487,75 @@ const StaffManagement = () => {
     return (
         <div className="staff-management" style={{ padding: '2rem' }}>
             {/* Header */}
-            <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Users size={32} color="var(--primary-600)" />
-                        {language === 'TH' ? 'จัดการพนักงาน' : 'Staff Management'}
-                    </h1>
+            <div className="glass-panel-premium animate-fade-in" style={{ 
+                padding: '2.5rem', marginBottom: '2.5rem', 
+                borderRadius: 'var(--radius-xl)', border: '1px solid var(--neutral-100)',
+                background: 'linear-gradient(135deg, white 0%, var(--primary-50) 100%)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                    <div>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--neutral-900)', letterSpacing: '-0.04em' }}>
+                            <div style={{ padding: '0.75rem', background: 'var(--primary-600)', borderRadius: '16px', color: 'white', boxShadow: 'var(--shadow-md)' }}>
+                                <Users size={32} />
+                            </div>
+                            {language === 'TH' ? 'บริหารจัดการพนักงาน' : 'Human Capital'}
+                        </h1>
+                        <p style={{ color: 'var(--neutral-500)', fontWeight: 600, marginTop: '0.5rem', fontSize: '1.1rem', marginLeft: '4.5rem' }}>
+                            {language === 'TH' ? 'จัดการทีมงานและประสิทธิภาพของบุคลากร' : 'Manage your professional clinical team'}
+                        </p>
+                    </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <button 
                             onClick={() => setShowAddStaff(true)}
                             className="btn btn-primary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            style={{ 
+                                display: 'flex', alignItems: 'center', gap: '0.75rem', 
+                                padding: '0.8rem 1.5rem', borderRadius: '14px', fontWeight: 800,
+                                background: 'var(--gradient-primary)', boxShadow: 'var(--shadow-md)', border: 'none'
+                            }}
                         >
-                            <UserPlus size={18} />
-                            {language === 'TH' ? 'เพิ่มพนักงาน' : 'Add Staff'}
+                            <UserPlus size={20} />
+                            {language === 'TH' ? 'เพิ่มพนักงานใหม่' : 'Enroll Staff'}
                         </button>
-                        <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Download size={18} />
-                            {language === 'TH' ? 'ส่งออก' : 'Export'}
+                        <button className="btn btn-secondary" style={{ 
+                            display: 'flex', alignItems: 'center', gap: '0.75rem',
+                            padding: '0.8rem 1.25rem', borderRadius: '14px', fontWeight: 700,
+                            background: 'white', border: '1.5px solid var(--neutral-200)', boxShadow: 'var(--shadow-sm)'
+                        }}>
+                            <Download size={20} color="var(--primary-600)" />
+                            {language === 'TH' ? 'รายงาน' : 'Report'}
                         </button>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--neutral-200)' }}>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
                     {[
-                        { id: 'overview', label: { TH: 'ภาพรวม', EN: 'Overview' } },
-                        { id: 'attendance', label: { TH: 'การเข้างาน', EN: 'Attendance' } },
-                        { id: 'payroll', label: { TH: 'ค่าจ้าง', EN: 'Payroll' } },
-                        { id: 'performance', label: { TH: 'ประสิทธิภาพ', EN: 'Performance' } },
-                        { id: 'settings', label: { TH: 'ตั้งค่า', EN: 'Settings' } }
+                        { id: 'overview', label: { TH: 'พนักงานทั้งหมด', EN: 'All Staff' }, icon: Users },
+                        { id: 'attendance', label: { TH: 'เวลาเข้างาน', EN: 'Attendance' }, icon: Clock },
+                        { id: 'payroll', label: { TH: 'เงินเดือน/ค่าจ้าง', EN: 'Payroll' }, icon: DollarSign },
+                        { id: 'performance', label: { TH: 'ประเมินผล', EN: 'Performance' }, icon: Target },
+                        { id: 'settings', label: { TH: 'ตั้งค่าระบบ', EN: 'HR System' }, icon: Settings }
                     ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             style={{
-                                padding: '0.75rem 1.5rem',
+                                padding: '0.85rem 1.5rem',
                                 border: 'none',
-                                background: activeTab === tab.id ? 'var(--primary-50)' : 'transparent',
-                                color: activeTab === tab.id ? 'var(--primary-700)' : 'var(--neutral-600)',
-                                borderBottom: activeTab === tab.id ? '2px solid var(--primary-600)' : '2px solid transparent',
-                                fontWeight: 600,
-                                cursor: 'pointer'
+                                borderRadius: '12px',
+                                background: activeTab === tab.id ? 'var(--neutral-900)' : 'transparent',
+                                color: activeTab === tab.id ? 'white' : 'var(--neutral-500)',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                transition: 'all 0.2s ease',
+                                boxShadow: activeTab === tab.id ? 'var(--shadow-md)' : 'none'
                             }}
                         >
+                            <tab.icon size={16} />
                             {tab.label[language]}
                         </button>
                     ))}

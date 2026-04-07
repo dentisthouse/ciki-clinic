@@ -263,12 +263,15 @@ const LinePortal = () => {
         // Search for user
         setAuthLoading(true);
 
+        let user = null;
+
         try {
-            // DEMO BYPASS for User Lookup: If using 123456 and looking for aSpecific Demo phone, can auto-create/assign
+            // DEMO BYPASS for User Lookup
             if (code === '123456') {
-                console.log('🧪 Demo Mode: Searching for any existing user or creating dummy');
+                console.log('🧪 Demo Mode OTP detected');
             }
 
+            console.log('🔍 Starting user lookup for phone:', phoneNum);
             // 1. ลองค้นหาด้วยเบอร์โทร (ทำความสะอาดเบอร์ก่อน)
             const { data: phoneMatch, error: phoneError } = await supabase
                 .from('patients')
@@ -278,8 +281,9 @@ const LinePortal = () => {
             if (phoneError) {
                 console.error('Supabase Phone Search Error:', phoneError);
             }
-
-            let user = phoneMatch && phoneMatch.length > 0 ? phoneMatch[0] : null;
+            
+            user = phoneMatch && phoneMatch.length > 0 ? phoneMatch[0] : null;
+            if (user) console.log('✅ Found user by phone');
 
             // 2. ถ้าไม่เจอด้วยเบอร์ ลองค้นด้วย LINE ID
             if (!user && lineUserId) {
@@ -310,23 +314,17 @@ const LinePortal = () => {
         }
         
         if (user) {
-            console.log('✅ Found User:', user.name);
-            // บันทึก session และเข้าสู่ระบบ
+            console.log('🎉 Login Success for:', user.name);
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
-            try {
-                loadUserAppointments(user);
-            } catch (err) {
-                console.warn('Non-critical: Failed to load user apps', err);
-            }
+            loadUserAppointments(user);
             setPage('home');
             alert(`${pt('welcome')} ${user.name}`);
         } else if (code === '123456') {
-            // DEMO FALLBACK: Create a dummy user session if no user is found with 123456
-            console.log('🧪 Demo User Fallback');
+            console.log('🧪 Demo User Fallback Active');
             const demoUser = {
                 id: 'demo-999',
-                name: 'คุณลูกค้า (Demo Mode)',
+                name: 'คุณลูกค้า (Demo)',
                 phone: phoneNum,
                 hn: 'DEMO6704'
             };
@@ -335,7 +333,7 @@ const LinePortal = () => {
             setPage('home');
             alert(`${pt('welcome')} ${demoUser.name}`);
         } else {
-            console.log('❌ User not found, redirecting to register');
+            console.log('❌ No user found, going to register');
             setPage('register');
         }
     };
@@ -497,60 +495,61 @@ const LinePortal = () => {
     
     if (page === 'login') {
         return (
-            <div className="lp-container" style={{ background: '#f8fafc', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                {/* Abstract background accent */}
-                <div style={{ position: 'absolute', top: -50, right: -50, width: 250, height: 250, background: 'radial-gradient(circle, var(--lp-primary) 0%, transparent 70%)', opacity: 0.1, zIndex: 0 }} />
+            <div className="lp-container" style={{ background: 'var(--lp-background)', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+                {/* Background Decor */}
+                <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '300px', height: '300px', background: 'radial-gradient(circle, var(--lp-primary) 0%, transparent 70%)', opacity: 0.08, zIndex: 0, borderRadius: '50%' }} />
+                <div style={{ position: 'absolute', bottom: '-5%', left: '-10%', width: '250px', height: '250px', background: 'radial-gradient(circle, var(--lp-secondary) 0%, transparent 70%)', opacity: 0.05, zIndex: 0, borderRadius: '50%' }} />
                 
-                {/* Floating Language Button */}
-                <button 
-                    onClick={() => {
-                        if (language === 'TH') setLanguage('EN');
-                        else if (language === 'EN') setLanguage('CN');
-                        else setLanguage('TH');
-                    }}
-                    style={{ 
-                        position: 'absolute', top: '2.5rem', right: '1.5rem', zIndex: 10,
-                        background: 'white', padding: '0.6rem 1rem', borderRadius: '2rem',
-                        fontSize: '0.9rem', fontWeight: 800, border: '1px solid #e2e8f0',
-                        cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                        display: 'flex', alignItems: 'center', gap: '0.6rem'
-                    }}
-                >
-                    {language === 'TH' ? (
-                        <>
-                            <img src="https://flagcdn.com/w40/th.png" style={{ width: '22px', borderRadius: '3px' }} alt="TH" />
-                            <span>ไทย</span>
-                        </>
-                    ) : language === 'EN' ? (
-                        <>
-                            <img src="https://flagcdn.com/w40/gb.png" style={{ width: '22px', borderRadius: '3px' }} alt="EN" />
-                            <span>EN</span>
-                        </>
-                    ) : (
-                        <>
-                            <img src="https://flagcdn.com/w40/cn.png" style={{ width: '22px', borderRadius: '3px' }} alt="CN" />
-                            <span>CN</span>
-                        </>
-                    )}
-                </button>
+                {/* Floating Language Switcher */}
+                <div style={{ position: 'absolute', top: '2rem', right: '1.5rem', zIndex: 20 }}>
+                    <div style={{ display: 'flex', gap: '0.75rem', background: 'var(--glass-premium-bg, rgba(255,255,255,0.7))', padding: '0.5rem', borderRadius: '1.25rem', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.5)', boxShadow: 'var(--shadow-sm)' }}>
+                        {['TH', 'EN', 'CN'].map(lang => (
+                            <button
+                                key={lang}
+                                onClick={() => setLanguage(lang)}
+                                style={{ 
+                                    background: language === lang ? 'white' : 'transparent',
+                                    border: 'none',
+                                    padding: '0.4rem',
+                                    borderRadius: '0.75rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: language === lang ? '0 4px 12px rgba(0,0,0,0.05)' : 'none'
+                                }}
+                            >
+                                <img 
+                                    src={lang === 'TH' ? 'https://flagcdn.com/w40/th.png' : lang === 'EN' ? 'https://flagcdn.com/w40/gb.png' : 'https://flagcdn.com/w40/cn.png'} 
+                                    style={{ width: '24px', height: '18px', borderRadius: '2px', opacity: language === lang ? 1 : 0.6 }} 
+                                    alt={lang} 
+                                />
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
                 <div style={{ width: '100%', maxWidth: '340px', textAlign: 'center', zIndex: 1 }}>
-                    <div style={{ 
-                        width: '90px', height: '90px', background: 'white', 
-                        borderRadius: '2rem', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'center', margin: '0 auto 2rem', 
-                        boxShadow: '0 20px 40px rgba(16, 185, 129, 0.15)'
+                    <div className="animate-pop" style={{ 
+                        width: '100px', height: '100px', background: 'white', 
+                        borderRadius: '2.5rem', display: 'flex', alignItems: 'center', 
+                        justifyContent: 'center', margin: '0 auto 2.5rem', 
+                        boxShadow: '0 25px 50px -12px rgba(13, 148, 136, 0.2)',
+                        padding: '1rem'
                     }}>
-                        <img src="/logo.png" style={{ width: '85%', height: 'auto' }} alt={pt("ciki_dental")} />
+                        <img src="/logo.png" style={{ maxWidth: '100%', maxHeight: '100%' }} alt={pt("ciki_dental")} />
                     </div>
                     
-                    <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)', letterSpacing: '-0.02em' }}>
+                    <h1 style={{ fontSize: '2.25rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)', letterSpacing: '-0.03em', fontFamily: 'var(--font-serif, "Playfair Display", serif)' }}>
                         บ้านหมอฟัน
                     </h1>
-                    <div style={{ height: '1.5rem', marginBottom: '3rem' }}></div>
+                    <p style={{ color: 'var(--lp-text-muted)', fontSize: '0.95rem', fontWeight: 500, letterSpacing: '0.1em', uppercase: 'true', marginBottom: '3rem' }}>
+                        DENTIST'S HOUSE LUXURY CLINIC
+                    </p>
 
-                    <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
-                        <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'block', marginLeft: '0.5rem' }}>
+                    <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
+                        <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'block', paddingLeft: '0.5rem' }}>
                             {pt('phone_label')}
                         </label>
                         <div style={{ position: 'relative' }}>
@@ -559,7 +558,7 @@ const LinePortal = () => {
                             </div>
                             <input 
                                 className="lp-input-v2"
-                                style={{ paddingLeft: '3.5rem', height: '4rem', fontSize: '1.1rem', fontWeight: 600, border: '2px solid #f1f5f9' }}
+                                style={{ paddingLeft: '3.5rem', height: '4.25rem', fontSize: '1.2rem', fontWeight: 800, border: '1.5px solid #eef2f6', borderRadius: '1.5rem', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}
                                 type="tel"
                                 placeholder="08x-xxx-xxxx" 
                                 value={phoneNum} 
@@ -573,12 +572,16 @@ const LinePortal = () => {
                         className="lp-btn-accent" 
                         onClick={handleSendOTP} 
                         disabled={authLoading}
-                        style={{ height: '4rem', borderRadius: '1.25rem', fontSize: '1.1rem', fontWeight: 900, boxShadow: '0 12px 24px rgba(16, 185, 129, 0.2)' }}
+                        style={{ width: '100%', height: '4.25rem', borderRadius: '1.5rem', fontSize: '1.15rem', fontWeight: 900, boxShadow: '0 15px 30px rgba(13, 148, 136, 0.25)', background: 'var(--gradient-hero)', border: 'none' }}
                     >
                         {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : pt('get_otp')}
                     </button>
                     
-                    <div style={{ height: '2rem' }}></div>
+                    <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', opacity: 0.6 }}>
+                        <div style={{ height: '1px', flex: 1, background: '#e2e8f0' }} />
+                        <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.1em' }}>POWERED BY CIKI</span>
+                        <div style={{ height: '1px', flex: 1, background: '#e2e8f0' }} />
+                    </div>
                 </div>
             </div>
         );
@@ -587,35 +590,38 @@ const LinePortal = () => {
     // ===== OTP PAGE =====
     if (page === 'otp') {
         return (
-            <div className="lp-container" style={{ background: '#f8fafc', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ position: 'absolute', top: -50, left: -50, width: 220, height: 220, background: 'radial-gradient(circle, var(--lp-secondary) 0%, transparent 70%)', opacity: 0.1, zIndex: 0 }} />
+            <div className="lp-container" style={{ background: 'var(--lp-background)', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: '280px', height: '280px', background: 'radial-gradient(circle, var(--lp-secondary) 0%, transparent 70%)', opacity: 0.05, zIndex: 0, borderRadius: '50%' }} />
                 
                 <div style={{ width: '100%', maxWidth: '340px', textAlign: 'center', zIndex: 1 }}>
                     <div style={{ 
-                        width: '85px', height: '85px', background: 'white', 
-                        borderRadius: '2rem', display: 'flex', alignItems: 'center', 
+                        width: '90px', height: '90px', background: 'white', 
+                        borderRadius: '2.5rem', display: 'flex', alignItems: 'center', 
                         justifyContent: 'center', margin: '0 auto 2.5rem', 
-                        boxShadow: '0 20px 40px rgba(16, 185, 129, 0.1)'
+                        boxShadow: '0 25px 50px -12px rgba(13, 148, 136, 0.1)'
                     }}>
                         <ShieldCheck size={40} color="var(--lp-primary)" />
                     </div>
 
-                    <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.75rem', color: 'var(--lp-text-main)', letterSpacing: '-0.02em' }}>
+                    <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.75rem', color: 'var(--lp-text-main)', letterSpacing: '-0.02em', fontFamily: 'var(--font-serif, "Playfair Display", serif)' }}>
                         {pt('verify_title') || 'Verify Identity'}
                     </h1>
-                    <p style={{ color: 'var(--lp-text-muted)', fontSize: '0.95rem', marginBottom: '3.5rem', fontWeight: 500, opacity: 0.8 }}>
+                    <p style={{ color: 'var(--lp-text-muted)', fontSize: '0.95rem', marginBottom: '3.5rem', fontWeight: 500 }}>
                         {pt('otp_sent_to')} <span style={{ color: 'var(--lp-text-main)', fontWeight: 800 }}>{phoneNum}</span>
                     </p>
 
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginBottom: '3.5rem' }}>
+                    <div 
+                        style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '4rem' }}
+                        onClick={() => otpInputRef.current?.focus()}
+                    >
                         {[...Array(6)].map((_, i) => (
                             <div key={i} style={{
-                                width: '44px', height: '60px', borderRadius: '14px', background: 'white', border: '2px solid',
+                                width: '48px', height: '64px', borderRadius: '1.25rem', background: 'white', border: '2px solid',
                                 borderColor: otpCode.length === i ? 'var(--lp-primary)' : '#f1f5f9',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: '1.5rem', fontWeight: 900, color: 'var(--lp-text-main)', 
-                                boxShadow: otpCode.length === i ? '0 0 15px rgba(16, 185, 129, 0.15)' : 'none',
-                                transition: 'all 0.2s ease'
+                                fontSize: '1.6rem', fontWeight: 900, color: 'var(--lp-text-main)', 
+                                boxShadow: otpCode.length === i ? '0 10px 20px rgba(13, 148, 136, 0.1)' : 'none',
+                                transition: 'all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                             }}>
                                 {otpCode[i] || ''}
                             </div>
@@ -641,9 +647,10 @@ const LinePortal = () => {
                         onClick={() => handleVerifyOTP()}
                         disabled={otpCode.length < 6 || authLoading}
                         style={{ 
-                            width: '100%', height: '4rem', borderRadius: '1.25rem', 
-                            fontSize: '1.1rem', fontWeight: 900, display: 'block',
-                            boxShadow: '0 12px 24px rgba(16, 185, 129, 0.2)' 
+                            width: '100%', height: '4.25rem', borderRadius: '1.5rem', 
+                            fontSize: '1.15rem', fontWeight: 900, display: 'block',
+                            boxShadow: '0 15px 30px rgba(13, 148, 136, 0.25)',
+                            background: 'var(--gradient-hero)', border: 'none'
                         }}
                     >
                         {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : pt('verify_btn') || 'Verify & Continue'}
@@ -653,17 +660,24 @@ const LinePortal = () => {
                         onClick={() => setPage('login')}
                         style={{ 
                             width: '100%', background: 'none', border: 'none', 
-                            color: 'var(--lp-text-muted)', fontSize: '0.85rem', 
+                            color: 'var(--lp-text-muted)', fontSize: '0.9rem', 
                             fontWeight: 800, marginTop: '2.5rem', cursor: 'pointer', 
-                            opacity: 0.7, display: 'block', textAlign: 'center'
+                            opacity: 0.7, textDecoration: 'underline'
                         }}
                     >
                         {pt('change_phone_btn') || 'Change Phone Number'}
                     </button>
+                    
+                    {/* Demo Hint Banner */}
+                    <div style={{ marginTop: '2rem', padding: '1rem', background: 'var(--primary-50)', borderRadius: '1rem', border: '1.5px dashed var(--lp-primary)', color: 'var(--lp-primary-dark)', fontSize: '0.8rem', fontWeight: 600 }}>
+                        <Sparkles size={14} style={{ display: 'inline-block', marginRight: '0.5rem' }} />
+                        DEMO MODE: Use code <span style={{ fontWeight: 900, color: 'var(--lp-primary)' }}>123456</span> to continue
+                    </div>
                 </div>
             </div>
         );
     }
+
 
     // ===== REGISTER PAGE =====
     if (page === 'register') {

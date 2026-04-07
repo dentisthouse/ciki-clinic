@@ -85,18 +85,35 @@ const Billing = () => {
             />
 
             {/* Page Header */}
-            <div className="page-header">
+            <div className="page-header" style={{ marginBottom: '3rem' }}>
                 <div className="page-title-group">
-                    <h1>{t('bill_title')}</h1>
-                    <p>{t('bill_subtitle')}</p>
+                    <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--neutral-900)', letterSpacing: '-0.045em', marginBottom: '0.5rem' }}>
+                        {t('bill_title')}
+                    </h1>
+                    <p style={{ fontSize: '1.1rem', color: 'var(--neutral-500)', fontWeight: 500 }}>{t('bill_subtitle')}</p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button className="btn btn-secondary" style={{ background: 'var(--primary-50)', color: 'var(--primary-700)', border: '1.5px solid var(--primary-100)' }} onClick={() => setShowShiftModal(true)}>
-                        <Calculator size={18} style={{ marginRight: '8px' }} />
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <button className="btn btn-secondary" style={{ 
+                        background: 'white', 
+                        color: 'var(--neutral-700)', 
+                        border: '1.5px solid var(--neutral-200)',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: 'var(--radius-lg)',
+                        fontWeight: 700,
+                        boxShadow: 'var(--shadow-sm)'
+                    }} onClick={() => setShowShiftModal(true)}>
+                        <Calculator size={20} style={{ marginRight: '10px', color: 'var(--primary-600)' }} />
                         {language === 'EN' ? 'Daily Reconciliation' : 'สรุปยอดประจำวัน'}
                     </button>
-                    <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-                        <Plus size={18} style={{ marginRight: '8px' }} />
+                    <button className="btn btn-primary" style={{ 
+                        padding: '0.75rem 1.75rem',
+                        borderRadius: 'var(--radius-lg)',
+                        fontWeight: 800,
+                        boxShadow: 'var(--shadow-md)',
+                        background: 'var(--gradient-primary)',
+                        border: 'none'
+                    }} onClick={() => setIsModalOpen(true)}>
+                        <Plus size={20} style={{ marginRight: '10px' }} />
                         {language === 'EN' ? 'New Invoice' : 'เพิ่มใบแจ้งหนี้'}
                     </button>
                 </div>
@@ -104,62 +121,82 @@ const Billing = () => {
 
             {/* Pending Billing Queue - REAL-TIME HANDOFF */}
             {pendingPatients.length > 0 && (
-                <div className="animate-fade-in" style={{ marginBottom: '2.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                        <Clock size={18} color="var(--primary-600)" />
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
-                            {language === 'TH' ? 'รายการรอชำระเงิน (จากห้องตรวจ)' : 'Pending Payments (From Clinics)'}
+                <div className="animate-fade-in" style={{ marginBottom: '3rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', background: 'var(--primary-100)', borderRadius: '10px', color: 'var(--primary-600)' }}>
+                            <Clock size={18} />
+                        </div>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: 'var(--neutral-800)', letterSpacing: '-0.02em' }}>
+                            {language === 'TH' ? 'รายการรอชำระเงิน' : 'Incoming Payments'}
                         </h3>
-                        <span className="badge badge-info" style={{ marginLeft: 'auto' }}>{pendingPatients.length}</span>
+                        <span style={{ 
+                            marginLeft: 'auto', background: 'var(--primary-600)', color: 'white', 
+                            padding: '0.2rem 0.75rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 800 
+                        }}>
+                            {pendingPatients.length} Patients
+                        </span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
                         {pendingPatients.map(patient => (
                             <div 
                                 key={patient.id} 
                                 className="card glass-panel-premium" 
                                 style={{ 
-                                    padding: '1.25rem', 
-                                    background: 'var(--primary-50)', 
-                                    border: '1.4px solid var(--primary-200)',
+                                    padding: '1.5rem', 
+                                    background: 'var(--glass-premium-bg)', 
+                                    border: '1px solid var(--primary-100)',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    gap: '0.75rem',
-                                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+                                    gap: '1rem',
+                                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                    boxShadow: 'var(--shadow-md)'
                                 }}
                                 onClick={() => {
                                     setPrePopulatedId(patient.id);
                                     setPrePopulatedItems(patient.treatments.filter(t => t.paymentStatus === 'unpaid'));
                                     setIsModalOpen(true);
                                 }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-5px)';
+                                    e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                                    e.currentTarget.style.borderColor = 'var(--primary-300)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                    e.currentTarget.style.borderColor = 'var(--primary-100)';
+                                }}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <div style={{ minWidth: 0 }}>
-                                        <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--neutral-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{patient.name}</div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', marginTop: '0.2rem' }}>ID: {patient.id}</div>
+                                        <div style={{ fontWeight: 900, fontSize: '1.15rem', color: 'var(--neutral-900)', letterSpacing: '-0.01em' }}>{patient.name}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.25rem' }}>HN: {patient.hn || patient.id}</div>
                                     </div>
                                     <div style={{ 
-                                        background: 'white', 
+                                        background: 'var(--primary-50)', 
                                         color: 'var(--primary-600)', 
-                                        padding: '0.5rem', 
-                                        borderRadius: '12px',
-                                        boxShadow: 'var(--shadow-sm)',
-                                        border: '1px solid var(--primary-100)' 
+                                        padding: '0.75rem', 
+                                        borderRadius: '16px',
+                                        boxShadow: 'inset 0 0 0 1px var(--primary-100)'
                                     }}>
-                                        <Receipt size={18} />
+                                        <Receipt size={20} />
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                                    <span style={{ fontWeight: 700, color: 'var(--primary-700)', background: 'var(--primary-100)', padding: '0.1rem 0.5rem', borderRadius: '6px' }}>
-                                        {patient.treatments.filter(t => t.paymentStatus === 'unpaid').length} {language === 'TH' ? 'รายการ' : 'Items'}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem' }}>
+                                    <span style={{ fontWeight: 800, color: 'var(--primary-700)', background: 'var(--primary-50)', padding: '0.25rem 0.75rem', borderRadius: '8px' }}>
+                                        {patient.treatments.filter(t => t.paymentStatus === 'unpaid').length} {language === 'TH' ? 'รายการ' : 'Procedures'}
                                     </span>
-                                    <span style={{ color: 'var(--neutral-300)' }}>•</span>
-                                    <span style={{ fontWeight: 800, color: 'var(--neutral-900)', fontSize: '1rem' }}>
+                                    <span style={{ fontWeight: 900, color: 'var(--neutral-900)', fontSize: '1.25rem', marginLeft: 'auto' }}>
                                         ฿{patient.treatments.filter(t => t.paymentStatus === 'unpaid').reduce((sum, t) => sum + (t.price || 0), 0).toLocaleString()}
                                     </span>
                                 </div>
-                                <button className="btn btn-primary" style={{ width: '100%', padding: '0.6rem', fontSize: '0.85rem', marginTop: '0.25rem', boxShadow: '0 4px 12px rgba(20, 184, 166, 0.2)' }}>
-                                    {language === 'TH' ? 'ออกใบเรียกเก็บเงิน' : 'Process Payment'}
+                                <button className="btn btn-primary" style={{ 
+                                    width: '100%', padding: '0.85rem', fontSize: '1rem', fontWeight: 800, 
+                                    marginTop: '0.5rem', background: 'var(--gradient-primary)',
+                                    borderRadius: '14px', border: 'none'
+                                }}>
+                                    {language === 'TH' ? 'ออกใบเรียกเก็บเงิน' : 'Process Checkout'}
                                 </button>
                             </div>
                         ))}

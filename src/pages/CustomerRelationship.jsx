@@ -345,33 +345,62 @@ const CustomerRelationship = () => {
     return (
         <div className="customer-relationship" style={{ padding: '2rem' }}>
             {/* Header */}
-            <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Users size={32} color="var(--primary-600)" />
-                    {language === 'TH' ? 'จัดการความสัมพันธ์ลูกค้า' : 'Customer Relationship Management'}
-                </h1>
+            <div className="glass-panel-premium animate-fade-in" style={{ 
+                padding: '2.5rem', marginBottom: '2.5rem', 
+                borderRadius: 'var(--radius-xl)', border: '1px solid var(--neutral-100)',
+                background: 'linear-gradient(135deg, white 0%, var(--primary-50) 100%)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                    <div>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--neutral-900)', letterSpacing: '-0.04em' }}>
+                            <div style={{ padding: '0.75rem', background: 'var(--primary-600)', borderRadius: '16px', color: 'white', boxShadow: 'var(--shadow-md)' }}>
+                                <Users size={32} />
+                            </div>
+                            {language === 'TH' ? 'ความสัมพันธ์ลูกค้า' : 'Patient Experience'}
+                        </h1>
+                        <p style={{ color: 'var(--neutral-500)', fontWeight: 600, marginTop: '0.5rem', fontSize: '1.1rem', marginLeft: '4.5rem' }}>
+                            {language === 'TH' ? 'จัดการความพึงพอใจและโปรแกรมสมาชิก' : 'Elevate patient satisfaction and loyalty'}
+                        </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button className="btn btn-secondary" style={{ 
+                            display: 'flex', alignItems: 'center', gap: '0.75rem',
+                            padding: '0.8rem 1.25rem', borderRadius: '14px', fontWeight: 700,
+                            background: 'white', border: '1.5px solid var(--neutral-200)', boxShadow: 'var(--shadow-sm)'
+                        }} onClick={() => exportReport('feedback')}>
+                            <Download size={20} color="var(--primary-600)" />
+                            {language === 'TH' ? 'รายงาน' : 'Export'}
+                        </button>
+                    </div>
+                </div>
 
                 {/* Tabs */}
-                <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--neutral-200)', marginTop: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
                     {[
-                        { id: 'feedback', label: { TH: 'Feedback', EN: 'Feedback' } },
-                        { id: 'loyalty', label: { TH: 'โปรแกรมสมาชิก', EN: 'Loyalty Program' } },
-                        { id: 'communication', label: { TH: 'การสื่อสาร', EN: 'Communication' } },
-                        { id: 'satisfaction', label: { TH: 'สำรวจความพึงพอใจ', EN: 'Satisfaction Surveys' } }
+                        { id: 'feedback', label: { TH: 'รีวิว & ความคิดเห็น', EN: 'Reviews & Feedback' }, icon: MessageSquare },
+                        { id: 'loyalty', label: { TH: 'สิทธิประโยชน์หลัก', EN: 'Loyalty Program' }, icon: Award },
+                        { id: 'communication', label: { TH: 'การแจ้งเตือน', EN: 'Communications' }, icon: Send },
+                        { id: 'satisfaction', label: { TH: 'ดัชนีความพึงพอใจ', EN: 'Patient Satisfaction' }, icon: Target }
                     ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             style={{
-                                padding: '0.75rem 1.5rem',
+                                padding: '0.85rem 1.5rem',
                                 border: 'none',
-                                background: activeTab === tab.id ? 'var(--primary-50)' : 'transparent',
-                                color: activeTab === tab.id ? 'var(--primary-700)' : 'var(--neutral-600)',
-                                borderBottom: activeTab === tab.id ? '2px solid var(--primary-600)' : '2px solid transparent',
-                                fontWeight: 600,
-                                cursor: 'pointer'
+                                borderRadius: '12px',
+                                background: activeTab === tab.id ? 'var(--neutral-900)' : 'transparent',
+                                color: activeTab === tab.id ? 'white' : 'var(--neutral-500)',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                transition: 'all 0.2s ease',
+                                boxShadow: activeTab === tab.id ? 'var(--shadow-md)' : 'none'
                             }}
                         >
+                            <tab.icon size={16} />
                             {tab.label[language]}
                         </button>
                     ))}
@@ -430,13 +459,24 @@ const CustomerRelationship = () => {
                         </div>
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         {filteredFeedbacks.map(feedback => (
                             <div key={feedback.id} style={{
-                                padding: '1.5rem',
-                                border: '1px solid var(--neutral-200)',
-                                borderRadius: '12px',
-                                background: 'white'
+                                padding: '1.75rem',
+                                border: '1px solid var(--neutral-100)',
+                                borderRadius: 'var(--radius-xl)',
+                                background: 'var(--glass-premium-bg)',
+                                backdropFilter: 'blur(12px)',
+                                boxShadow: 'var(--shadow-sm)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                e.currentTarget.style.borderColor = 'var(--primary-100)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                e.currentTarget.style.borderColor = 'var(--neutral-100)';
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                                     <div style={{ flex: 1 }}>

@@ -273,86 +273,100 @@ const Schedule = () => {
             />
 
             {/* Page Header */}
-            <div className="page-header">
-                <div className="page-title-group">
-                    <h1>{t('sch_title')}</h1>
-                    <p>{t('sch_subtitle')}</p>
-                </div>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    {(staff?.role?.toLowerCase() !== 'dentist' && staff?.role?.toLowerCase() !== 'doctor') && (
-                        <button
-                            className="btn btn-secondary"
-                            onClick={() => setIsWalkInModalOpen(true)}
-                            style={{ background: '#f59e0b', color: 'white', border: 'none' }}
-                        >
-                            <User size={18} style={{ marginRight: '8px' }} />
-                            {t('sch_walk_in') || 'Walk-in'}
+            <div className="glass-panel-premium animate-fade-in" style={{ 
+                padding: '2.5rem', marginBottom: '2.5rem', 
+                borderRadius: 'var(--radius-xl)', border: '1px solid var(--neutral-100)',
+                background: 'linear-gradient(135deg, white 0%, var(--primary-50) 100%)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                    <div>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--neutral-900)', letterSpacing: '-0.04em' }}>
+                            <div style={{ padding: '0.75rem', background: 'var(--primary-600)', borderRadius: '16px', color: 'white', boxShadow: 'var(--shadow-md)' }}>
+                                <CalendarIcon size={32} />
+                            </div>
+                            {t('sch_title')}
+                        </h1>
+                        <p style={{ color: 'var(--neutral-500)', fontWeight: 600, marginTop: '0.5rem', fontSize: '1.1rem', marginLeft: '4.5rem' }}>
+                            {t('sch_subtitle')}
+                        </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button className="btn btn-secondary" style={{ 
+                            padding: '0.75rem', borderRadius: '12px', background: 'white', border: '1.5px solid var(--neutral-200)' 
+                        }} onClick={() => syncData()} title="Sync">
+                            <RefreshCw size={20} color="var(--primary-600)" />
                         </button>
-                    )}
-                    <button
-                        className="btn btn-secondary"
-                        onClick={() => syncData()}
-                        title="Force Sync Now"
-                    >
-                        <RefreshCw size={16} />
-                    </button>
-                    <button
-                        className={`btn ${viewMode === 'calendar' ? 'btn-primary' : 'btn-secondary'}`}
-                        onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
-                    >
-                        {viewMode === 'list' ? <CalendarIcon size={16} /> : <List size={16} />}
-                        {viewMode === 'list' ? t('sch_view_calendar') : t('sch_view_list')}
-                    </button>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <button className={`btn ${viewMode === 'calendar' ? 'btn-primary' : 'btn-secondary'}`} style={{
+                            padding: '0.75rem 1.25rem', borderRadius: '12px', fontWeight: 700,
+                            display: 'flex', alignItems: 'center', gap: '0.65rem'
+                        }} onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}>
+                            {viewMode === 'list' ? <CalendarIcon size={20} /> : <List size={20} />}
+                            {viewMode === 'list' ? t('sch_view_calendar') : t('sch_view_list')}
+                        </button>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
                         <select 
                             value={doctorFilter}
                             onChange={(e) => setDoctorFilter(e.target.value)}
                             disabled={staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor'}
                             style={{ 
-                                padding: '0.65rem 1rem', 
-                                borderRadius: '12px', 
-                                border: '1px solid var(--neutral-200)',
-                                background: (staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor') ? '#f1f5f9' : 'white',
-                                fontWeight: 700,
-                                color: 'var(--primary-700)',
+                                padding: '0.8rem 1.5rem', 
+                                borderRadius: '14px', 
+                                border: '1.5px solid var(--neutral-200)',
+                                background: (staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor') ? 'var(--neutral-50)' : 'white',
+                                fontWeight: 800,
+                                color: 'var(--neutral-800)',
                                 outline: 'none',
-                                cursor: (staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor') ? 'not-allowed' : 'pointer',
-                                opacity: (staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor') ? 0.7 : 1
+                                cursor: 'pointer',
+                                fontSize: '0.95rem',
+                                boxShadow: 'var(--shadow-sm)'
                             }}
                         >
-                            {/* Dynamic Options: Show only based on Role */}
                             {(() => {
                                 const role = staff?.role?.toLowerCase();
                                 const isClinical = role === 'dentist' || role === 'doctor';
                                 const myBoundName = DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name;
 
-                                // If owner/admin, show all options
                                 if (!isClinical) {
                                     return (
                                         <>
-                                            <option value="All">แพทย์ทั้งหมด (All Doctors)</option>
-                                            <option value="หมอบิ๊ก">หมอบิ๊ก (เฉพาะทางฟันคุด)</option>
-                                            <option value="หมอต้อง">หมอต้อง (ทั่วไป)</option>
-                                            <option value="หมออ้อม">หมออ้อม (จัดฟัน)</option>
-                                            <option value="หมอจุ๊บ">หมอจุ๊บ (จัดฟัน)</option>
+                                            <option value="All">👨‍⚕️ แพทย์ทั้งหมด (All Doctors)</option>
+                                            <option value="หมอบิ๊ก">👨‍⚕️ หมอบิ๊ก (เฉพาะทางฟันคุด)</option>
+                                            <option value="หมอต้อง">👨‍⚕️ หมอต้อง (ทั่วไป)</option>
+                                            <option value="หมออ้อม">👩‍⚕️ หมออ้อม (จัดฟัน)</option>
+                                            <option value="หมอจุ๊บ">👩‍⚕️ หมอจุ๊บ (จัดฟัน)</option>
                                         </>
                                     );
                                 }
-
-                                // If Dentist, only show their OWN option
-                                return (
-                                    <option value={myBoundName}>{myBoundName}</option>
-                                );
+                                return <option value={myBoundName}>👩‍⚕️ {myBoundName}</option>;
                             })()}
                         </select>
                     </div>
-                    
-                    {(staff?.role?.toLowerCase() !== 'dentist' && staff?.role?.toLowerCase() !== 'doctor') && (
-                        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-                            <Plus size={18} style={{ marginRight: '8px' }} />
-                            {t('sch_new_apt')}
-                        </button>
-                    )}
+
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        {(staff?.role?.toLowerCase() !== 'dentist' && staff?.role?.toLowerCase() !== 'doctor') && (
+                            <button className="btn btn-accent" style={{ 
+                                padding: '0.8rem 1.5rem', borderRadius: '14px', fontWeight: 800,
+                                display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--accent-100)', color: 'var(--accent-700)', border: 'none'
+                            }} onClick={() => setIsWalkInModalOpen(true)}>
+                                <User size={20} />
+                                {t('sch_walk_in')}
+                            </button>
+                        )}
+                        {(staff?.role?.toLowerCase() !== 'dentist' && staff?.role?.toLowerCase() !== 'doctor') && (
+                            <button className="btn btn-primary" style={{ 
+                                padding: '0.8rem 1.75rem', borderRadius: '14px', fontWeight: 900,
+                                display: 'flex', alignItems: 'center', gap: '0.5rem', border: 'none',
+                                background: 'var(--gradient-primary)', boxShadow: 'var(--shadow-md)'
+                            }} onClick={() => setIsModalOpen(true)}>
+                                <Plus size={22} />
+                                {t('sch_new_apt')}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -360,18 +374,24 @@ const Schedule = () => {
                 <>
                     {/* Stats Header */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                        <div className="card glass-panel-premium animate-slide-up delay-100" style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'white' }}>
-                            <div className="floating-icon" style={{ padding: '0.85rem', background: 'var(--primary-50)', color: 'var(--primary-600)', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(20, 184, 166, 0.2)' }}>
-                                <CalendarIcon size={24} />
+                        <div className="card glass-panel-premium animate-slide-up delay-100" style={{ 
+                            display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.5rem',
+                            background: 'var(--glass-premium-bg)', border: '1px solid var(--primary-100)', borderRadius: 'var(--radius-xl)'
+                        }}>
+                            <div className="floating-icon" style={{ 
+                                padding: '1rem', background: 'var(--primary-50)', color: 'var(--primary-600)', 
+                                borderRadius: '18px', boxShadow: 'var(--shadow-sm)' 
+                            }}>
+                                <CalendarIcon size={28} />
                             </div>
                             <div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{t('dash_appointments')}</div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--neutral-500)', fontWeight: 700, marginBottom: '0.25rem' }}>{t('dash_appointments')}</div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--neutral-900)', letterSpacing: '-0.02em' }}>
                                     {(() => {
                                         const userIsClinical = staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor';
                                         const effectiveFilter = userIsClinical ? (DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name) : doctorFilter;
                                         return appointments.filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), currentDate)).length;
-                                    })()} {t('sch_today_count_label')}
+                                    })()} <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--neutral-400)' }}>{t('sch_today_count_label')}</span>
                                 </div>
                             </div>
                         </div>
@@ -492,29 +512,23 @@ const Schedule = () => {
                                                 </div>
                                             </td>
                                             <td>
-                                                <span style={{
-                                                    background:
-                                                        apt.status === 'Completed' ? '#dcfce7' :
-                                                        apt.status === 'Confirmed' ? '#06C75520' :
-                                                        apt.status === 'Cancelled' ? '#fee2e2' :
-                                                        apt.status === 'Requested' ? '#fff7ed' :
-                                                        apt.status === 'Sent' ? '#f0f9ff' :
-                                                            apt.status === 'In Progress' ? '#dbeafe' :
-                                                                '#f3f4f6',
-                                                    color:
-                                                        apt.status === 'Completed' ? '#166534' :
-                                                        apt.status === 'Confirmed' ? '#06C755' :
-                                                        apt.status === 'Cancelled' ? '#991b1b' :
-                                                        apt.status === 'Requested' ? '#c2410c' :
-                                                        apt.status === 'Sent' ? '#0369a1' :
-                                                            apt.status === 'In Progress' ? '#1e40af' :
-                                                                '#4b5563',
-                                                    padding: '0.25rem 0.75rem',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 600,
-                                                    display: 'inline-block'
-                                                }}>
+                                                <span 
+                                                    className={`badge badge-${
+                                                        apt.status === 'Completed' ? 'success' :
+                                                        apt.status === 'Confirmed' ? 'success' :
+                                                        apt.status === 'Cancelled' ? 'danger' :
+                                                        apt.status === 'Requested' ? 'warning' :
+                                                        apt.status === 'Sent' ? 'info' :
+                                                        apt.status === 'In Progress' ? 'info' :
+                                                        'neutral'
+                                                    }`}
+                                                    style={{
+                                                        padding: '0.4rem 1rem',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 700,
+                                                        letterSpacing: '0.02em'
+                                                    }}
+                                                >
                                                     {apt.status === 'Sent' ? (language === 'TH' ? 'ส่งแล้ว' : 'Sent') :
                                                      apt.status === 'Confirmed' ? (language === 'TH' ? 'ยืนยันแล้ว' : 'Confirmed') :
                                                      apt.status === 'Requested' ? (language === 'TH' ? 'ขอเลื่อน' : 'Rescheduling') :
@@ -619,14 +633,11 @@ const Schedule = () => {
 
                                                             {!apt.checkInTime && (
                                                                 <button
-                                                                    className="btn"
+                                                                    className="btn btn-primary"
                                                                     style={{
-                                                                        padding: '0.4rem 0.8rem',
-                                                                        fontSize: '0.75rem',
-                                                                        backgroundColor: 'var(--primary-600)',
-                                                                        color: 'white',
-                                                                        border: 'none',
-                                                                        borderRadius: 'var(--radius-md)'
+                                                                        padding: '0.5rem 1.25rem',
+                                                                        fontSize: '0.8rem',
+                                                                        borderRadius: 'var(--radius-lg)'
                                                                     }}
                                                                     onClick={() => {
                                                                         updateAppointment(apt.id, {

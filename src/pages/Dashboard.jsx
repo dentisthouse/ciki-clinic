@@ -22,22 +22,35 @@ import {
 } from 'recharts';
 
 const StatCard = ({ title, value, icon: Icon, trend, colorClass, delay, t }) => (
-    <div className={`stat-card glass-panel-premium animate-slide-up ${delay}`} style={{ background: 'white' }}>
+    <div className={`stat-card glass-panel-premium animate-slide-up ${delay}`} style={{ 
+        background: 'var(--glass-premium-bg)',
+        border: '1px solid var(--glass-premium-border)',
+        boxShadow: 'var(--glass-premium-shadow)',
+        borderRadius: 'var(--radius-xl)'
+    }}>
         <div className="stat-header">
             <div className="stat-info">
-                <p>{title}</p>
-                <h3>{value}</h3>
+                <p style={{ color: 'var(--neutral-500)', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.25rem' }}>{title}</p>
+                <h3 style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--neutral-900)', letterSpacing: '-0.02em' }}>{value}</h3>
             </div>
-            <div className={`stat-icon-wrapper ${colorClass.replace('bg-', 'btn-')} floating-icon`} style={{ 
-                background: `linear-gradient(135deg, var(--neutral-50) 0%, white 100%)`, 
-                color: `var(--${colorClass.split('-')[1]}-600)`,
-                border: `1px solid var(--neutral-100)`
+            <div className={`stat-icon-wrapper floating-icon`} style={{ 
+                background: `linear-gradient(135deg, var(--primary-50) 0%, white 100%)`, 
+                color: `var(--primary-600)`,
+                width: '48px', height: '48px', borderRadius: '14px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: 'var(--shadow-sm)',
+                border: `1px solid var(--primary-100)`
             }}>
                 <Icon size={24} />
             </div>
         </div>
-        <div className="stat-trend">
-            <div className={`trend-badge ${trend >= 0 ? 'trend-up' : 'trend-down'}`}>
+        <div className="stat-trend" style={{ marginTop: '1.25rem' }}>
+            <div className={`trend-badge ${trend >= 0 ? 'trend-up' : 'trend-down'}`} style={{
+                background: trend >= 0 ? 'var(--success-light)' : 'var(--danger-light)',
+                color: trend >= 0 ? 'var(--success)' : 'var(--danger)',
+                padding: '0.25rem 0.6rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800,
+                display: 'flex', alignItems: 'center', gap: '4px'
+            }}>
                 {trend >= 0 ? <TrendingUp size={14} /> : <TrendingUp size={14} style={{ transform: 'rotate(180deg)' }} />}
                 <span>{Math.abs(trend)}%</span>
             </div>
@@ -194,21 +207,37 @@ const Dashboard = () => {
             <SSOReportModal isOpen={showSSOReport} onClose={() => setShowSSOReport(false)} />
             
             {/* Header */}
-            <div className="dashboard-header animate-fade-in">
+            <div className="dashboard-header animate-fade-in" style={{ marginBottom: '2.5rem' }}>
                 <div className="header-welcome">
-                    <h1>{t('dash_welcome_morning')}</h1>
-                    <div className="header-date">
-                        <Calendar size={14} style={{ marginRight: '8px' }} />
+                    <h1 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--neutral-900)', letterSpacing: '-0.03em', marginBottom: '0.25rem' }}>
+                        {t('dash_welcome_morning')}
+                    </h1>
+                    <div className="header-date" style={{ color: 'var(--neutral-500)', fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center' }}>
+                        <Calendar size={16} style={{ marginRight: '8px', color: 'var(--primary-600)' }} />
                         {format(today, language === 'EN' ? 'EEEE, d MMMM yyyy' : 'd MMMM yyyy')}
                     </div>
                 </div>
-                <div className="header-buttons">
-                    <button className="btn" style={{ backgroundColor: 'white', border: '1px solid var(--neutral-200)' }} onClick={() => navigate('/patients')}>
-                        <Search size={16} style={{ marginRight: '8px' }} />
+                <div className="header-buttons" style={{ display: 'flex', gap: '1rem' }}>
+                    <button className="btn" style={{ 
+                        backgroundColor: 'white', 
+                        border: '1.5px solid var(--neutral-200)', 
+                        padding: '0.75rem 1.25rem',
+                        borderRadius: 'var(--radius-lg)',
+                        fontWeight: 700,
+                        color: 'var(--neutral-700)',
+                        boxShadow: 'var(--shadow-sm)'
+                    }} onClick={() => navigate('/patients')}>
+                        <Search size={18} style={{ marginRight: '8px', color: 'var(--primary-600)' }} />
                         {language === 'EN' ? 'Search Patient' : 'ค้นหาคนไข้'}
                     </button>
-                    <button className="btn btn-primary" onClick={() => navigate('/schedule?action=new')}>
-                        <Plus size={16} style={{ marginRight: '8px' }} />
+                    <button className="btn btn-primary" style={{ 
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: 'var(--radius-lg)',
+                        fontWeight: 800,
+                        boxShadow: 'var(--shadow-md)',
+                        background: 'var(--gradient-primary)'
+                    }} onClick={() => navigate('/schedule?action=new')}>
+                        <Plus size={18} style={{ marginRight: '8px' }} />
                         {t('sch_new_apt')}
                     </button>
                 </div>
