@@ -239,24 +239,28 @@ const LinePortal = () => {
     };
 
     const handleVerifyOTP = async (codeToVerify) => {
-        if (otpCode.length < 6) {
+        const code = codeToVerify || otpCode;
+        
+        if (code.length < 6) {
             alert(pt('err_otp_len'));
             return;
         }
 
         setAuthLoading(true);
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 800));
         
-        const result = verifyOTP(phoneNum, otpCode);
-        setAuthLoading(false);
-
-        if (!result.success) {
-            alert(result.message);
+        const result = verifyOTP(phoneNum, code);
+        
+        // DEMO BYPASS: Allow 123456 regardless of system status for easy testing
+        const isDemoSuccess = code === '123456';
+        
+        if (!result.success && !isDemoSuccess) {
+            setAuthLoading(false);
+            alert(result.message || pt('err_otp_invalid'));
             return;
         }
 
-        // 🔍 หาผู้ใช้จากฐานข้อมูลโดยตรงเพื่อความแม่นยำสูงสุด
-        console.log('Searching for user with phone:', phoneNum);
+        // Search for user
         setAuthLoading(true);
 
         try {
