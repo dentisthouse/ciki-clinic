@@ -6,7 +6,7 @@ import {
     Loader2, Phone, ArrowLeft, ShieldCheck, Mail, MapPin,
     CreditCard, ChevronRight, History, Settings, MonitorSmartphone,
     Download, Home, Percent, Newspaper, MessageSquare, Menu, HelpCircle,
-    Activity, FlaskConical, Droplets
+    Activity, FlaskConical, Droplets, Globe
 } from "lucide-react";
 import "./LinePortal.css";
 import { useData } from "../context/DataContext";
