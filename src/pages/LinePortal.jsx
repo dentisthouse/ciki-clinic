@@ -208,7 +208,7 @@ const LinePortal = () => {
         console.log(`Found ${userApts.length} appointments for ${user.name}`);
     };
 
-    const handleLogin = async () => {
+    const handleSendOTP = async () => {
         const formattedPhone = formatPhoneNumber(phoneNum);
         
         if (!isValidThaiPhone(formattedPhone)) {
@@ -238,7 +238,7 @@ const LinePortal = () => {
         }
     };
 
-    const handleVerifyOtp = async () => {
+    const handleVerifyOTP = async (codeToVerify) => {
         if (otpCode.length < 6) {
             alert(pt('err_otp_len'));
             return;
@@ -494,8 +494,11 @@ const LinePortal = () => {
     
     if (page === 'login') {
         return (
-            <div className="lp-container" style={{ justifyContent: 'center', padding: '2rem', position: 'relative' }}>
-                {/* Floating Language Button for Login Page */}
+            <div className="lp-container" style={{ background: '#f8fafc', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                {/* Abstract background accent */}
+                <div style={{ position: 'absolute', top: -50, right: -50, width: 250, height: 250, background: 'radial-gradient(circle, var(--lp-primary) 0%, transparent 70%)', opacity: 0.1, zIndex: 0 }} />
+                
+                {/* Floating Language Button */}
                 <button 
                     onClick={() => {
                         if (language === 'TH') setLanguage('EN');
@@ -503,44 +506,36 @@ const LinePortal = () => {
                         else setLanguage('TH');
                     }}
                     style={{ 
-                        position: 'absolute',
-                        top: '1.5rem',
-                        right: '1.5rem',
-                        background: 'rgba(255,255,255,0.8)', 
-                        backdropFilter: 'blur(8px)',
-                        border: '1px solid rgba(0,0,0,0.05)', 
-                        cursor: 'pointer', 
-                        padding: '0.5rem 0.75rem', 
-                        borderRadius: '2rem',
-                        fontWeight: 800,
-                        color: 'var(--lp-text-main)',
-                        fontSize: '0.8rem',
-                        boxShadow: 'var(--lp-shadow-sm)'
+                        position: 'absolute', top: '2.5rem', right: '1.5rem', zIndex: 10,
+                        background: 'white', padding: '0.6rem 1rem', borderRadius: '2rem',
+                        fontSize: '0.75rem', fontWeight: 800, border: '1px solid #e2e8f0',
+                        cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                        display: 'flex', alignItems: 'center', gap: '0.5rem'
                     }}
                 >
-                    {language === 'CN' ? '🌐 中文' : language === 'EN' ? '🌐 EN' : '🌐 ภาษาไทย'}
+                    <Star size={14} color="var(--lp-primary)" />
+                    {language === 'TH' ? 'ไทย' : language === 'EN' ? 'EN' : 'CN'}
                 </button>
 
-                <div className="lp-glass" style={{ width: '100%', borderRadius: '2.5rem', padding: '2.5rem 1.5rem', textAlign: 'center' }}>
+                <div style={{ width: '100%', maxWidth: '340px', textAlign: 'center', zIndex: 1 }}>
                     <div style={{ 
-                        width: '80px', 
-                        height: '80px', 
-                        background: 'white',
-                        borderRadius: '1.5rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 1.5rem',
-                        boxShadow: 'var(--lp-shadow-md)'
+                        width: '90px', height: '90px', background: 'white', 
+                        borderRadius: '2rem', display: 'flex', alignItems: 'center', 
+                        justifyContent: 'center', margin: '0 auto 2rem', 
+                        boxShadow: '0 20px 40px rgba(16, 185, 129, 0.15)'
                     }}>
-                        <img src="/logo.png" style={{ width: '70%', height: '70%', objectFit: 'contain' }} alt={pt("ciki_dental")} />
+                        <img src="/logo.png" style={{ width: '65%', height: 'auto' }} alt={pt("ciki_dental")} />
                     </div>
                     
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)' }}>{pt("ciki_dental")}</h1>
-                    <p style={{ color: 'var(--lp-text-muted)', marginBottom: '2.5rem', fontSize: '0.95rem' }}>{pt('exp_future')}</p>
+                    <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)', letterSpacing: '-0.02em' }}>
+                        บ้านหมอฟัน
+                    </h1>
+                    <p style={{ color: 'var(--lp-text-muted)', marginBottom: '3.5rem', fontSize: '1rem', fontWeight: 500, opacity: 0.8 }}>
+                        {pt('exp_future')}
+                    </p>
 
                     <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
-                        <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'block', marginLeft: '0.5rem' }}>
+                        <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'block', marginLeft: '0.5rem' }}>
                             {pt('phone_label')}
                         </label>
                         <div style={{ position: 'relative' }}>
@@ -548,28 +543,34 @@ const LinePortal = () => {
                                 <Phone size={20} />
                             </div>
                             <input 
-                                className="lp-input"
-                                type="text"
-                                placeholder={pt('phone_placeholder')} 
+                                className="lp-input-v2"
+                                style={{ paddingLeft: '3.5rem', height: '4rem', fontSize: '1.1rem', fontWeight: 600, border: '2px solid #f1f5f9' }}
+                                type="tel"
+                                placeholder="08x-xxx-xxxx" 
                                 value={phoneNum} 
-                                onChange={e => setPhoneNum(e.target.value)} 
-                                maxLength={10}
+                                onChange={e => setPhoneNum(formatPhoneNumber(e.target.value))} 
+                                maxLength={12}
                             />
                         </div>
                     </div>
                     
-                    <button className="lp-btn-primary" onClick={handleLogin} disabled={authLoading}>
-                        {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : pt('send_otp')}
+                    <button 
+                        className="lp-btn-accent" 
+                        onClick={handleSendOTP} 
+                        disabled={authLoading}
+                        style={{ height: '4rem', borderRadius: '1.25rem', fontSize: '1.1rem', fontWeight: 900, boxShadow: '0 12px 24px rgba(16, 185, 129, 0.2)' }}
+                    >
+                        {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : pt('get_otp')}
                     </button>
                     
-                    <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1.5rem', color: 'var(--lp-text-muted)' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                            <ShieldCheck size={18} />
-                            <span style={{ fontSize: '0.65rem' }}>{pt('secure')}</span>
+                    <div style={{ marginTop: '4rem', display: 'flex', justifyContent: 'center', gap: '2.5rem', opacity: 0.4 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                            <ShieldCheck size={22} color="var(--lp-text-main)" />
+                            <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>{pt('secure')}</span>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                            <Sparkles size={18} />
-                            <span style={{ fontSize: '0.65rem' }}>{pt('premium')}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                            <Star size={22} color="var(--lp-text-main)" />
+                            <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>{pt('premium')}</span>
                         </div>
                     </div>
                 </div>
@@ -580,105 +581,69 @@ const LinePortal = () => {
     // ===== OTP PAGE =====
     if (page === 'otp') {
         return (
-            <div className="lp-container" style={{ justifyContent: 'center', padding: '2rem' }}>
-                <div className="lp-glass" style={{ width: '100%', borderRadius: '2.5rem', padding: '2.5rem 1.5rem', textAlign: 'center', position: 'relative' }}>
-                    <div style={{
-                        position: 'absolute',
-                        top: '-1rem',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: '#10b981',
-                        color: 'white',
-                        padding: '0.4rem 1rem',
-                        borderRadius: '1rem',
-                        fontSize: '0.7rem',
-                        fontWeight: 800,
-                        letterSpacing: '0.05em',
-                        boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+            <div className="lp-container" style={{ background: '#f8fafc', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', top: -50, left: -50, width: 220, height: 220, background: 'radial-gradient(circle, var(--lp-secondary) 0%, transparent 70%)', opacity: 0.1, zIndex: 0 }} />
+                
+                <div style={{ width: '100%', maxWidth: '340px', textAlign: 'center', zIndex: 1 }}>
+                    <div style={{ 
+                        width: '85px', height: '85px', background: 'white', 
+                        borderRadius: '2rem', display: 'flex', alignItems: 'center', 
+                        justifyContent: 'center', margin: '0 auto 2.5rem', 
+                        boxShadow: '0 20px 40px rgba(16, 185, 129, 0.1)'
                     }}>
-                        VERIFICATION
+                        <ShieldCheck size={40} color="var(--lp-primary)" />
                     </div>
 
-                    <div style={{ 
-                        width: '64px', 
-                        height: '64px', 
-                        background: '#f8fafc', 
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '1rem auto 1.5rem',
-                        border: '1px solid #e2e8f0'
-                    }}>
-                        <ShieldCheck size={32} color="var(--lp-primary)" />
-                    </div>
-                    
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.5rem' }}>Verify Identity</h1>
-                    <p style={{ color: 'var(--lp-text-muted)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
-                        OTP sent to <span style={{ color: 'var(--lp-text-main)', fontWeight: 700 }}>{phoneNum}</span>
+                    <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.75rem', color: 'var(--lp-text-main)', letterSpacing: '-0.02em' }}>
+                        {pt('verify_title') || 'Verify Identity'}
+                    </h1>
+                    <p style={{ color: 'var(--lp-text-muted)', fontSize: '0.95rem', marginBottom: '3.5rem', fontWeight: 500, opacity: 0.8 }}>
+                        {pt('otp_sent_to')} <span style={{ color: 'var(--lp-text-main)', fontWeight: 800 }}>{phoneNum}</span>
                     </p>
-                    
-                    <div 
-                        onClick={() => otpInputRef.current?.focus()}
-                        style={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            gap: '0.65rem', 
-                            marginBottom: '2rem',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {[1, 2, 3, 4, 5, 6].map(i => {
-                            const isActive = otpCode.length === i - 1;
-                            const isFilled = otpCode.length >= i;
-                            return (
-                                <div 
-                                    key={i} 
-                                    style={{
-                                        width: '42px',
-                                        height: '56px',
-                                        border: `2px solid ${isActive ? 'var(--lp-primary)' : '#e5e7eb'}`,
-                                        background: isActive ? 'rgba(16, 185, 129, 0.05)' : 'white',
-                                        borderRadius: '0.85rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '1.5rem',
-                                        fontWeight: 800,
-                                        transition: 'all 0.2s',
-                                        boxShadow: isActive ? '0 0 0 4px rgba(16, 185, 129, 0.1)' : 'none',
-                                        color: isFilled ? 'var(--lp-text-main)' : 'transparent'
-                                    }}
-                                >
-                                    {otpCode[i - 1] || '•'}
-                                </div>
-                            );
-                        })}
+
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginBottom: '3.5rem' }}>
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} style={{
+                                width: '44px', height: '60px', borderRadius: '14px', background: 'white', border: '2px solid',
+                                borderColor: otpCode.length === i ? 'var(--lp-primary)' : '#f1f5f9',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '1.5rem', fontWeight: 900, color: 'var(--lp-text-main)', 
+                                boxShadow: otpCode.length === i ? '0 0 15px rgba(16, 185, 129, 0.15)' : 'none',
+                                transition: 'all 0.2s ease'
+                            }}>
+                                {otpCode[i] || ''}
+                            </div>
+                        ))}
                     </div>
-                    
-                    <input
+
+                    <input 
                         ref={otpInputRef}
-                        type="text"
-                        inputMode="numeric"
-                        autoFocus
-                        value={otpCode}
-                        onChange={e => {
+                        type="tel" 
+                        maxLength={6} 
+                        value={otpCode} 
+                        onChange={(e) => {
                             const val = e.target.value.replace(/[^0-9]/g, '');
-                            if (val.length <= 6) setOtpCode(val);
+                            setOtpCode(val);
+                            if (val.length === 6) handleVerifyOTP(val);
                         }}
-                        maxLength={6}
                         style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                        autoFocus
                     />
 
-                    <button className="lp-btn-primary" onClick={handleVerifyOtp} disabled={authLoading}>
-                        {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : 'Verify & Continue'}
+                    <button 
+                        className="lp-btn-accent" 
+                        onClick={() => handleVerifyOTP()}
+                        disabled={otpCode.length < 6 || authLoading}
+                        style={{ height: '4rem', borderRadius: '1.25rem', fontSize: '1.1rem', fontWeight: 900, boxShadow: '0 12px 24px rgba(16, 185, 129, 0.2)' }}
+                    >
+                        {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : pt('verify_btn') || 'Verify & Continue'}
                     </button>
-                    
+
                     <button 
                         onClick={() => setPage('login')}
-                        style={{ background: 'none', border: 'none', color: 'var(--lp-text-muted)', fontSize: '0.85rem', marginTop: '1.5rem', cursor: 'pointer', fontWeight: 600 }}
+                        style={{ background: 'none', border: 'none', color: 'var(--lp-text-muted)', fontSize: '0.85rem', fontWeight: 800, marginTop: '2rem', cursor: 'pointer', opacity: 0.7 }}
                     >
-                        Resend Code
+                        {pt('change_phone_btn') || 'Change Phone Number'}
                     </button>
                 </div>
             </div>

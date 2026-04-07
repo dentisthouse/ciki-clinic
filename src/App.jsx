@@ -53,10 +53,10 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
-          <AuthProvider>
-            <DataProvider>
-              <NotificationProvider>
-                <ToastProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <DataProvider>
+                <NotificationProvider>
                   <BrowserRouter>
                     <Routes>
                       {/* Public Routes */}
@@ -87,10 +87,10 @@ function App() {
                       </Route>
                     </Routes>
                   </BrowserRouter>
-                </ToastProvider>
-              </NotificationProvider>
-            </DataProvider>
-          </AuthProvider>
+                </NotificationProvider>
+              </DataProvider>
+            </AuthProvider>
+          </ToastProvider>
         </LanguageProvider>
       </QueryClientProvider>
     </ErrorBoundary>

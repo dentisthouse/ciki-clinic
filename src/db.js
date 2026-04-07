@@ -4,7 +4,7 @@ export const db = new Dexie('CikiClinicDB');
 
 // Define database schema
 db.version(1).stores({
-    patients: 'id, name, registrationDate, active',
+    patients: 'id, hn, name, registrationDate, active',
     appointments: 'id, patient_id, date, status, queueStatus',
     inventory: 'id, name, category, stock',
     invoices: 'id, patient_id, date, status',

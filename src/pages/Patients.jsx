@@ -53,6 +53,7 @@ const Patients = () => {
 
     const filteredPatients = patients.filter(patient => {
         const matchesSearch = (patient.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+            (patient.hn?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
             (patient.id?.toLowerCase() || '').includes(searchTerm.toLowerCase());
         const matchesFilter = filter === 'All' || patient.status === filter;
         return matchesSearch && matchesFilter;
@@ -293,7 +294,7 @@ const Patients = () => {
                                                         </div>
                                                         <div>
                                                             <div style={{ fontWeight: 600, color: 'var(--neutral-900)' }}>{patient.name}</div>
-                                                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)' }}>ID: {patient.id}</div>
+                                                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)' }}>HN: {patient.hn || patient.id}</div>
                                                         </div>
                                                     </div>
                                                 </td>

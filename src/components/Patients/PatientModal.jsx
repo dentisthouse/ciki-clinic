@@ -150,7 +150,7 @@ const PatientModal = ({ isOpen, onClose, onSave, patient }) => {
                                 {patient ? (language === 'TH' ? 'แก้ไขข้อมูลคนไข้' : 'Edit Patient Profile') : (language === 'TH' ? 'ลงทะเบียนคนไข้ใหม่' : 'New Patient Registration')}
                             </h2>
                             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--neutral-500)', fontWeight: 500 }}>
-                                {patient ? `Patient ID: ${patient.id}` : 'Fill in the information to register a new patient'}
+                                {patient ? `HN: ${patient.hn || patient.id}` : 'Fill in the information to register a new patient'}
                             </p>
                         </div>
                     </div>

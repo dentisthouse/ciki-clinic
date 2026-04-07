@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from '../supabase';
 import { useAuth } from './AuthContext';
 import { db } from '../db';
+import { generateFullHN } from '../utils/hnGenerator';
+import { useToast } from './ToastContext';
 
 const DataContext = createContext();
 
@@ -9,6 +11,7 @@ export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }) => {
     const { user } = useAuth();
+    const { error: toastError } = useToast();
     
     // --- APP STATE ---
     const [isLoading, setIsLoading] = useState(true);
@@ -105,6 +108,9 @@ export const DataProvider = ({ children }) => {
                     if (tableName === 'patients') {
                         processedData = data.map(p => ({ 
                             ...p, 
+                            registrationDate: p.registration_date,
+                            idCard: p.id_card,
+                            insuranceType: p.insurance_type,
                             toothChart: p.tooth_chart || {}, 
                             medicalHistory: p.medical_history || [], 
                             vitals: p.vitals || {}
@@ -207,32 +213,61 @@ export const DataProvider = ({ children }) => {
             updateLocalState(table, allLocal);
 
             // Sync to Supabase in background
-            const { error } = await action();
-            if (error) throw error;
+            const { error: sbError } = await action();
+            if (sbError) {
+                console.error(`Supabase persistence error [${table}]:`, sbError);
+                toastError(`Supabase Error: ${sbError.message || 'Unknown error'}`);
+                throw sbError;
+            }
         } catch (err) {
             console.error(`Backend persistence failed for [${table}]`, err);
-            // Optionally: queue for later retry if offline
+            toastError(`${table} persistence failed: ${err.message || 'Network error'}`);
         }
     };
 
     // Patients
     const addPatient = async (patient) => {
-        const id = Date.now().toString();
+        // Split name into first and last name for HN generation
+        const [firstName, ...lastNameParts] = (patient.name || '').trim().split(/\s+/);
+        const lastName = lastNameParts.join(' ');
+        
+        // Generate automatic HN based on name code + running sequence
+        const hn = generateFullHN(firstName, lastName, patients);
+
+        // Generate a standard UUID to match Supabase's column requirements
+        const id = crypto.randomUUID ? crypto.randomUUID() : `P-${Date.now()}`;
+        
         const newPatient = { 
             ...patient, 
             id, 
+            hn,
             active: true, 
             registrationDate: new Date().toISOString(),
             toothChart: {}, medicalHistory: [], vitals: {}
         };
         
         await persistAction('patients', 
-            () => supabase.from('patients').insert([{
-                ...newPatient,
-                tooth_chart: {},
-                medical_history: [],
-                vitals: {}
-            }]), 
+            () => {
+                // Use strictly snake_case for Supabase columns to avoid schema mismatch
+                const supabaseData = {
+                    id: newPatient.id,
+                    hn: newPatient.hn,
+                    name: newPatient.name,
+                    phone: newPatient.phone,
+                    email: newPatient.email,
+                    address: newPatient.address,
+                    gender: newPatient.gender,
+                    age: parseInt(newPatient.age) || 0,
+                    active: true,
+                    registration_date: newPatient.registrationDate,
+                    id_card: newPatient.idCard,
+                    insurance_type: newPatient.insuranceType,
+                    medical_history: newPatient.medicalHistory || [],
+                    tooth_chart: newPatient.toothChart || {},
+                    vitals: newPatient.vitals || {}
+                };
+                return supabase.from('patients').insert([supabaseData]);
+            }, 
             'insert', newPatient
         );
     };
