@@ -508,12 +508,27 @@ const LinePortal = () => {
                     style={{ 
                         position: 'absolute', top: '2.5rem', right: '1.5rem', zIndex: 10,
                         background: 'white', padding: '0.6rem 1rem', borderRadius: '2rem',
-                        fontSize: '0.85rem', fontWeight: 800, border: '1px solid #e2e8f0',
+                        fontSize: '0.9rem', fontWeight: 800, border: '1px solid #e2e8f0',
                         cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                        display: 'flex', alignItems: 'center', gap: '0.5rem'
+                        display: 'flex', alignItems: 'center', gap: '0.6rem'
                     }}
                 >
-                    {language === 'TH' ? '🇹🇭 ไทย' : language === 'EN' ? '🇬🇧 EN' : '🇨🇳 CN'}
+                    {language === 'TH' ? (
+                        <>
+                            <img src="https://flagcdn.com/w40/th.png" style={{ width: '22px', borderRadius: '3px' }} alt="TH" />
+                            <span>ไทย</span>
+                        </>
+                    ) : language === 'EN' ? (
+                        <>
+                            <img src="https://flagcdn.com/w40/gb.png" style={{ width: '22px', borderRadius: '3px' }} alt="EN" />
+                            <span>EN</span>
+                        </>
+                    ) : (
+                        <>
+                            <img src="https://flagcdn.com/w40/cn.png" style={{ width: '22px', borderRadius: '3px' }} alt="CN" />
+                            <span>CN</span>
+                        </>
+                    )}
                 </button>
 
                 <div style={{ width: '100%', maxWidth: '340px', textAlign: 'center', zIndex: 1 }}>

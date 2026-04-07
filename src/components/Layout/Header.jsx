@@ -60,23 +60,25 @@ const Header = ({ onMenuClick }) => {
                     className="btn btn-secondary"
                     onClick={toggleLanguage}
                     style={{
-                        padding: '0.4rem 0.8rem',
+                        padding: '0.4rem 1rem',
                         fontSize: '0.85rem',
                         fontWeight: 800,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.6rem',
-                        minWidth: '80px',
+                        gap: '0.8rem',
+                        minWidth: '100px',
                         justifyContent: 'center',
                         borderRadius: '12px'
                     }}
                 >
-                    <span style={{ opacity: language === 'TH' ? 1 : 0.3, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        🇹🇭 <span style={{ fontSize: '0.7rem' }}>TH</span>
+                    <span style={{ opacity: language === 'TH' ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <img src="https://flagcdn.com/w40/th.png" style={{ width: '18px', height: 'auto', borderRadius: '2px' }} alt="TH" />
+                        <span style={{ fontSize: '0.75rem' }}>TH</span>
                     </span>
-                    <div style={{ width: '1px', height: '12px', background: 'var(--neutral-200)' }}></div>
-                    <span style={{ opacity: language === 'EN' ? 1 : 0.3, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        🇬🇧 <span style={{ fontSize: '0.7rem' }}>EN</span>
+                    <div style={{ width: '1.5px', height: '14px', background: 'var(--neutral-200)' }}></div>
+                    <span style={{ opacity: language === 'EN' ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <img src="https://flagcdn.com/w40/gb.png" style={{ width: '18px', height: 'auto', borderRadius: '2px' }} alt="EN" />
+                        <span style={{ fontSize: '0.75rem' }}>EN</span>
                     </span>
                 </button>
 
