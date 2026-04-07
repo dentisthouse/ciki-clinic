@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, ChevronRight, Plus, List, ChevronLeft, User, Volume2, RefreshCw } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronRight, Plus, List, ChevronLeft, User, Volume2, RefreshCw, Clock, CheckCircle, Edit3, Clipboard, Stethoscope, PhoneOff, LogIn } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { th, enUS } from 'date-fns/locale';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -8,6 +7,7 @@ import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import AppointmentModal from '../components/Scheduling/AppointmentModal';
 import WalkInModal from '../components/Scheduling/WalkInModal';
+import InitialVitalsModal from '../components/Scheduling/InitialVitalsModal';
 
 const Schedule = () => {
     const { t, language } = useLanguage();
@@ -72,6 +72,8 @@ const Schedule = () => {
     const [doctorFilter, setDoctorFilter] = useState('All');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
+    const [isVitalsModalOpen, setIsVitalsModalOpen] = useState(false);
+    const [selectedAptForVitals, setSelectedAptForVitals] = useState(null);
     const [selectedRoom, setSelectedRoom] = useState('Room 1'); // For queue calling
 
     // Filter appointments for dentists on load
@@ -263,6 +265,17 @@ const Schedule = () => {
                 onSave={handleSaveAppointment}
             />
 
+            <InitialVitalsModal
+                isOpen={isVitalsModalOpen}
+                onClose={() => setIsVitalsModalOpen(false)}
+                patientName={selectedAptForVitals?.patientName || selectedAptForVitals?.patient}
+                patientCN={patients.find(p => p.id === selectedAptForVitals?.patientId)?.hn || ''}
+                onSave={(vitals) => {
+                    updateAppointment(selectedAptForVitals.id, { vitals });
+                    alert(language === 'TH' ? 'บันทึกข้อมูลเบื้องต้นเรียบร้อย' : 'Pre-service vitals saved');
+                }}
+            />
+
             <WalkInModal
                 isOpen={isWalkInModalOpen}
                 onClose={() => setIsWalkInModalOpen(false)}
@@ -422,8 +435,8 @@ const Schedule = () => {
                                     <th>{language === 'TH' ? 'คิว' : 'Queue'}</th>
                                     <th>{t('sch_col_patient')}</th>
                                     <th>{t('sch_col_procedure')}</th>
-                                    <th>{t('sch_col_status')}</th>
-                                    <th></th>
+                                    <th>{language === 'TH' ? 'มาถึง' : 'Arrived'}</th>
+                                    <th style={{ textAlign: 'center' }}>{language === 'TH' ? 'จัดการ' : 'Manage'}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -512,153 +525,127 @@ const Schedule = () => {
                                                 </div>
                                             </td>
                                             <td>
-                                                <span 
-                                                    className={`badge badge-${
-                                                        apt.status === 'Completed' ? 'success' :
-                                                        apt.status === 'Confirmed' ? 'success' :
-                                                        apt.status === 'Cancelled' ? 'danger' :
-                                                        apt.status === 'Requested' ? 'warning' :
-                                                        apt.status === 'Sent' ? 'info' :
-                                                        apt.status === 'In Progress' ? 'info' :
-                                                        'neutral'
-                                                    }`}
-                                                    style={{
-                                                        padding: '0.4rem 1rem',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 700,
-                                                        letterSpacing: '0.02em'
-                                                    }}
-                                                >
-                                                    {apt.status === 'Sent' ? (language === 'TH' ? 'ส่งแล้ว' : 'Sent') :
-                                                     apt.status === 'Confirmed' ? (language === 'TH' ? 'ยืนยันแล้ว' : 'Confirmed') :
-                                                     apt.status === 'Requested' ? (language === 'TH' ? 'ขอเลื่อน' : 'Rescheduling') :
-                                                     apt.status === 'Cancelled' ? (language === 'TH' ? 'ยกเลิกแล้ว' : 'Cancelled') :
-                                                     apt.status}
-                                                </span>
-                                            </td>
-                                            <td style={{ textAlign: 'right' }}>
-                                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                                    {apt.status !== 'Completed' && (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+                                                    {apt.checkInTime ? (
                                                         <>
-                                                            <button
-                                                                className="btn"
-                                                                style={{
-                                                                    padding: '0.4rem 0.8rem',
-                                                                    fontSize: '0.75rem',
-                                                                    backgroundColor: apt.status === 'Sent' ? '#F0F9FF' : 
-                                                                                      apt.status === 'Confirmed' ? '#dcfce7' : '#E0F2FE',
-                                                                    color: apt.status === 'Sent' ? '#0369A1' : 
-                                                                           apt.status === 'Confirmed' ? '#166534' : '#0369A1',
-                                                                    border: apt.status === 'Sent' ? '1px dashed #0369a1' : 'none',
-                                                                    borderRadius: 'var(--radius-md)',
-                                                                    fontWeight: 600,
-                                                                    cursor: (apt.status === 'Sent' || apt.status === 'Confirmed') ? 'default' : 'pointer',
-                                                                    opacity: (apt.status === 'Sent' || apt.status === 'Confirmed') ? 0.8 : 1
-                                                                }}
+                                                            <div style={{ 
+                                                                display: 'flex', alignItems: 'center', gap: '0.4rem', 
+                                                                background: '#f0fdf4', color: '#166534', 
+                                                                padding: '0.3rem 0.75rem', borderRadius: '14px',
+                                                                fontSize: '0.85rem', fontWeight: 700, border: '1px solid #dcfce7'
+                                                            }}>
+                                                                <CheckCircle size={14} /> {new Date(apt.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
+                                                            <div style={{ 
+                                                                fontSize: '0.75rem', padding: '0.2rem 0.6rem', border: 'none',
+                                                                borderRadius: '6px', background: '#dcfce7', color: '#166534',
+                                                                fontWeight: 700
+                                                            }}>
+                                                                {language === 'TH' ? 'มาตามเวลานัด' : 'On Time'}
+                                                            </div>
+                                                            <button style={{
+                                                                padding: '0.4rem 1rem', background: 'transparent', border: '1.5px solid #22c55e',
+                                                                color: '#22c55e', borderRadius: '24px', fontSize: '0.8rem', fontWeight: 800,
+                                                                cursor: 'pointer'
+                                                            }}>
+                                                                {language === 'TH' ? 'ยืนยันการนัดหมาย' : 'Confirm Appt'}
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button 
                                                                 onClick={() => {
-                                                                    if (apt.status !== 'Sent' && apt.status !== 'Confirmed') {
-                                                                        handleSendLineConfirmation(apt);
-                                                                    }
+                                                                    updateAppointment(apt.id, {
+                                                                        status: 'Waiting',
+                                                                        queueStatus: 'Waiting',
+                                                                        checkInTime: new Date().toISOString()
+                                                                    });
+                                                                }}
+                                                                style={{
+                                                                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                                                    padding: '0.4rem 0.75rem', background: 'white', border: '1.5px dashed #94a3b8',
+                                                                    borderRadius: '24px', color: '#64748b', fontSize: '0.8rem', fontWeight: 600,
+                                                                    cursor: 'pointer'
                                                                 }}
                                                             >
-                                                                <span style={{ marginRight: '4px' }}>
-                                                                    {apt.status === 'Sent' ? '🕒' : 
-                                                                     apt.status === 'Confirmed' ? '✅' : 
-                                                                     apt.status === 'Requested' ? '📅' : '💬'}
-                                                                </span>
-                                                                {apt.status === 'Sent' ? (language === 'TH' ? 'ส่งแล้ว (รอ)' : 'Sent (Wait)') :
-                                                                 apt.status === 'Confirmed' ? (language === 'TH' ? 'ยืนยันแล้ว' : 'Confirmed') :
-                                                                 apt.status === 'Requested' ? (language === 'TH' ? 'ขอเลื่อน' : 'Rescheduling') :
-                                                                 (language === 'TH' ? 'ส่งยืนยัน' : 'Send Conf.')}
+                                                                <Clock size={14} /> {language === 'TH' ? 'บันทึกมาถึง' : 'Record Arrival'}
                                                             </button>
-
-                                                            {(!apt.queueStatus || apt.queueStatus === 'Waiting' || apt.queueStatus === 'Skipped') && (
-                                                                <>
-                                                                    {/* Room Selection Dropdown */}
-                                                                    <select
-                                                                        value={selectedRoom}
-                                                                        onChange={(e) => setSelectedRoom(e.target.value)}
-                                                                        style={{
-                                                                            padding: '0.4rem 0.6rem',
-                                                                            fontSize: '0.75rem',
-                                                                            borderRadius: 'var(--radius-md)',
-                                                                            border: '1px solid var(--neutral-200)',
-                                                                            background: 'white'
-                                                                        }}
-                                                                    >
-                                                                        <option value="Room 1">{language === 'TH' ? 'ห้อง 1' : 'Room 1'}</option>
-                                                                        <option value="Room 2">{language === 'TH' ? 'ห้อง 2' : 'Room 2'}</option>
-                                                                        <option value="Room 3">{language === 'TH' ? 'ห้อง 3' : 'Room 3'}</option>
-                                                                    </select>
-                                                                    <button
-                                                                        className="btn"
-                                                                        style={{
-                                                                            padding: '0.4rem 0.8rem',
-                                                                            fontSize: '0.75rem',
-                                                                            backgroundColor: apt.queueStatus === 'Skipped' ? '#94a3b8' : '#f59e0b',
-                                                                            color: 'white',
-                                                                            border: 'none',
-                                                                            borderRadius: 'var(--radius-md)',
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            gap: '0.25rem'
-                                                                        }}
-                                                                        onClick={() => handleCallQueue(apt)}
-                                                                    >
-                                                                        <Volume2 size={14} />
-                                                                        {apt.queueStatus === 'Skipped' ? (language === 'TH' ? 'รอเรียกใหม่' : 'Re-queue') : (language === 'TH' ? 'เรียกคิว' : 'Call')}
-                                                                    </button>
-                                                                </>
-                                                            )}
-
-                                                            {apt.queueStatus === 'In Progress' && (
-                                                                <button
-                                                                    className="btn"
-                                                                    style={{
-                                                                        padding: '0.4rem 0.8rem',
-                                                                        fontSize: '0.75rem',
-                                                                        backgroundColor: '#059669', // Green for Complete
-                                                                        color: 'white',
-                                                                        border: 'none',
-                                                                        borderRadius: 'var(--radius-md)'
-                                                                    }}
-                                                                    onClick={() => {
-                                                                        navigate(`/patients/${apt.patientId || 'P001'}?tab=billing`);
-                                                                        updateQueueStatus(apt.id, 'Completed');
-                                                                    }}
-                                                                >
-                                                                    {language === 'TH' ? 'ส่งจ่ายเงิน' : 'To Billing'}
-                                                                </button>
-                                                            )}
-
-                                                            {!apt.checkInTime && (
-                                                                <button
-                                                                    className="btn btn-primary"
-                                                                    style={{
-                                                                        padding: '0.5rem 1.25rem',
-                                                                        fontSize: '0.8rem',
-                                                                        borderRadius: 'var(--radius-lg)'
-                                                                    }}
-                                                                    onClick={() => {
-                                                                        updateAppointment(apt.id, {
-                                                                            status: 'Waiting',
-                                                                            queueStatus: 'Waiting',
-                                                                            checkInTime: new Date().toISOString()
-                                                                        });
-                                                                    }}
-                                                                >
-                                                                    {language === 'TH' ? 'เช็คอิน' : 'Check-in'}
-                                                                </button>
+                                                            {apt.status === 'Cancelled' ? (
+                                                                <div style={{ 
+                                                                    fontSize: '0.75rem', padding: '0.15rem 0.6rem',
+                                                                    borderRadius: '12px', background: '#fef2f2', color: '#ef4444',
+                                                                    border: '1px solid #fee2e2', fontWeight: 700
+                                                                }}>
+                                                                    {language === 'TH' ? 'ยกเลิก' : 'Cancelled'}
+                                                                </div>
+                                                            ) : (
+                                                                <div style={{ 
+                                                                    fontSize: '0.75rem', padding: '0.15rem 0.6rem',
+                                                                    borderRadius: '12px', background: '#f5f3ff', color: '#8b5cf6',
+                                                                    border: '1px solid #ede9fe', fontWeight: 700
+                                                                }}>
+                                                                    {language === 'TH' ? 'รอระบุ' : 'Pending'}
+                                                                </div>
                                                             )}
                                                         </>
                                                     )}
+                                                </div>
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'center' }}>
+                                                    {/* Control Buttons Group */}
+                                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                                        <button 
+                                                            className="btn-icon" 
+                                                            style={{ 
+                                                                background: '#fff7ed', color: '#f59e0b', border: '1px solid #ffedd5', 
+                                                                borderRadius: '10px', width: '40px', height: '40px',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                            }}
+                                                            title={language === 'TH' ? 'แก้ไข' : 'Edit'}
+                                                        >
+                                                            <Edit3 size={18} />
+                                                        </button>
+                                                        <button 
+                                                            className="btn-icon"
+                                                            onClick={() => {
+                                                                setSelectedAptForVitals(apt);
+                                                                setIsVitalsModalOpen(true);
+                                                            }}
+                                                            style={{ 
+                                                                background: 'white', color: '#00ccff', border: '1px solid #00ccff', 
+                                                                borderRadius: '10px', width: '40px', height: '40px',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                            }}
+                                                            title={language === 'TH' ? 'บันทึกข้อมูลก่อนรับบริการ' : 'Vitals'}
+                                                        >
+                                                            <Clipboard size={18} />
+                                                        </button>
+                                                    </div>
 
+                                                    {/* Enter exam room button */}
                                                     <button
-                                                        className="btn btn-secondary"
-                                                        style={{ padding: '0.4rem', borderRadius: '50%' }}
-                                                        onClick={() => navigate(`/patients/${apt.patientId || 'mock-id'}`)}
+                                                        onClick={() => handleCallQueue(apt)}
+                                                        style={{
+                                                            background: 'var(--gradient-primary)',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            padding: '0.6rem 1.25rem',
+                                                            borderRadius: '12px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.5rem',
+                                                            fontWeight: 800,
+                                                            fontSize: '0.95rem',
+                                                            boxShadow: '0 4px 12px rgba(13, 148, 136, 0.2)',
+                                                            cursor: 'pointer',
+                                                            minWidth: '140px'
+                                                        }}
                                                     >
-                                                        <ChevronRight size={16} />
+                                                        <div style={{ padding: '0.2rem', background: 'rgba(255,255,255,0.2)', borderRadius: '6px' }}>
+                                                            <LogIn size={16} />
+                                                        </div>
+                                                        {language === 'TH' ? 'เข้าห้องตรวจ' : 'Enter Exam'}
                                                     </button>
                                                 </div>
                                             </td>
