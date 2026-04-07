@@ -508,12 +508,12 @@ const LinePortal = () => {
                     style={{ 
                         position: 'absolute', top: '2.5rem', right: '1.5rem', zIndex: 10,
                         background: 'white', padding: '0.6rem 1rem', borderRadius: '2rem',
-                        fontSize: '1.2rem', fontWeight: 800, border: '1px solid #e2e8f0',
+                        fontSize: '0.85rem', fontWeight: 800, border: '1px solid #e2e8f0',
                         cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
                         display: 'flex', alignItems: 'center', gap: '0.5rem'
                     }}
                 >
-                    {language === 'TH' ? '🇹🇭' : language === 'EN' ? '🇬🇧' : '🇨🇳'}
+                    {language === 'TH' ? '🇹🇭 ไทย' : language === 'EN' ? '🇬🇧 EN' : '🇨🇳 CN'}
                 </button>
 
                 <div style={{ width: '100%', maxWidth: '340px', textAlign: 'center', zIndex: 1 }}>
@@ -523,7 +523,7 @@ const LinePortal = () => {
                         justifyContent: 'center', margin: '0 auto 2rem', 
                         boxShadow: '0 20px 40px rgba(16, 185, 129, 0.15)'
                     }}>
-                        <img src="/logo.png" style={{ width: '65%', height: 'auto' }} alt={pt("ciki_dental")} />
+                        <img src="/logo.png" style={{ width: '85%', height: 'auto' }} alt={pt("ciki_dental")} />
                     </div>
                     
                     <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)', letterSpacing: '-0.02em' }}>
@@ -560,16 +560,7 @@ const LinePortal = () => {
                         {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : pt('get_otp')}
                     </button>
                     
-                    <div style={{ marginTop: '4rem', display: 'flex', justifyContent: 'center', gap: '2.5rem', opacity: 0.4 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                            <ShieldCheck size={22} color="var(--lp-text-main)" />
-                            <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>{pt('secure')}</span>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                            <Star size={22} color="var(--lp-text-main)" />
-                            <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>{pt('premium')}</span>
-                        </div>
-                    </div>
+                    <div style={{ height: '2rem' }}></div>
                 </div>
             </div>
         );

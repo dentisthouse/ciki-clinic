@@ -61,18 +61,23 @@ const Header = ({ onMenuClick }) => {
                     onClick={toggleLanguage}
                     style={{
                         padding: '0.4rem 0.8rem',
-                        fontSize: '1.2rem',
+                        fontSize: '0.85rem',
                         fontWeight: 800,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem',
-                        minWidth: '60px',
-                        justifyContent: 'center'
+                        gap: '0.6rem',
+                        minWidth: '80px',
+                        justifyContent: 'center',
+                        borderRadius: '12px'
                     }}
                 >
-                    <span style={{ opacity: language === 'TH' ? 1 : 0.3 }}>🇹🇭</span>
+                    <span style={{ opacity: language === 'TH' ? 1 : 0.3, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        🇹🇭 <span style={{ fontSize: '0.7rem' }}>TH</span>
+                    </span>
                     <div style={{ width: '1px', height: '12px', background: 'var(--neutral-200)' }}></div>
-                    <span style={{ opacity: language === 'EN' ? 1 : 0.3 }}>🇬🇧</span>
+                    <span style={{ opacity: language === 'EN' ? 1 : 0.3, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        🇬🇧 <span style={{ fontSize: '0.7rem' }}>EN</span>
+                    </span>
                 </button>
 
                 {/* Notifications */}
