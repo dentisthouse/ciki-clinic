@@ -445,41 +445,159 @@
   color: white;
 }
 
-/* Animations */
-@keyframes pop-in {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+/* --- Recommended Carousel V2 --- */
+.lp-promo-scroll-v2 {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding: 0.5rem 0 1.5rem 0;
+  scroll-snap-type: x mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.animate-pop {
-  animation: pop-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.lp-promo-scroll-v2::-webkit-scrollbar {
+  display: none;
 }
 
-/* Generic Layout helpers */
-.lp-content-v2 {
-  padding: 0.5rem 0;
-}
-
-/* Reusable Glass Effect */
-.lp-glass-v2 {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 1);
-}
-
-.lp-btn-accent {
-  background: linear-gradient(135deg, var(--lp-primary) 0%, #059669 100%);
-  color: white;
-  border: none;
-  font-weight: 700;
+.lp-promo-card-v2 {
+  min-width: 280px;
+  max-width: 280px;
+  height: 180px;
+  border-radius: 2rem;
+  overflow: hidden;
+  position: relative;
+  background: #eee;
+  scroll-snap-align: center;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.1);
   cursor: pointer;
-  transition: all 0.2s ease;
+  border: 1px solid rgba(255,255,255,1);
 }
 
-.lp-btn-accent:active {
-  transform: scale(0.95);
+.lp-promo-card-v2 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
 }
+
+.lp-promo-card-v2:active img {
+  transform: scale(1.05);
+}
+
+.lp-promo-overlay-v2 {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1.25rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.lp-promo-tag-v2 {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #ef4444;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+}
+
+.lp-promo-info-v2 h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.lp-promo-info-v2 p {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+/* --- News Grid V2 --- */
+.lp-news-grid-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.lp-news-card-v2 {
+  background: white;
+  border-radius: 2rem;
+  overflow: hidden;
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+  border: 1px solid #f1f5f9;
+}
+
+.lp-news-thumb-v2 {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.lp-news-thumb-v2 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lp-news-body-v2 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 0.5rem;
+}
+
+.lp-news-date-v2 {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--lp-text-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.lp-news-body-v2 h4 {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--lp-text-main);
+  line-height: 1.3;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lp-news-read-v2 {
+  background: none;
+  border: none;
+  color: var(--lp-primary);
+  font-size: 0.75rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  cursor: pointer;
+}
+
 
 .lp-input-v2 {
   width: 100%;

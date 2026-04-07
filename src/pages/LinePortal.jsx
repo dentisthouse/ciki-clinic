@@ -750,28 +750,45 @@ const LinePortal = () => {
                         <LogOut size={20} />
                     </button>
 
-                    <button 
-                        onClick={() => setPage('appointments')}
-                        style={{ 
-                            background: 'rgba(255, 255, 255, 0.15)', border: 'none', color: 'white',
-                            width: '42px', height: '42px', borderRadius: '12px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', backdropFilter: 'blur(10px)', position: 'relative'
-                        }}
-                    >
-                        <Bell size={20} />
-                        {userAppointments.length > 0 && (
-                            <div style={{
-                                position: 'absolute', top: -4, right: -4,
-                                background: '#ef4444', border: '2px solid white',
-                                borderRadius: '50%', width: 18, height: 18,
-                                fontSize: '0.65rem', fontWeight: 900,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                {userAppointments.length}
-                            </div>
-                        )}
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        {/* Language Toggle */}
+                        <button 
+                            onClick={() => setLanguage(language === 'TH' ? 'EN' : 'TH')}
+                            style={{ 
+                                background: 'rgba(255, 255, 255, 0.15)', border: 'none', color: 'white',
+                                padding: '0.4rem 0.8rem', borderRadius: '10px',
+                                fontSize: '0.75rem', fontWeight: 900,
+                                cursor: 'pointer', backdropFilter: 'blur(10px)',
+                                display: 'flex', alignItems: 'center', gap: '4px'
+                            }}
+                        >
+                            <Globe size={14} />
+                            {language === 'TH' ? 'EN' : 'TH'}
+                        </button>
+
+                        <button 
+                            onClick={() => setPage('appointments')}
+                            style={{ 
+                                background: 'rgba(255, 255, 255, 0.15)', border: 'none', color: 'white',
+                                width: '42px', height: '42px', borderRadius: '12px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', backdropFilter: 'blur(10px)', position: 'relative'
+                            }}
+                        >
+                            <Bell size={20} />
+                            {userAppointments.length > 0 && (
+                                <div style={{
+                                    position: 'absolute', top: -4, right: -4,
+                                    background: '#ef4444', border: '2px solid white',
+                                    borderRadius: '50%', width: 18, height: 18,
+                                    fontSize: '0.65rem', fontWeight: 900,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>
+                                    {userAppointments.length}
+                                </div>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Unified Premium Profile Card V2 */}
@@ -822,41 +839,51 @@ const LinePortal = () => {
                     </div>
                 </div>
 
-                {/* Promotions Section */}
-                <div className="lp-section">
+                {/* Recommended (Carousel Refined) */}
+                <div className="lp-section" style={{ marginTop: '0.5rem' }}>
                     <div className="lp-section-header">
-                        <h3 className="lp-section-title">{language === 'TH' ? 'บริการแนะนำ' : 'Recommended'}</h3>
+                        <h3 className="lp-section-title">{language === 'TH' ? 'แนะนำสำหรับคุณ' : 'Recommended'}</h3>
                         <button className="lp-btn-see-all" onClick={() => setPage('services')}>
-                            <MessageSquare size={12} />
-                            ดูทั้งหมด
+                            <span>{language === 'TH' ? 'ดูทั้งหมด' : 'See All'}</span>
+                            <ChevronRight size={14} />
                         </button>
                     </div>
-                    <div className="lp-promo-scroll">
+                    <div className="lp-promo-scroll-v2">
                         {getDentalServices(pt).slice(0, 4).map(service => (
-                            <div key={service.id} className="lp-promo-card" onClick={() => { setBookingService(service.id); setPage('booking'); }}>
+                            <div key={service.id} className="lp-promo-card-v2" onClick={() => { setBookingService(service.id); setPage('booking'); }}>
                                 <img src={`https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=500&h=300&fit=crop`} alt={service.name} />
-                                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', padding: '1rem', color: 'white' }}>
-                                    <p style={{ fontSize: '0.8rem', fontWeight: 600 }}>{service.name}</p>
-                                    <p style={{ fontWeight: 900 }}>ราคา {service.price.toLocaleString()} บาท</p>
+                                <div className="lp-promo-overlay-v2">
+                                    <div className="lp-promo-tag-v2">HOT</div>
+                                    <div className="lp-promo-info-v2">
+                                        <h4>{service.name}</h4>
+                                        <p>฿{service.price.toLocaleString()}</p>
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* News Section */}
+                {/* News Section (Grid Refined) */}
                 <div className="lp-section">
                     <div className="lp-section-header">
-                        <h3 className="lp-section-title">{language === 'TH' ? 'ข่าวสาร' : 'News'}</h3>
+                        <h3 className="lp-section-title">{language === 'TH' ? 'ข่าวสารล่าสุด' : 'Latest News'}</h3>
                     </div>
-                    <div className="lp-news-grid">
+                    <div className="lp-news-grid-v2">
                         {NEWS.map(n => (
-                            <div key={n.id} className="lp-news-card">
-                                <div className="lp-news-thumb">
-                                    <img src={n.img} alt={n.title} />
+                            <div key={n.id} className="lp-news-card-v2 animate-pop">
+                                <div className="lp-news-thumb-v2">
+                                    <img 
+                                        src={n.img.includes('undefined') ? 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=400&h=300&fit=crop' : n.img} 
+                                        alt={n.title} 
+                                    />
                                 </div>
-                                <div style={{ padding: '0.75rem' }}>
-                                    <p style={{ fontSize: '0.7rem', fontWeight: 800, lineHeight: 1.2 }}>{n.title}</p>
+                                <div className="lp-news-body-v2">
+                                    <span className="lp-news-date-v2">07 APR 2026</span>
+                                    <h4>{n.title}</h4>
+                                    <button className="lp-news-read-v2">
+                                        {language === 'TH' ? 'อ่านเพิ่ม' : 'Read More'}
+                                    </button>
                                 </div>
                             </div>
                         ))}
