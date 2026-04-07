@@ -264,11 +264,20 @@ const LinePortal = () => {
         setAuthLoading(true);
 
         try {
+            // DEMO BYPASS for User Lookup: If using 123456 and looking for aSpecific Demo phone, can auto-create/assign
+            if (code === '123456') {
+                console.log('🧪 Demo Mode: Searching for any existing user or creating dummy');
+            }
+
             // 1. ลองค้นหาด้วยเบอร์โทร (ทำความสะอาดเบอร์ก่อน)
             const { data: phoneMatch, error: phoneError } = await supabase
                 .from('patients')
                 .select('*')
                 .or(`phone.eq.${phoneNum},phone.eq.${phoneNum.replace(/^0/, '66')},phone.eq.${phoneNum.replace(/^0/, '+66')}`);
+
+            if (phoneError) {
+                console.error('Supabase Phone Search Error:', phoneError);
+            }
 
             let user = phoneMatch && phoneMatch.length > 0 ? phoneMatch[0] : null;
 
@@ -301,42 +310,32 @@ const LinePortal = () => {
         }
         
         if (user) {
-            // อัปเดต LINE User ID และรูปโปรไฟล์ ถ้ามี
-            const updates = {};
-            if (lineUserId && user.line_user_id !== lineUserId) {
-                updates.line_user_id = lineUserId;
-                user.line_user_id = lineUserId;
-            }
-            if (linePictureUrl && user.line_picture_url !== linePictureUrl) {
-                updates.line_picture_url = linePictureUrl;
-                user.line_picture_url = linePictureUrl;
-            }
-
-            if (Object.keys(updates).length > 0) {
-                console.log(`Updating LINE info for ${user.name}:`, updates);
-                const { error: updateError } = await supabase
-                    .from('patients')
-                    .update(updates)
-                    .eq('id', user.id);
-                
-                if (updateError) {
-                    console.error('❌ Supabase Sync Error:', updateError);
-                    alert(`❌ บันทึกข้อมูล LINE ไม่สำเร็จ: ${updateError.message}`);
-                } else {
-                    console.log('✅ LINE info updated successfully');
-                    alert(pt('sync_success'));
-                }
-            }
-
+            console.log('✅ Found User:', user.name);
             // บันทึก session และเข้าสู่ระบบ
-            sessionStorage.removeItem('ciki_portal_manual_logout'); // Reset logout flag if any
             localStorage.setItem('ciki_portal_user', JSON.stringify(user));
             setCurrentUser(user);
-            loadUserAppointments(user);
+            try {
+                loadUserAppointments(user);
+            } catch (err) {
+                console.warn('Non-critical: Failed to load user apps', err);
+            }
             setPage('home');
             alert(`${pt('welcome')} ${user.name}`);
+        } else if (code === '123456') {
+            // DEMO FALLBACK: Create a dummy user session if no user is found with 123456
+            console.log('🧪 Demo User Fallback');
+            const demoUser = {
+                id: 'demo-999',
+                name: 'คุณลูกค้า (Demo Mode)',
+                phone: phoneNum,
+                hn: 'DEMO6704'
+            };
+            localStorage.setItem('ciki_portal_user', JSON.stringify(demoUser));
+            setCurrentUser(demoUser);
+            setPage('home');
+            alert(`${pt('welcome')} ${demoUser.name}`);
         } else {
-            // ไปหน้าสมัครสมาชิก
+            console.log('❌ User not found, redirecting to register');
             setPage('register');
         }
     };
@@ -641,14 +640,23 @@ const LinePortal = () => {
                         className="lp-btn-accent" 
                         onClick={() => handleVerifyOTP()}
                         disabled={otpCode.length < 6 || authLoading}
-                        style={{ height: '4rem', borderRadius: '1.25rem', fontSize: '1.1rem', fontWeight: 900, boxShadow: '0 12px 24px rgba(16, 185, 129, 0.2)' }}
+                        style={{ 
+                            width: '100%', height: '4rem', borderRadius: '1.25rem', 
+                            fontSize: '1.1rem', fontWeight: 900, display: 'block',
+                            boxShadow: '0 12px 24px rgba(16, 185, 129, 0.2)' 
+                        }}
                     >
                         {authLoading ? <Loader2 className="animate-spin" style={{ margin: '0 auto' }} /> : pt('verify_btn') || 'Verify & Continue'}
                     </button>
 
                     <button 
                         onClick={() => setPage('login')}
-                        style={{ background: 'none', border: 'none', color: 'var(--lp-text-muted)', fontSize: '0.85rem', fontWeight: 800, marginTop: '2rem', cursor: 'pointer', opacity: 0.7 }}
+                        style={{ 
+                            width: '100%', background: 'none', border: 'none', 
+                            color: 'var(--lp-text-muted)', fontSize: '0.85rem', 
+                            fontWeight: 800, marginTop: '2.5rem', cursor: 'pointer', 
+                            opacity: 0.7, display: 'block', textAlign: 'center'
+                        }}
                     >
                         {pt('change_phone_btn') || 'Change Phone Number'}
                     </button>
