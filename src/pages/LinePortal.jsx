@@ -508,13 +508,12 @@ const LinePortal = () => {
                     style={{ 
                         position: 'absolute', top: '2.5rem', right: '1.5rem', zIndex: 10,
                         background: 'white', padding: '0.6rem 1rem', borderRadius: '2rem',
-                        fontSize: '0.75rem', fontWeight: 800, border: '1px solid #e2e8f0',
+                        fontSize: '1.2rem', fontWeight: 800, border: '1px solid #e2e8f0',
                         cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
                         display: 'flex', alignItems: 'center', gap: '0.5rem'
                     }}
                 >
-                    <Star size={14} color="var(--lp-primary)" />
-                    {language === 'TH' ? 'ไทย' : language === 'EN' ? 'EN' : 'CN'}
+                    {language === 'TH' ? '🇹🇭' : language === 'EN' ? '🇬🇧' : '🇨🇳'}
                 </button>
 
                 <div style={{ width: '100%', maxWidth: '340px', textAlign: 'center', zIndex: 1 }}>
@@ -530,9 +529,7 @@ const LinePortal = () => {
                     <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.5rem', color: 'var(--lp-text-main)', letterSpacing: '-0.02em' }}>
                         บ้านหมอฟัน
                     </h1>
-                    <p style={{ color: 'var(--lp-text-muted)', marginBottom: '3.5rem', fontSize: '1rem', fontWeight: 500, opacity: 0.8 }}>
-                        {pt('exp_future')}
-                    </p>
+                    <div style={{ height: '1.5rem', marginBottom: '3rem' }}></div>
 
                     <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
                         <label style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--lp-text-main)', marginBottom: '0.75rem', display: 'block', marginLeft: '0.5rem' }}>

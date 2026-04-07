@@ -7,6 +7,7 @@ export const PORTAL_TRANS = {
         "phone_label": "Your Phone Number",
         "phone_placeholder": "08x-xxx-xxxx",
         "send_otp": "Send OTP",
+        "get_otp": "Login",
         "secure": "Secure",
         "premium": "Premium",
         
@@ -102,6 +103,7 @@ export const PORTAL_TRANS = {
         "phone_label": "เบอร์โทรศัพท์ของคุณ",
         "phone_placeholder": "08x-xxx-xxxx",
         "send_otp": "ส่งรหัส OTP",
+        "get_otp": "เข้าสู่ระบบ",
         "secure": "ปลอดภัย",
         "premium": "พรีเมียม",
         
@@ -197,6 +199,7 @@ export const PORTAL_TRANS = {
         "phone_label": "您的手机号码",
         "phone_placeholder": "08x-xxx-xxxx",
         "send_otp": "发送验证码",
+        "get_otp": "登录",
         "secure": "安全",
         "premium": "优质",
         

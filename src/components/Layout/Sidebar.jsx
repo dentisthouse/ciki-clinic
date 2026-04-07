@@ -88,7 +88,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         {
             category: t('nav_cat_system'),
             items: [
-                { icon: MessageCircle, label: 'LINE Portal', path: '/line-portal', pKey: 'staff' },
                 { icon: UserCog, label: language === 'TH' ? 'พนักงาน' : 'Staff', path: '/staff', pKey: 'staff' },
                 { icon: Clock, label: language === 'TH' ? 'ลงเวลา' : 'Attendance', path: '/attendance', excludeRole: 'dentist' },
             ]
