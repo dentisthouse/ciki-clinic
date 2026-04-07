@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Printer, CheckCircle, FileText, ChevronRight, AlertCircle, ChevronDown, MoreVertical } from 'lucide-react';
+import { Plus, Trash2, Printer, CheckCircle, FileText, ChevronRight, AlertCircle, ChevronDown, MoreVertical, Clock, Calendar } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useLanguage } from '../../context/LanguageContext';
 import DigitalToothChart from './DigitalToothChart';
@@ -9,7 +9,7 @@ import { PenTool } from 'lucide-react';
 
 const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus }) => {
     const { t, language } = useLanguage();
-    const { updatePatient } = useData();
+    const { updatePatient, appointments } = useData();
     const [plans, setPlans] = useState(patient.treatmentPlans || []);
     const [activePlanId, setActivePlanId] = useState(null);
     const [selectedTeeth, setSelectedTeeth] = useState([]);
@@ -273,6 +273,94 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: '600px' }}>
+
+            {/* Upcoming Appointments Banner */}
+            {(() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const upcomingApts = (appointments || [])
+                    .filter(a => {
+                        const matchPatient = a.patientId === patient.id || a.patient_id === patient.id;
+                        if (!matchPatient) return false;
+                        const aptDate = new Date(a.date || a.appointmentDate);
+                        return aptDate >= today && a.status !== 'Cancelled' && a.status !== 'Completed';
+                    })
+                    .sort((a, b) => new Date(a.date || a.appointmentDate) - new Date(b.date || b.appointmentDate))
+                    .slice(0, 3);
+
+                if (upcomingApts.length === 0) return null;
+
+                return (
+                    <div style={{
+                        background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
+                        border: '1.5px solid #93c5fd',
+                        borderRadius: '16px',
+                        padding: '1.25rem 1.5rem',
+                        position: 'relative',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{
+                            position: 'absolute', top: '-20px', right: '-10px',
+                            width: '80px', height: '80px', borderRadius: '50%',
+                            background: 'rgba(59, 130, 246, 0.08)'
+                        }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                            <Calendar size={16} color="#2563eb" />
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e40af' }}>
+                                {language === 'TH' ? `🔔 นัดหมายที่กำลังจะมาถึง (${upcomingApts.length})` : `🔔 Upcoming Appointments (${upcomingApts.length})`}
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            {upcomingApts.map((apt, i) => {
+                                const aptDate = apt.date || apt.appointmentDate || '';
+                                const aptTime = apt.time || apt.appointmentTime || '';
+                                const service = apt.service || apt.treatment || apt.type || '-';
+                                const doctor = apt.doctor || apt.dentist || '';
+                                const isToday = aptDate === new Date().toISOString().split('T')[0];
+                                return (
+                                    <div key={apt.id || i} style={{
+                                        flex: '1 1 200px',
+                                        background: 'white',
+                                        borderRadius: '12px',
+                                        padding: '0.85rem 1rem',
+                                        border: isToday ? '1.5px solid #22c55e' : '1px solid #e2e8f0',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                                        position: 'relative'
+                                    }}>
+                                        {isToday && (
+                                            <span style={{
+                                                position: 'absolute', top: '-8px', right: '8px',
+                                                padding: '2px 8px', background: '#22c55e', color: 'white',
+                                                borderRadius: '6px', fontSize: '0.6rem', fontWeight: 900
+                                            }}>
+                                                {language === 'TH' ? 'วันนี้' : 'TODAY'}
+                                            </span>
+                                        )}
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.35rem' }}>
+                                            {service}
+                                        </div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                                <Calendar size={11} /> {aptDate}
+                                            </span>
+                                            {aptTime && (
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                                    <Clock size={11} /> {aptTime}
+                                                </span>
+                                            )}
+                                            {doctor && (
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                                    👨‍⚕️ {doctor}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Header with Top Dropdown for Plans */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '1rem', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
