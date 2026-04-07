@@ -3,7 +3,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Phone, Mail, MapPin, Calendar, Clock, FileText,
     Shield, Activity, DollarSign, Plus, ArrowLeft,
-    CheckCircle, AlertCircle, Edit2, Trash2, Ruler, Image as ImageIcon
+    CheckCircle, AlertCircle, Edit2, Trash2, Ruler, Image as ImageIcon,
+    ClipboardList, XCircle, User
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -97,13 +98,155 @@ const InfoItem = ({ icon: Icon, label, value }) => (
     </div>
 );
 
+// Appointment History Component
+const AppointmentHistorySection = ({ patientId, patientName, appointments, language }) => {
+    const patientAppointments = (appointments || [])
+        .filter(a => a.patientId === patientId || a.patient_id === patientId)
+        .sort((a, b) => new Date(b.date || b.appointmentDate || 0) - new Date(a.date || a.appointmentDate || 0));
+
+    const statusConfig = {
+        Completed: { label: language === 'TH' ? 'เสร็จสิ้น' : 'Completed', color: '#22c55e', bg: '#f0fdf4', icon: CheckCircle },
+        Confirmed: { label: language === 'TH' ? 'ยืนยันแล้ว' : 'Confirmed', color: '#3b82f6', bg: '#eff6ff', icon: CheckCircle },
+        Pending: { label: language === 'TH' ? 'รอยืนยัน' : 'Pending', color: '#f59e0b', bg: '#fffbeb', icon: Clock },
+        Cancelled: { label: language === 'TH' ? 'ยกเลิก' : 'Cancelled', color: '#ef4444', bg: '#fef2f2', icon: XCircle },
+        'No-Show': { label: language === 'TH' ? 'ไม่มาตามนัด' : 'No-Show', color: '#8b5cf6', bg: '#f5f3ff', icon: AlertCircle },
+        InProgress: { label: language === 'TH' ? 'กำลังรักษา' : 'In Progress', color: '#0d9488', bg: '#f0fdfa', icon: Activity },
+    };
+
+    const totalVisits = patientAppointments.filter(a => a.status === 'Completed').length;
+    const totalCancelled = patientAppointments.filter(a => a.status === 'Cancelled' || a.status === 'No-Show').length;
+    const upcoming = patientAppointments.filter(a => {
+        const d = new Date(a.date || a.appointmentDate);
+        return d >= new Date() && a.status !== 'Cancelled';
+    }).length;
+
+    if (patientAppointments.length === 0) {
+        return (
+            <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+                <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--neutral-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                    <ClipboardList size={36} color="var(--neutral-300)" />
+                </div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--neutral-700)', marginBottom: '0.5rem' }}>
+                    {language === 'TH' ? 'ยังไม่มีประวัติการนัดหมาย' : 'No appointment history'}
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--neutral-400)' }}>
+                    {language === 'TH' ? 'เมื่อมีการนัดหมายจะปรากฏที่นี่' : 'Appointments will appear here once created'}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            {/* Stats Bar */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                {[
+                    { label: language === 'TH' ? 'นัดหมายทั้งหมด' : 'Total', value: patientAppointments.length, color: '#6366f1', bg: '#f5f3ff' },
+                    { label: language === 'TH' ? 'มาตามนัด' : 'Visited', value: totalVisits, color: '#22c55e', bg: '#f0fdf4' },
+                    { label: language === 'TH' ? 'นัดครั้งต่อไป' : 'Upcoming', value: upcoming, color: '#3b82f6', bg: '#eff6ff' },
+                    { label: language === 'TH' ? 'ไม่มา/ยกเลิก' : 'Missed', value: totalCancelled, color: '#ef4444', bg: '#fef2f2' },
+                ].map((s, i) => (
+                    <div key={i} style={{ padding: '1rem', background: s.bg, borderRadius: '14px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 900, color: s.color }}>{s.value}</div>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: s.color, opacity: 0.8 }}>{s.label}</div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Timeline */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                {patientAppointments.map((apt, index) => {
+                    const sc = statusConfig[apt.status] || statusConfig.Pending;
+                    const aptDate = apt.date || apt.appointmentDate || '';
+                    const aptTime = apt.time || apt.appointmentTime || '';
+                    const service = apt.service || apt.treatment || apt.type || '-';
+                    const doctor = apt.doctor || apt.dentist || '';
+                    const notes = apt.notes || apt.reason || '';
+                    const room = apt.room || '';
+                    const StatusIcon = sc.icon;
+
+                    return (
+                        <div key={apt.id || index} style={{ display: 'flex', gap: '1rem', position: 'relative' }}>
+                            {/* Timeline line */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '40px', flexShrink: 0 }}>
+                                <div style={{
+                                    width: 36, height: 36, borderRadius: '50%', background: sc.bg,
+                                    border: `2px solid ${sc.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    flexShrink: 0, zIndex: 1
+                                }}>
+                                    <StatusIcon size={16} color={sc.color} />
+                                </div>
+                                {index < patientAppointments.length - 1 && (
+                                    <div style={{ width: '2px', flex: 1, background: 'var(--neutral-200)', minHeight: '20px' }} />
+                                )}
+                            </div>
+
+                            {/* Card */}
+                            <div style={{
+                                flex: 1, padding: '1rem 1.25rem', background: 'var(--neutral-50)',
+                                borderRadius: '14px', marginBottom: '0.75rem',
+                                border: '1px solid var(--neutral-100)',
+                                transition: 'all 0.2s ease'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--neutral-800)', marginBottom: '0.15rem' }}>
+                                            {service}
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8rem', color: 'var(--neutral-500)' }}>
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                <Calendar size={12} /> {aptDate}
+                                            </span>
+                                            {aptTime && (
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                    <Clock size={12} /> {aptTime}
+                                                </span>
+                                            )}
+                                            {room && (
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                    🚪 {language === 'TH' ? `ห้อง ${room}` : `Room ${room}`}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <span style={{
+                                        padding: '0.25rem 0.7rem', borderRadius: '8px', fontSize: '0.7rem',
+                                        fontWeight: 800, background: sc.bg, color: sc.color,
+                                        display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0
+                                    }}>
+                                        <StatusIcon size={11} /> {sc.label}
+                                    </span>
+                                </div>
+                                {(doctor || notes) && (
+                                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--neutral-100)' }}>
+                                        {doctor && (
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--neutral-600)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                <User size={12} /> {doctor}
+                                            </span>
+                                        )}
+                                        {notes && (
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--neutral-400)', fontStyle: 'italic' }}>
+                                                {notes}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 // MAIN COMPONENT
 const PatientProfile = () => {
     const { t, language } = useLanguage();
     const { permissions, isAdmin } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
-    const { patients, updatePatient } = useData();
+    const { patients, updatePatient, appointments } = useData();
     const patient = patients.find(p => p.id === id);
     const [searchParams] = useSearchParams();
 
@@ -197,6 +340,7 @@ const PatientProfile = () => {
         canViewClinical && { id: 'gallery', label: language === 'TH' ? 'รูปถ่าย' : 'Gallery', icon: ImageIcon },
         canViewClinical && { id: 'imaging', label: t('prof_imaging'), icon: ImageIcon },
         canViewHistory && { id: 'history', label: language === 'TH' ? 'ประวัติการรักษา' : 'Treatment History', icon: Calendar },
+        canViewClinical && { id: 'appointments', label: language === 'TH' ? 'ประวัติการนัดหมาย' : 'Appointments', icon: ClipboardList },
         canViewBilling && { id: 'billing', label: t('nav_billing'), icon: DollarSign, badge: unpaidTreatments.length > 0 ? unpaidTreatments.length : null },
     ].filter(Boolean);
 
@@ -358,6 +502,9 @@ const PatientProfile = () => {
                         {activeTab === 'imaging' && <ImagingTab patientId={patient.id} />}
                         {activeTab === 'history' && (
                             <HistoryTab patient={patient} treatmentHistory={patient.treatments || []} language={language} />
+                        )}
+                        {activeTab === 'appointments' && (
+                            <AppointmentHistorySection patientId={patient.id} patientName={patient.name} appointments={appointments} language={language} />
                         )}
                         {activeTab === 'billing' && (
                             <div>
