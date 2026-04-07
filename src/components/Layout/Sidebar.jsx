@@ -28,7 +28,11 @@ import {
     Ticket,
     Heart,
     Settings,
-    ClipboardList
+    ClipboardList,
+    Crown,
+    Lock,
+    KeyRound,
+    Stethoscope
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
@@ -57,6 +61,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             category: t('nav_cat_overview'),
             items: [
                 { icon: LayoutDashboard, label: t('nav_dashboard'), path: '/', excludeRole: 'dentist' },
+                { icon: Crown, label: language === 'TH' ? 'หน้าเจ้าของคลินิก' : 'Owner Dashboard', path: '/owner-dashboard', pKey: 'analytics', excludeRole: 'dentist' },
             ]
         },
         {
@@ -68,6 +73,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 { icon: Layout, label: language === 'TH' ? 'สถานะคิวรายห้อง' : 'Floor Management', path: '/floor', pKey: 'schedule' },
                 { icon: Pill, label: language === 'TH' ? 'ฉลากยา' : 'Drug Labels', path: '/drug-labels', pKey: 'patients' },
                 { icon: FileSignature, label: language === 'TH' ? 'ใบรับรองแพทย์' : 'Medical Certificates', path: '/medical-certificates', pKey: 'patients' },
+                { icon: Stethoscope, label: language === 'TH' ? 'แผนการรักษา' : 'Treatment Plan', path: '/treatment-plan', pKey: 'patients' },
             ]
         },
         {
@@ -79,6 +85,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 { icon: Wallet, label: language === 'TH' ? 'รายจ่าย' : 'Expenses', path: '/expenses', pKey: 'expenses' },
                 { icon: Shield, label: language === 'TH' ? 'เบิกจ่าย E-Claim' : 'E-Claim', path: '/e-claim', pKey: 'billing' },
                 { icon: CreditCard, label: language === 'TH' ? 'ชำระเงินออนไลน์' : 'Online Payments', path: '/online-payments', pKey: 'billing' },
+                { icon: Wallet, label: language === 'TH' ? 'การเงินคลินิก' : 'Financial Mgmt', path: '/financial', pKey: 'billing', excludeRole: 'dentist' },
             ]
         },
         {
@@ -103,7 +110,12 @@ const Sidebar = ({ isOpen, onClose }) => {
             category: t('nav_cat_system'),
             items: [
                 { icon: UserCog, label: language === 'TH' ? 'พนักงาน' : 'Staff', path: '/staff', pKey: 'staff' },
+                { icon: Users, label: language === 'TH' ? 'จัดการพนักงาน' : 'Staff Management', path: '/staff-management', pKey: 'staff', excludeRole: 'dentist' },
                 { icon: Clock, label: language === 'TH' ? 'ลงเวลา' : 'Attendance', path: '/attendance', excludeRole: 'dentist' },
+                { icon: KeyRound, label: language === 'TH' ? 'สิทธิ์การใช้งาน' : 'Roles', path: '/roles', pKey: 'staff', excludeRole: 'dentist' },
+                { icon: Lock, label: language === 'TH' ? 'ตรวจสอบความปลอดภัย' : 'Security Audit', path: '/security', pKey: 'staff', excludeRole: 'dentist' },
+                { icon: Bell, label: language === 'TH' ? 'ตั้งค่าแจ้งเตือน' : 'Notifications', path: '/notifications', pKey: 'staff' },
+                { icon: Settings, label: language === 'TH' ? 'ตั้งค่าคลินิก' : 'Clinic Settings', path: '/settings', pKey: 'staff', excludeRole: 'dentist' },
             ]
         }
     ].map(group => ({
