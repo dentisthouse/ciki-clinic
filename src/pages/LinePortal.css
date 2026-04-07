@@ -215,58 +215,126 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-/* --- Promotion Slider --- */
-.lp-promo-scroll {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-  scroll-snap-type: x mandatory;
-}
-
-.lp-promo-card {
-  min-width: 280px;
-  flex: 0 0 calc(100% - 2rem);
-  height: 160px;
-  border-radius: 1.25rem;
-  overflow: hidden;
-  position: relative;
-  background: #eee;
-  scroll-snap-align: center;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-.lp-promo-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* --- News Grid --- */
-.lp-news-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.lp-news-card {
+/* --- Premium Service Cards --- */
+.lp-service-card-v2 {
   background: white;
-  border-radius: 1.25rem;
-  overflow: hidden;
-  box-shadow: var(--lp-shadow);
+  border-radius: 1.75rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  box-shadow: 0 4px 20px rgba(13, 148, 136, 0.04);
+  border: 1px solid rgba(241, 245, 249, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
 }
 
-.lp-news-thumb {
-  width: 100%;
-  aspect-ratio: 1;
-  background: #eee;
-  overflow: hidden;
+.lp-service-card-v2:active {
+  transform: scale(0.97);
+  background: var(--lp-primary-light);
 }
 
-.lp-news-thumb img {
+.lp-service-icon-box-v2 {
+  width: 52px;
+  height: 52px;
+  background: var(--lp-primary-light);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lp-primary);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.lp-service-card-v2:active .lp-service-icon-box-v2 {
+  background: white;
+}
+
+.lp-service-info-v2 {
+  flex: 1;
+}
+
+.lp-service-name-v2 {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--lp-text-main);
+  margin-bottom: 2px;
+}
+
+.lp-service-duration-v2 {
+  font-size: 0.75rem;
+  color: var(--lp-text-muted);
+  font-weight: 700;
+}
+
+.lp-service-price-box-v2 {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lp-service-price-prefix-v2 {
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: var(--lp-text-muted);
+  text-transform: uppercase;
+  margin-bottom: -4px;
+}
+
+.lp-service-price-v2 {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--lp-primary);
+  letter-spacing: -0.02em;
+}
+
+.lp-service-book-v2 {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: var(--lp-secondary);
+  letter-spacing: 0.05em;
+  margin-top: -2px;
+}
+
+/* --- Premium Booking Form --- */
+.lp-booking-container-v2 {
+  background: white;
+  border-radius: 2.5rem;
+  padding: 2rem;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.06);
+  border: 1px solid rgba(241, 245, 249, 1);
+  margin-top: -1.5rem;
+}
+
+.lp-booking-label-v2 {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: var(--lp-text-main);
+  margin-bottom: 0.75rem;
+  display: block;
+  letter-spacing: 0.01em;
+}
+
+.lp-input-v3 {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background: #f8fafc;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--lp-text-main);
+  outline: none;
+  transition: all 0.2s ease;
+  appearance: none;
+}
+
+.lp-input-v3:focus {
+  border-color: var(--lp-accent);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.1);
 }
 
 /* --- Bottom Navigation V2 --- */
