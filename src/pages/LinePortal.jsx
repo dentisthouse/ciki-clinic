@@ -803,15 +803,15 @@ const LinePortal = () => {
                                 />
                                 <div className="lp-member-badge">
                                     <Star size={10} fill="currentColor" />
-                                    <span>GOLD MEMBER</span>
+                                    <span>{pt('member_tier_gold')}</span>
                                 </div>
                             </div>
                             
                             <div className="lp-profile-info-v2">
                                 <h3 className="lp-user-name-v2">
-                                    คุณ{currentUser?.name || pt('guest_user')}
+                                    {pt('greeting_prefix')}{currentUser?.name || pt('guest_user')}
                                 </h3>
-                                <p className="lp-hn-label-v2">HN: {currentUser?.hn || '6225-001'}</p>
+                                <p className="lp-hn-label-v2">{pt('hn_label')} {currentUser?.hn || '6225-001'}</p>
                             </div>
                         </div>
 
@@ -819,19 +819,19 @@ const LinePortal = () => {
                             <div className="lp-info-item-v2">
                                 <Phone size={16} className="lp-info-icon-v2" />
                                 <div className="lp-info-content-v2">
-                                    <label>เบอร์โทรศัพท์</label>
+                                    <label>{pt('phone_short')}</label>
                                     <span>{currentUser?.phone || '09x-xxx-xxxx'}</span>
                                 </div>
                             </div>
                             <div className="lp-info-item-v2">
                                 <Activity size={16} className="lp-info-icon-v2" />
                                 <div className="lp-info-content-v2">
-                                    <label>{language === 'TH' ? 'สิทธิ์การรักษา' : 'Treatment Rights'}</label>
+                                    <label>{pt('treatment_rights')}</label>
                                     <span>
-                                        {currentUser?.insuranceType === 'Self' ? (language === 'TH' ? 'ชำระเงินเอง' : 'Self-pay') : 
-                                         currentUser?.insuranceType === 'SSO' ? (language === 'TH' ? 'ประกันสังคม (SSO)' : 'Social Security') :
-                                         currentUser?.insuranceType === 'Insurance' ? (currentUser?.insuranceProvider || (language === 'TH' ? 'ประกันสุขภาพ' : 'Insurance')) :
-                                         (currentUser?.insuranceType || (language === 'TH' ? 'ไม่ระบุ' : 'N/A'))}
+                                        {currentUser?.insuranceType === 'Self' ? pt('self_pay') : 
+                                         currentUser?.insuranceType === 'SSO' ? pt('sso') :
+                                         currentUser?.insuranceType === 'Insurance' ? (currentUser?.insuranceProvider || pt('health_insurance')) :
+                                         (currentUser?.insuranceType || pt('not_specified'))}
                                     </span>
                                 </div>
                             </div>
@@ -842,9 +842,9 @@ const LinePortal = () => {
                 {/* Recommended (Carousel Refined) */}
                 <div className="lp-section" style={{ marginTop: '0.5rem' }}>
                     <div className="lp-section-header">
-                        <h3 className="lp-section-title">{language === 'TH' ? 'แนะนำสำหรับคุณ' : 'Recommended'}</h3>
+                        <h3 className="lp-section-title">{pt('recommended_for_you')}</h3>
                         <button className="lp-btn-see-all" onClick={() => setPage('services')}>
-                            <span>{language === 'TH' ? 'ดูทั้งหมด' : 'See All'}</span>
+                            <span>{pt('see_all')}</span>
                             <ChevronRight size={14} />
                         </button>
                     </div>
@@ -856,7 +856,7 @@ const LinePortal = () => {
                                     <div className="lp-promo-tag-v2">HOT</div>
                                     <div className="lp-promo-info-v2">
                                         <h4>{service.name}</h4>
-                                        <p>฿{service.price.toLocaleString()}</p>
+                                        <p>{pt('starting_from')} ฿{service.price.toLocaleString()}</p>
                                     </div>
                                 </div>
                             </div>
@@ -867,7 +867,7 @@ const LinePortal = () => {
                 {/* News Section (Grid Refined) */}
                 <div className="lp-section">
                     <div className="lp-section-header">
-                        <h3 className="lp-section-title">{language === 'TH' ? 'ข่าวสารล่าสุด' : 'Latest News'}</h3>
+                        <h3 className="lp-section-title">{pt('latest_news')}</h3>
                     </div>
                     <div className="lp-news-grid-v2">
                         {NEWS.map(n => (
@@ -882,7 +882,7 @@ const LinePortal = () => {
                                     <span className="lp-news-date-v2">07 APR 2026</span>
                                     <h4>{n.title}</h4>
                                     <button className="lp-news-read-v2">
-                                        {language === 'TH' ? 'อ่านเพิ่ม' : 'Read More'}
+                                        {pt('read_more')}
                                     </button>
                                 </div>
                             </div>
@@ -894,19 +894,19 @@ const LinePortal = () => {
                 <div className="lp-bottom-nav-v2">
                     <button className={`lp-nav-item-v2 ${page === 'home' ? 'active' : ''}`} onClick={() => setPage('home')}>
                         <Home size={20} />
-                        <span>หน้าหลัก</span>
+                        <span>{pt('dashboard')}</span>
                     </button>
                     
                     <button className={`lp-nav-center-btn ${page === 'booking' ? 'active' : ''}`} onClick={() => setPage('booking')}>
                         <div className="lp-nav-center-inner">
                             <Calendar size={24} />
-                            <span>จองคิว</span>
+                            <span>{pt('booking')}</span>
                         </div>
                     </button>
 
                     <button className={`lp-nav-item-v2 ${page === 'services' ? 'active' : ''}`} onClick={() => setPage('services')}>
                         <Percent size={20} />
-                        <span>โปรโมชั่น</span>
+                        <span>{pt('services')}</span>
                     </button>
                 </div>
             </div>
@@ -935,12 +935,12 @@ const LinePortal = () => {
                                 </div>
                                 <div className="lp-service-price-box-v2">
                                     <span className="lp-service-price-prefix-v2">
-                                        {language === 'TH' ? 'เริ่มต้น' : 'From'}
+                                        {pt('starting_from')}
                                     </span>
                                     <p className="lp-service-price-v2">
                                         ฿{service.price.toLocaleString()}
                                     </p>
-                                    <span className="lp-service-book-v2">{language === 'TH' ? 'จองเลย' : 'BOOK'}</span>
+                                    <span className="lp-service-book-v2">{pt('book_now_short')}</span>
                                 </div>
                             </div>
                         ))}
@@ -1021,7 +1021,7 @@ const LinePortal = () => {
                     {selectedServiceObj && (
                         <div style={{ padding: '2rem 1rem', textAlign: 'center' }}>
                             <p style={{ fontSize: '0.85rem', color: 'var(--lp-text-muted)', fontWeight: 700 }}>
-                                {language === 'TH' ? 'ราคาประมาณการ:' : 'Estimated Price:'} 
+                                {pt('est_price')} 
                                 <span style={{ color: 'var(--lp-primary)', marginLeft: '4px' }}>฿{selectedServiceObj.price.toLocaleString()}</span>
                             </p>
                         </div>
