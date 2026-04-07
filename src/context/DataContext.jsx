@@ -197,6 +197,48 @@ export const DataProvider = ({ children }) => {
 
     // --- CRUD OPERATIONS (OPTIMISTIC & PERSISTENT) ---
     
+    // Helper to map patient fields to snake_case for Supabase
+    const toSupabasePatient = (patientUpdate) => {
+        const mapping = {
+            id: 'id',
+            hn: 'hn',
+            name: 'name',
+            phone: 'phone',
+            email: 'email',
+            address: 'address',
+            gender: 'gender',
+            age: 'age',
+            active: 'active',
+            registrationDate: 'registration_date',
+            idCard: 'id_card',
+            insuranceType: 'insurance_type',
+            insuranceProvider: 'insurance_provider',
+            insuranceLimit: 'insurance_limit',
+            medicalHistory: 'medical_history',
+            toothChart: 'tooth_chart',
+            vitals: 'vitals',
+            treatmentPlans: 'treatment_plans',
+            treatments: 'treatments',
+            oldRecords: 'old_records',
+            installmentPlan: 'installment_plan',
+            lineUserId: 'line_user_id',
+            linePictureUrl: 'line_picture_url',
+            totalBilled: 'total_billed',
+            totalPaid: 'total_paid'
+        };
+
+        const mapped = {};
+        Object.entries(patientUpdate).forEach(([key, value]) => {
+            if (mapping[key]) {
+                mapped[mapping[key]] = value;
+            } else {
+                // If no mapping found, just use as is (already snake_case or unknown)
+                mapped[key] = value;
+            }
+        });
+        return mapped;
+    };
+
     const persistAction = async (table, action, method, data, id) => {
         try {
             // Update Local First (Optimistic)
@@ -243,29 +285,19 @@ export const DataProvider = ({ children }) => {
             hn,
             active: true, 
             registrationDate: new Date().toISOString(),
-            toothChart: {}, medicalHistory: [], vitals: {}
+            toothChart: {}, 
+            medicalHistory: [], 
+            vitals: {},
+            treatmentPlans: [],
+            treatments: [],
+            oldRecords: [],
+            totalBilled: 0,
+            totalPaid: 0
         };
         
         await persistAction('patients', 
             () => {
-                // Use strictly snake_case for Supabase columns to avoid schema mismatch
-                const supabaseData = {
-                    id: newPatient.id,
-                    hn: newPatient.hn,
-                    name: newPatient.name,
-                    phone: newPatient.phone,
-                    email: newPatient.email,
-                    address: newPatient.address,
-                    gender: newPatient.gender,
-                    age: parseInt(newPatient.age) || 0,
-                    active: true,
-                    registration_date: newPatient.registrationDate,
-                    id_card: newPatient.idCard,
-                    insurance_type: newPatient.insuranceType,
-                    medical_history: newPatient.medicalHistory || [],
-                    tooth_chart: newPatient.toothChart || {},
-                    vitals: newPatient.vitals || {}
-                };
+                const supabaseData = toSupabasePatient(newPatient);
                 return supabase.from('patients').insert([supabaseData]);
             }, 
             'insert', newPatient
@@ -274,7 +306,10 @@ export const DataProvider = ({ children }) => {
 
     const updatePatient = async (id, updates) => {
         await persistAction('patients',
-            () => supabase.from('patients').update(updates).eq('id', id),
+            () => {
+                const supabaseUpdates = toSupabasePatient(updates);
+                return supabase.from('patients').update(supabaseUpdates).eq('id', id);
+            },
             'update', updates, id
         );
     };

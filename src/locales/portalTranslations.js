@@ -14,20 +14,16 @@ export const PORTAL_TRANS = {
         "change_phone_btn": "Change Phone Number",
         "verifying": "Verifying...",
         "secure": "Secure",
-        "premium": "Premium",
-        
         "verify_otp": "Verify OTP",
         "enter_code": "Enter the 6-digit code sent to",
         "verify_login": "Verify & Login",
         "resend_in": "Resend in",
         "resend_now": "Resend OTP",
-
         "complete_profile": "Complete Profile",
         "first_name": "First Name",
         "last_name": "Last Name",
         "create_account": "Create Account",
         "back_login": "Back to Login",
-
         "dashboard": "Dashboard",
         "guest_user": "Guest User",
         "verified_patient": "Verified Patient",
@@ -39,29 +35,24 @@ export const PORTAL_TRANS = {
         "next_apt": "Next Appointment",
         "book_apt_prompt": "Book an Appointment",
         "book_apt_desc": "Schedule your next visit easily.",
-
         "our_services": "Our Services",
         "premium_services": "Dental Services",
         "book_now": "Book Now",
-
         "book_apt": "Book Appointment",
         "step_service": "1. Select Service",
         "step_branch": "2. Select Branch",
         "step_datetime": "3. Select Date & Time",
         "confirm_booking": "Confirm Booking",
-
         "booking_success": "Booking Success!",
         "booking_success_desc": "Your appointment has been scheduled. Our team will contact you shortly.",
         "service": "Service",
         "datetime": "Date & Time",
         "branch": "Branch",
         "back_dashboard": "Back to Dashboard",
-
         "my_apts": "My Appointments",
         "no_apts": "No upcoming appointments found.",
         "book_first": "Book Your First Slot",
         "main_clinic": "Main Clinic",
-
         "err_phone": "Please enter a valid phone number (e.g. 0812345678)",
         "otp_sent": "OTP sent to your phone",
         "err_otp_send": "Error sending OTP",
@@ -73,7 +64,6 @@ export const PORTAL_TRANS = {
         "logout_success": "Logged out successfully",
         "err_sel_service": "Please select service and time",
         "book_success_alert": "Booking successful!",
-
         "srv_checkup": "Dental Checkup",
         "srv_cleaning": "Teeth Cleaning / Airflow",
         "srv_filling": "Composite Filling",
@@ -85,10 +75,8 @@ export const PORTAL_TRANS = {
         "min": "min",
         "month": "months",
         "visits": "visits",
-        
         "status_confirmed": "Confirmed",
         "status_pending": "Pending",
-        
         "branch_sukhumvit": "Sukhumvit Branch",
         "branch_siam": "Siam Square",
         "branch_ladprao": "Ladprao Branch",
@@ -118,6 +106,12 @@ export const PORTAL_TRANS = {
         "sel_time": "SELECT TIME",
         "processing": "Processing...",
         "back_to_dashboard_btn": "Back to Dashboard",
+        "my_journey": "My Dental Journey",
+        "ortho_progress": "Ortho Progress",
+        "treatment_plan": "Treatment Plan",
+        "view_plan_desc": "Track your progress",
+        "clinical_records": "History & Records",
+        "consult_ortho": "Consult Ortho",
     },
     TH: {
         "ciki_dental": "บ้านหมอฟัน",
@@ -134,20 +128,16 @@ export const PORTAL_TRANS = {
         "change_phone_btn": "ขอรหัสใหม่อีกครั้ง",
         "verifying": "กำลังตรวจสอบ...",
         "secure": "ปลอดภัย",
-        "premium": "พรีเมียม",
-        
         "verify_otp": "ยืนยันรหัส OTP",
         "enter_code": "กรอกรหัส 6 หลักที่ส่งไปยังเบอร์",
         "verify_login": "ยืนยันและเข้าสู่ระบบ",
         "resend_in": "ส่งรหัสใหม่ใน",
         "resend_now": "ส่งรหัส OTP อีกครั้ง",
-
         "complete_profile": "กรอกประวัติให้สมบูรณ์",
         "first_name": "ชื่อจริง",
         "last_name": "นามสกุล",
         "create_account": "สร้างบัญชี",
         "back_login": "กลับไปหน้าล็อกอิน",
-
         "dashboard": "หน้าหลัก",
         "guest_user": "ผู้เยี่ยมชม",
         "verified_patient": "คนไข้ยืนยันตัวตนแล้ว",
@@ -159,29 +149,24 @@ export const PORTAL_TRANS = {
         "next_apt": "นัดหมายครั้งต่อไป",
         "book_apt_prompt": "จองคิวทำฟัน",
         "book_apt_desc": "เลือกวันเวลาที่สะดวกได้ทันที",
-
         "our_services": "บริการของเรา",
         "premium_services": "บริการทันตกรรม",
         "book_now": "จองเลย",
-
         "book_apt": "จองคิวทำฟัน",
         "step_service": "1. เลือกบริการ",
         "step_branch": "2. เลือกสาขา",
         "step_datetime": "3. เลือกวันและเวลา",
         "confirm_booking": "ยืนยันการจอง",
-
         "booking_success": "จองสำเร็จ!",
         "booking_success_desc": "ระบบได้รับข้อมูลเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับเร็วๆ นี้",
         "service": "บริการ",
         "datetime": "วันและเวลา",
         "branch": "สาขา",
         "back_dashboard": "กลับหน้าหลัก",
-
         "my_apts": "นัดหมายของฉัน",
         "no_apts": "ยังไม่มีนัดหมายเร็วๆ นี้",
         "book_first": "จองคิวครั้งแรกเลย",
         "main_clinic": "สาขาหลัก",
-
         "err_phone": "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (เช่น 0812345678)",
         "otp_sent": "ส่งรหัส OTP ไปยังเบอร์มือถือของคุณแล้ว",
         "err_otp_send": "เกิดข้อผิดพลาดในการส่ง OTP",
@@ -193,7 +178,6 @@ export const PORTAL_TRANS = {
         "logout_success": "ออกจากระบบเรียบร้อยแล้ว",
         "err_sel_service": "กรุณาเลือกบริการและเวลา",
         "book_success_alert": "จองนัดหมายสำเร็จ!",
-
         "srv_checkup": "ตรวจสุขภาพช่องปาก",
         "srv_cleaning": "ขูดหินปูน / Airflow",
         "srv_filling": "อุดฟัน (Composite)",
@@ -205,10 +189,8 @@ export const PORTAL_TRANS = {
         "min": "นาที",
         "month": "เดือน",
         "visits": "นัด",
-        
         "status_confirmed": "ยืนยันแล้ว",
         "status_pending": "รอยืนยัน",
-        
         "branch_sukhumvit": "สาขาสุขุมวิท",
         "branch_siam": "สาขาสยามสแควร์",
         "branch_ladprao": "สาขาลาดพร้าว",
@@ -238,6 +220,12 @@ export const PORTAL_TRANS = {
         "sel_time": "เลือกเวลา",
         "processing": "กำลังประมวลผล...",
         "back_to_dashboard_btn": "กลับสู่หน้าหลัก",
+        "my_journey": "เส้นทางการรักษาของคุณ",
+        "ortho_progress": "ความคืบหน้าจัดฟัน",
+        "treatment_plan": "แผนการรักษา",
+        "view_plan_desc": "ติดตามความคืบหน้า",
+        "clinical_records": "ประวัติและบันทึก",
+        "consult_ortho": "ปรึกษาหมอจัดฟัน",
     },
     CN: {
         "ciki_dental": "บ้านหมอฟัน (牙科)",
@@ -254,20 +242,16 @@ export const PORTAL_TRANS = {
         "change_phone_btn": "重发验证码",
         "verifying": "正在验证...",
         "secure": "安全",
-        "premium": "优质",
-        
         "verify_otp": "验证 OTP",
         "enter_code": "请输入发送至手机的6位验证码",
         "verify_login": "验证并登录",
         "resend_in": "重新发送倒计时",
         "resend_now": "重新发送验证码",
-
         "complete_profile": "完善个人资料",
         "first_name": "名字",
         "last_name": "姓氏",
         "create_account": "创建账户",
         "back_login": "返回登录",
-
         "dashboard": "主页",
         "guest_user": "访客",
         "verified_patient": "已认证患者",
@@ -279,29 +263,24 @@ export const PORTAL_TRANS = {
         "next_apt": "下次预约",
         "book_apt_prompt": "预约牙医",
         "book_apt_desc": "轻松安排您的下一次就诊",
-
         "our_services": "我们的服务",
         "premium_services": "高级牙科服务",
         "book_now": "立即预约",
-
         "book_apt": "预约就诊",
         "step_service": "1. 选择服务",
         "step_branch": "2. 选择分店",
         "step_datetime": "3. 选择日期和时间",
         "confirm_booking": "确认预约",
-
         "booking_success": "预约成功!",
         "booking_success_desc": "您的预约已安排。我们的团队将很快与您联系。",
         "service": "服务",
         "datetime": "日期和时间",
         "branch": "分店",
         "back_dashboard": "返回主页",
-
         "my_apts": "我的预约",
         "no_apts": "没有即将到来的预约。",
         "book_first": "预约您的第一个时间段",
         "main_clinic": "主诊所",
-
         "err_phone": "请输入有效的电话号码（例如：0812345678）",
         "otp_sent": "验证码已发送至您的手机",
         "err_otp_send": "发送验证码时出错",
@@ -313,7 +292,6 @@ export const PORTAL_TRANS = {
         "logout_success": "已成功注销",
         "err_sel_service": "请选择服务和时间",
         "book_success_alert": "预约成功！",
-
         "srv_checkup": "口腔检查",
         "srv_cleaning": "洗牙 / 喷砂",
         "srv_filling": "树脂补牙",
@@ -325,10 +303,8 @@ export const PORTAL_TRANS = {
         "min": "分钟",
         "month": "个月",
         "visits": "次",
-        
         "status_confirmed": "已确认",
         "status_pending": "待确认",
-        
         "branch_sukhumvit": "素坤逸分店 (Sukhumvit)",
         "branch_siam": "暹罗广场分店 (Siam Square)",
         "branch_ladprao": "拉普绕分店 (Ladprao)",
@@ -338,6 +314,8 @@ export const PORTAL_TRANS = {
         "select_branch_label": "选择分店",
         "avail_slots": "可用时间段",
         "tier_standard": "标准会员",
-        "premium_services": "高级服务",
+        "greeting_prefix": "",
+        "sel_date": "选择日期",
+        "sel_time": "选择时间",
     }
 };

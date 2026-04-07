@@ -22,7 +22,13 @@ import {
     Layout,
     Bell,
     Target,
-    TrendingUp
+    TrendingUp,
+    Pill,
+    FileSignature,
+    Ticket,
+    Heart,
+    Settings,
+    ClipboardList
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
@@ -60,6 +66,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                 { icon: Calendar, label: t('nav_schedule'), path: '/schedule', pKey: 'schedule' },
                 { icon: Activity, label: t('nav_queue'), path: '/queue', role: 'receptionist' }, 
                 { icon: Layout, label: language === 'TH' ? 'สถานะคิวรายห้อง' : 'Floor Management', path: '/floor', pKey: 'schedule' },
+                { icon: Pill, label: language === 'TH' ? 'ฉลากยา' : 'Drug Labels', path: '/drug-labels', pKey: 'patients' },
+                { icon: FileSignature, label: language === 'TH' ? 'ใบรับรองแพทย์' : 'Medical Certificates', path: '/medical-certificates', pKey: 'patients' },
             ]
         },
         {
@@ -69,6 +77,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                 { icon: ShieldCheck, label: t('nav_sso'), path: '/sso', pKey: 'sso' },
                 { icon: TrendingUp, label: language === 'TH' ? 'รายงานประจำวัน' : 'Daily Report', path: '/daily-report', pKey: 'analytics', role: 'receptionist' },
                 { icon: Wallet, label: language === 'TH' ? 'รายจ่าย' : 'Expenses', path: '/expenses', pKey: 'expenses' },
+                { icon: Shield, label: language === 'TH' ? 'เบิกจ่าย E-Claim' : 'E-Claim', path: '/e-claim', pKey: 'billing' },
+                { icon: CreditCard, label: language === 'TH' ? 'ชำระเงินออนไลน์' : 'Online Payments', path: '/online-payments', pKey: 'billing' },
             ]
         },
         {
@@ -76,6 +86,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             items: [
                 { icon: Package, label: t('nav_inventory'), path: '/inventory', pKey: 'inventory' },
                 { icon: Truck, label: t('nav_labs'), path: '/labs', pKey: 'inventory' },
+                { icon: Ticket, label: language === 'TH' ? 'คูปองและวงเงิน' : 'Coupons & Credits', path: '/coupons', pKey: 'inventory' },
+                { icon: Heart, label: language === 'TH' ? 'CRM ลูกค้าสัมพันธ์' : 'CRM', path: '/crm', pKey: 'patients' },
             ]
         },
         {
@@ -83,6 +95,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             items: [
                 { icon: BarChart3, label: language === 'TH' ? 'วิเคราะห์พื้นฐาน' : 'Basic Analytics', path: '/analytics', pKey: 'analytics', excludeRole: 'dentist' },
                 { icon: Brain, label: language === 'TH' ? 'วิเคราะห์ขั้นสูง' : 'Advanced Analytics', path: '/advanced-analytics', pKey: 'analytics', excludeRole: 'dentist' },
+                { icon: TrendingUp, label: language === 'TH' ? 'วิเคราะห์ธุรกิจ' : 'Business Analytics', path: '/business-analytics', pKey: 'analytics', excludeRole: 'dentist' },
+                { icon: ClipboardList, label: language === 'TH' ? 'รายงานเชิงลึก 45+' : 'Reports 45+', path: '/reports', pKey: 'analytics', excludeRole: 'dentist' },
             ]
         },
         {

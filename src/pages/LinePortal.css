@@ -627,3 +627,58 @@
   box-shadow: 0 4px 6px rgba(0,0,0,0.02);
   border: 1px solid #f1f5f9;
 }
+
+/* --- Horizontal Date Picker V3 --- */
+.lp-date-scroll-v3 {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 1rem 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.lp-date-scroll-v3::-webkit-scrollbar {
+  display: none;
+}
+
+.lp-date-chip-v3 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 62px;
+  height: 78px;
+  background: white;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.lp-date-chip-v3.active {
+  background: var(--lp-primary);
+  border-color: var(--lp-primary);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(13, 148, 136, 0.25);
+}
+
+.lp-day-name-v3 {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--lp-text-muted);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.lp-date-num-v3 {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--lp-text-main);
+}
+
+.lp-date-chip-v3.active .lp-day-name-v3,
+.lp-date-chip-v3.active .lp-date-num-v3 {
+  color: white;
+}
