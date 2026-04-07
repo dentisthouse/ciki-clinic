@@ -171,7 +171,7 @@ const Billing = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <div style={{ minWidth: 0 }}>
                                         <div style={{ fontWeight: 900, fontSize: '1.15rem', color: 'var(--neutral-900)', letterSpacing: '-0.01em' }}>{patient.name}</div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.25rem' }}>HN: {patient.hn || patient.id}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.25rem' }}>HN: {patient.hn || 'N/A'}</div>
                                     </div>
                                     <div style={{ 
                                         background: 'var(--primary-50)', 

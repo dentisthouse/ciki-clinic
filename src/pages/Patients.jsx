@@ -297,7 +297,7 @@ const Patients = () => {
                                                         </div>
                                                         <div>
                                                             <div style={{ fontWeight: 600, color: 'var(--neutral-900)' }}>{patient.name}</div>
-                                                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)' }}>HN: {patient.hn || patient.id}</div>
+                                                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)' }}>{patient.hn && patient.hn.length < 20 ? `HN: ${patient.hn}` : (language === 'TH' ? 'ยังไม่ได้ออก HN' : 'No HN')}</div>
                                                         </div>
                                                     </div>
                                                 </td>

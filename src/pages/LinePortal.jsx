@@ -851,26 +851,23 @@ const LinePortal = () => {
                     </div>
                 </div>
 
-                {/* Navigation Bottom */}
-                <div className="lp-bottom-nav">
-                    <button className={`lp-nav-item ${page === 'home' ? 'active' : ''}`} onClick={() => setPage('home')}>
-                        <Home size={22} />
+                {/* Simplified & Premium Navigation Bottom */}
+                <div className="lp-bottom-nav-v2">
+                    <button className={`lp-nav-item-v2 ${page === 'home' ? 'active' : ''}`} onClick={() => setPage('home')}>
+                        <Home size={20} />
                         <span>หน้าหลัก</span>
                     </button>
-                    <button className={`lp-nav-item ${page === 'services' ? 'active' : ''}`} onClick={() => setPage('services')}>
-                        <Percent size={22} />
-                        <span>โปรโมชั่น</span>
-                    </button>
                     
-                    <button className="lp-nav-item lp-nav-fab" onClick={() => setPage('booking')}>
-                        <div className="lp-nav-fab-inner">
+                    <button className={`lp-nav-center-btn ${page === 'booking' ? 'active' : ''}`} onClick={() => setPage('booking')}>
+                        <div className="lp-nav-center-inner">
                             <Calendar size={24} />
+                            <span>จองคิว</span>
                         </div>
                     </button>
 
-                    <button className="lp-nav-item" onClick={handleLogout} style={{ opacity: 0.5 }}>
-                        <Menu size={22} />
-                        <span>ตัวเลือก</span>
+                    <button className={`lp-nav-item-v2 ${page === 'services' ? 'active' : ''}`} onClick={() => setPage('services')}>
+                        <Percent size={20} />
+                        <span>โปรโมชั่น</span>
                     </button>
                 </div>
             </div>

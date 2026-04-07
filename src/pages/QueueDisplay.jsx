@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Volume2, User, Clock, Calendar } from 'lucide-react';
+import { Volume2, User, Clock, Calendar, ChevronRight, Sparkles, Star } from 'lucide-react';
 
 const QueueDisplay = () => {
     const { t, language } = useLanguage();
@@ -16,55 +16,54 @@ const QueueDisplay = () => {
         return () => clearInterval(timer);
     }, []);
 
-    // Filter appointments for today and simulate queue data
+    // Filter appointments for today
     useEffect(() => {
-        const todayStr = new Date().toISOString().split('T')[0];
-
-        // Filter appointments for today
-        const todaysApts = appointments
-            .filter(apt => apt.date.startsWith(todayStr) && apt.status !== 'Cancelled')
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const localTodayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
+        
+        const todaysApts = (appointments || [])
+            .filter(apt => {
+                if (!apt || !apt.date) return false;
+                const aptDate = String(apt.date).replace(/\//g, '-'); // Normalize YYYY/MM/DD to YYYY-MM-DD
+                return (aptDate.startsWith(todayStr) || aptDate.startsWith(localTodayStr)) && apt.status !== 'Cancelled';
+            })
             .map(apt => ({
                 ...apt,
-                // Ensure queueNumber exists (legacy support)
-                queueNumber: apt.queueNumber || 'A-XX',
-                queueStatus: apt.queueStatus || 'Waiting'
+                id: apt.id || Math.random().toString(36).substr(2, 9),
+                queueNumber: apt.queueNumber || 'W-01',
+                queueStatus: apt.queueStatus || 'Waiting',
+                patientName: apt.patientName || apt.patient || (language === 'TH' ? 'คนไข้ทั่วไป' : 'General Patient')
             }));
 
         setQueueList(todaysApts);
-    }, [appointments]);
+    }, [appointments, language]);
 
-    // Listen for queue calls from other pages (Schedule page)
+    // Announcement Logic
     useEffect(() => {
         const handleStorageChange = () => {
             const announcementData = localStorage.getItem('lastQueueCall');
             if (announcementData) {
                 const data = JSON.parse(announcementData);
-                // Check if this is a new announcement (within last 5 seconds)
                 const announcementTime = new Date(data.timestamp);
                 const now = new Date();
                 const diffSeconds = (now - announcementTime) / 1000;
                 
                 if (diffSeconds < 5 && (!lastAnnouncement || lastAnnouncement.timestamp !== data.timestamp)) {
                     setLastAnnouncement(data);
-                    // Play voice announcement
                     playVoiceAnnouncement(data);
                 }
             }
         };
 
-        // Check every 2 seconds for new announcements
         const interval = setInterval(handleStorageChange, 2000);
-        
-        // Also listen for storage events from other tabs
         window.addEventListener('storage', handleStorageChange);
-        
         return () => {
             clearInterval(interval);
             window.removeEventListener('storage', handleStorageChange);
         };
     }, [lastAnnouncement, language]);
 
-    // Play voice announcement
     const playVoiceAnnouncement = (data) => {
         if ('speechSynthesis' in window) {
             const roomText = data.room === 'Room 1' ? 'ห้องตรวจหนึ่ง' : 
@@ -72,502 +71,499 @@ const QueueDisplay = () => {
                             data.room === 'Room 3' ? 'ห้องตรวจสาม' : data.room;
             
             const text = data.announcement || `ขอเชิญคุณ ${data.patientName} หมายเลขคิว ${data.queueNumber} กรุณาเข้ารับบริการที่ ${roomText}`;
-            
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'th-TH';
-            utterance.rate = 0.9;
-            utterance.pitch = 1;
-            utterance.volume = 1;
-            
-            window.speechSynthesis.cancel(); // Stop any current speech
+            utterance.rate = 0.85;
+            utterance.pitch = 1.05;
+            window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
         }
     };
 
-    // Current Queue: First one "In Progress"
     const currentQueue = queueList.find(q => q.queueStatus === 'In Progress');
-
-    // Next Queues: "Waiting", sorted by queue number or time
     const nextQueues = queueList
         .filter(q => q.queueStatus === 'Waiting')
         .sort((a, b) => a.time.localeCompare(b.time))
-        .slice(0, 3);
+        .slice(0, 5);
 
-    const formatTime = (date) => {
-        return date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-    };
-
-    const formatDate = (date) => {
-        return date.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    };
+    const formatTime = (date) => date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const formatDate = (date) => date.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     return (
-        <div className="queue-container">
-            {/* Modern Header */}
-            <header className="queue-header">
-                <div className="header-brand">
-                    <div className="logo-box">
-                        <img src="/logo.png" alt="บ้านหมอฟัน" />
+        <div className="qd-luxury-container">
+            {/* Ambient Background Elements */}
+            <div className="qd-ambient-glow qd-glow-1"></div>
+            <div className="qd-ambient-glow qd-glow-2"></div>
+            
+            {/* Header Section */}
+            <header className="qd-header animate-fade-in">
+                <div className="qd-brand">
+                    <div className="qd-logo-wrapper">
+                        <img src="/logo.png" alt="Logo" className="qd-logo" />
                     </div>
-                    <div className="brand-text">
-                        <h1>บ้านหมอฟัน</h1>
-                        <p>Dental Home Clinic</p>
+                    <div className="qd-brand-info">
+                        <h1 className="qd-clinic-title">บ้านหมอฟัน คลินิก</h1>
+                        <p className="qd-clinic-tagline">DENTIST'S HOUSE LUXURY CLINIC</p>
                     </div>
                 </div>
-                <div className="header-time">
-                    <div className="time-display">
-                        <Clock size={28} />
-                        <span className="time-text">{formatTime(currentTime)}</span>
+                
+                <div className="qd-datetime">
+                    <div className="qd-time-card">
+                        <Clock className="qd-icon-gold" size={32} />
+                        <span className="qd-time-text">{formatTime(currentTime)}</span>
                     </div>
-                    <div className="date-display">
-                        <Calendar size={18} />
-                        <span>{formatDate(currentTime)}</span>
+                    <div className="qd-date-text">
+                        {formatDate(currentTime)}
                     </div>
                 </div>
             </header>
 
-            {/* Main Content */}
-            <main className="queue-main">
-                {/* Current Queue Card */}
-                <div className="current-queue-section">
-                    <div className="section-badge calling">
-                        <span className="pulse-dot"></span>
-                        <Volume2 size={24} />
-                        <span>{language === 'TH' ? 'กำลังเรียก' : 'NOW CALLING'}</span>
+            <main className="qd-main-grid">
+                {/* Current Active Queue (Left Side) */}
+                <section className="qd-current-section animate-slide-up">
+                    <div className="qd-status-pill qd-pulse">
+                        <Volume2 size={24} className="qd-calling-icon" />
+                        <span>{language === 'TH' ? 'กำลังเรียกเข้ารับบริการ' : 'NOW CALLING'}</span>
+                        <div className="qd-pulse-ring"></div>
                     </div>
 
-                    {currentQueue ? (
-                        <div className="current-queue-content">
-                            <div className="queue-number-large">{currentQueue.queueNumber}</div>
-                            <div className="patient-name">{currentQueue.patientName}</div>
-                            <div className="room-badge">
-                                {currentQueue.room ? 
-                                    (language === 'TH' ? 
-                                        (currentQueue.room === 'Room 1' ? 'ห้องตรวจ 1' : 
-                                         currentQueue.room === 'Room 2' ? 'ห้องตรวจ 2' : 
-                                         currentQueue.room === 'Room 3' ? 'ห้องตรวจ 3' : currentQueue.room) : 
-                                        currentQueue.room) : 
-                                    (language === 'TH' ? 'ห้องตรวจ' : 'Exam Room')
-                                }
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="empty-state">
-                            <div className="coffee-icon">☕</div>
-                            <p className="empty-title">{language === 'TH' ? 'ไม่มีคิว' : 'No Queue'}</p>
-                            <p className="empty-subtitle">{language === 'TH' ? 'รอรับบริการ' : 'Waiting for service'}</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Next Queue List */}
-                <div className="next-queue-section">
-                    <h2 className="next-queue-title">
-                        <span>{language === 'TH' ? 'คิวถัดไป' : 'Next Queue'}</span>
-                        <span className="queue-count">{nextQueues.length}</span>
-                    </h2>
-
-                    {nextQueues.length > 0 ? (
-                        <div className="queue-list">
-                            {nextQueues.map((q, i) => (
-                                <div key={i} className="queue-card">
-                                    <div className="queue-info">
-                                        <div className="queue-number">{q.queueNumber}</div>
-                                        <div className="queue-patient">{q.patientName}</div>
-                                    </div>
-                                    <div className="queue-status">
-                                        <span className="status-badge">
-                                            {language === 'TH' ? 'รอเรียก' : 'Waiting'}
-                                        </span>
-                                    </div>
+                    <div className="qd-main-card glass-panel-premium">
+                        {currentQueue ? (
+                            <div className="qd-caller-content">
+                                <div className="qd-number-badge animate-pop-in">
+                                    {currentQueue.queueNumber}
                                 </div>
-                            ))}
+                                <h2 className="qd-patient-display">{currentQueue.patientName}</h2>
+                                <div className="qd-room-indicator">
+                                    <Sparkles size={28} className="qd-decorator" />
+                                    <span>
+                                        {currentQueue.room ? 
+                                            (language === 'TH' ? 
+                                                (currentQueue.room === 'Room 1' ? 'ห้องตรวจ 1' : 
+                                                 currentQueue.room === 'Room 2' ? 'ห้องตรวจ 2' : 
+                                                 currentQueue.room === 'Room 3' ? 'ห้องตรวจ 3' : currentQueue.room) : 
+                                                currentQueue.room) : 
+                                            (language === 'TH' ? 'ห้องตรวจ' : 'Examination Room')
+                                        }
+                                    </span>
+                                    <Sparkles size={28} className="qd-decorator" />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="qd-empty-display">
+                                <div className="qd-waiting-art">
+                                    <Star size={80} className="qd-gold-star" />
+                                </div>
+                                <h3>{language === 'TH' ? 'รอเรียกนัดหมายถัดไป' : 'Ready for Next Patient'}</h3>
+                                <p>{language === 'TH' ? 'คลินิกยินดีให้บริการคุณลูกค้าทุกท่าน' : 'Our team is honored to serve you.'}</p>
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                {/* Waiting List (Right Side) */}
+                <section className="qd-waiting-section animate-slide-up delay-200">
+                    <div className="qd-waiting-header">
+                        <div className="qd-section-label">
+                            <User size={28} className="qd-icon-teal" />
+                            <span>{language === 'TH' ? 'คิวที่รอเรียก' : 'UPCOMING QUEUES'}</span>
                         </div>
-                    ) : (
-                        <div className="next-empty">
-                            <p>{language === 'TH' ? 'ว่าง' : 'Empty'}</p>
+                        <div className="qd-queue-stats">
+                            {nextQueues.length} {language === 'TH' ? 'ท่าน' : 'Remaining'}
                         </div>
-                    )}
-                </div>
+                    </div>
+
+                    <div className="qd-waiting-list">
+                        {nextQueues.length > 0 ? (
+                            nextQueues.map((q, idx) => (
+                                <div key={idx} className="qd-waiting-card animate-slide-right" style={{ animationDelay: `${idx * 100}ms` }}>
+                                    <div className="qd-waiting-num">{q.queueNumber}</div>
+                                    <div className="qd-waiting-info">
+                                        <div className="qd-waiting-name">{q.patientName}</div>
+                                        <div className="qd-waiting-type">{q.treatment || q.procedure || '-'}</div>
+                                    </div>
+                                    <div className="qd-waiting-status">
+                                        <div className="qd-status-dot"></div>
+                                        {language === 'TH' ? 'รอเรียก' : 'Waiting'}
+                                    </div>
+                                    <ChevronRight size={20} className="qd-card-arrow" />
+                                </div>
+                            ))
+                        ) : (
+                            <div className="qd-waiting-empty card">
+                                <p>{language === 'TH' ? 'ยังไม่มีคิวที่รอดำเนินการ' : 'No pending appointments'}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Clinic Branding / Ad Space */}
+                    <div className="qd-ads-panel glass-panel-premium">
+                        <Star size={24} className="qd-icon-gold" />
+                        <div className="qd-ads-content">
+                            <h4>{language === 'TH' ? 'รอยยิ้มของคุณ คือความภูมิใจของเรา' : 'Quality Care for Your Perfect Smile'}</h4>
+                            <p>{language === 'TH' ? 'สอบถามข้อมูลเพิ่มเติมได้ที่เคาน์เตอร์บริการ' : 'Visit our front desk for any inquiries'}</p>
+                        </div>
+                    </div>
+                </section>
             </main>
 
-            {/* Modern Footer */}
-            <footer className="queue-footer">
-                <div className="footer-content">
-                    <span className="footer-icon">📄</span>
-                    <span>ต้องการใบรับรองแพทย์แจ้งเจ้าหน้าที่ก่อนเข้ารับบริการ</span>
-                    <span className="footer-separator">|</span>
-                    <span>If you need a medical certificate, please inform the staff</span>
-                    <span className="footer-separator">|</span>
-                    <span>บ้านหมอฟัน ยินดีให้บริการ</span>
+            {/* Premium Ticker Footer */}
+            <footer className="qd-footer">
+                <div className="qd-footer-inner">
+                    <div className="qd-ticker">
+                        <span>• {language === 'TH' ? 'ขูดหินปูนเป็นประจำทุก 6 เดือน' : 'Dental checkup every 6 months'}</span>
+                        <span>• {language === 'TH' ? 'โปรดแจ้งประวัติการแพ้ยาและโรคประจำตัว' : 'Please inform us of your medical history'}</span>
+                        <span>• {language === 'TH' ? 'แปรงฟันอย่างถูกวิธีช่วยรักษาสุขภาพช่องปาก' : 'Maintain good oral hygiene daily'}</span>
+                        <span>• {language === 'TH' ? 'คลินิกเปิดให้บริการทุกวัน 09:30 - 20:00 น.' : 'Clinic Hours: 09:30 AM - 08:00 PM'}</span>
+                    </div>
                 </div>
             </footer>
 
             <style>{`
-                .queue-container {
-                    min-height: 100vh;
-                    width: 100vw;
-                    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%);
-                    display: flex;
-                    flex-direction: column;
-                    overflow: hidden;
-                    font-family: 'Sarabun', 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+                :root {
+                  --qd-teal: #0d9488;
+                  --qd-teal-light: #14b8a6;
+                  --qd-gold: #c5a059;
+                  --qd-gold-light: #dfc18d;
+                  --qd-bg: #f8fafc;
+                  --qd-glass: rgba(255, 255, 255, 0.9);
                 }
 
-                /* Modern Header */
-                .queue-header {
-                    background: linear-gradient(135deg, #059669 0%, #10b981 50%, #22c55e 100%);
-                    padding: 1.5rem 3rem;
+                .qd-luxury-container {
+                    min-height: 100vh;
+                    width: 100vw;
+                    background-color: var(--qd-bg);
+                    background-image: 
+                        radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.05) 0px, transparent 50%),
+                        radial-gradient(at 100% 0%, rgba(197, 160, 89, 0.05) 0px, transparent 50%);
+                    display: flex;
+                    flex-direction: column;
+                    font-family: 'Outfit', 'Prompt', sans-serif;
+                    position: relative;
+                    overflow: hidden;
+                    color: #1e293b;
+                }
+
+                .qd-ambient-glow {
+                    position: absolute;
+                    width: 600px;
+                    height: 600px;
+                    border-radius: 50%;
+                    filter: blur(120px);
+                    z-index: 0;
+                    opacity: 0.15;
+                    pointer-events: none;
+                }
+                .qd-glow-1 { top: -10%; left: -10%; background: var(--qd-teal); }
+                .qd-glow-2 { bottom: -10%; right: -10%; background: var(--qd-gold); }
+
+                /* Header */
+                .qd-header {
+                    padding: 2rem 4rem;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    color: white;
-                    box-shadow: 0 8px 32px rgba(5, 150, 105, 0.3);
+                    z-index: 10;
+                    background: rgba(255, 255, 255, 0.5);
+                    backdrop-filter: blur(8px);
+                    border-bottom: 1px solid rgba(0,0,0,0.05);
                 }
 
-                .header-brand {
+                .qd-brand {
                     display: flex;
                     align-items: center;
-                    gap: 1.25rem;
+                    gap: 1.5rem;
                 }
 
-                .logo-box {
-                    width: 72px;
-                    height: 72px;
+                .qd-logo-wrapper {
+                    width: 90px;
+                    height: 90px;
                     background: white;
-                    border-radius: 20px;
-                    padding: 8px;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                    border-radius: 28px;
+                    padding: 12px;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                 }
 
-                .logo-box img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
-                }
+                .qd-logo { width: 100%; height: 100%; object-fit: contain; }
 
-                .brand-text h1 {
+                .qd-clinic-title {
+                    font-size: 2.25rem;
+                    font-weight: 900;
+                    color: var(--qd-teal);
                     margin: 0;
-                    font-size: 2rem;
-                    font-weight: 800;
                     letter-spacing: -0.02em;
                 }
 
-                .brand-text p {
+                .qd-clinic-tagline {
                     margin: 0.25rem 0 0 0;
                     font-size: 1rem;
-                    opacity: 0.9;
-                    font-weight: 500;
-                    letter-spacing: 0.1em;
+                    color: var(--qd-gold);
+                    font-weight: 800;
+                    letter-spacing: 0.2em;
                 }
 
-                .header-time {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-end;
-                    gap: 0.5rem;
+                .qd-datetime {
+                    text-align: right;
                 }
 
-                .time-display {
+                .qd-time-card {
                     display: flex;
                     align-items: center;
-                    gap: 0.75rem;
-                    font-size: 2.75rem;
-                    font-weight: 700;
-                    line-height: 1;
+                    justify-content: flex-end;
+                    gap: 1rem;
+                    margin-bottom: 0.5rem;
                 }
 
-                .date-display {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    font-size: 1.1rem;
-                    opacity: 0.95;
-                    font-weight: 500;
+                .qd-time-text {
+                    font-size: 3.5rem;
+                    font-weight: 900;
+                    color: #1e293b;
+                    font-family: 'Outfit';
+                    letter-spacing: -0.05em;
                 }
 
-                /* Main Content */
-                .queue-main {
+                .qd-date-text {
+                    font-size: 1.25rem;
+                    color: #64748b;
+                    font-weight: 600;
+                }
+
+                /* Grid Layout */
+                .qd-main-grid {
                     flex: 1;
-                    padding: 2rem 3rem;
+                    padding: 3rem 4rem;
                     display: grid;
-                    grid-template-columns: 1.4fr 1fr;
-                    gap: 2.5rem;
-                    max-width: 1600px;
-                    margin: 0 auto;
+                    grid-template-columns: 1.2fr 0.8fr;
+                    gap: 4rem;
+                    z-index: 10;
+                    max-width: 1800px;
                     width: 100%;
+                    margin: 0 auto;
                 }
 
-                /* Current Queue Section */
-                .current-queue-section {
-                    background: white;
-                    border-radius: 40px;
-                    padding: 2.5rem;
-                    box-shadow: 
-                        0 20px 60px rgba(0, 0, 0, 0.08),
-                        0 0 0 1px rgba(0, 0, 0, 0.03);
+                /* Caller Section */
+                .qd-current-section {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    position: relative;
-                    overflow: hidden;
                 }
 
-                .current-queue-section::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 6px;
-                    background: linear-gradient(90deg, #22c55e, #10b981, #059669);
-                }
-
-                .section-badge {
+                .qd-status-pill {
                     display: inline-flex;
                     align-items: center;
-                    gap: 0.75rem;
-                    padding: 0.875rem 2rem;
-                    border-radius: 50px;
+                    gap: 1rem;
+                    padding: 1rem 2.5rem;
+                    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+                    color: white;
+                    border-radius: 100px;
                     font-size: 1.5rem;
-                    font-weight: 700;
-                    margin-bottom: 2.5rem;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+                    font-weight: 800;
+                    margin-bottom: 3rem;
+                    position: relative;
+                    box-shadow: 0 15px 30px rgba(13, 148, 136, 0.3);
                 }
 
-                .section-badge.calling {
-                    background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
-                    color: #166534;
-                    border: 2px solid #22c55e;
+                .qd-pulse-ring {
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    border: 4px solid var(--qd-teal);
+                    border-radius: 100px;
+                    animation: qd-pulse-anim 2s infinite;
                 }
 
-                .pulse-dot {
-                    width: 16px;
-                    height: 16px;
-                    border-radius: 50%;
-                    background: #22c55e;
-                    animation: pulse-dot 2s infinite;
+                @keyframes qd-pulse-anim {
+                    0% { transform: scale(1); opacity: 1; }
+                    100% { transform: scale(1.2, 1.4); opacity: 0; }
                 }
 
-                @keyframes pulse-dot {
-                    0%, 100% { 
-                        transform: scale(1); 
-                        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-                    }
-                    50% { 
-                        transform: scale(1.1); 
-                        box-shadow: 0 0 0 12px rgba(34, 197, 94, 0);
-                    }
-                }
-
-                .current-queue-content {
-                    text-align: center;
+                .qd-main-card {
                     width: 100%;
+                    min-height: 550px;
+                    background: var(--qd-glass);
+                    border-radius: 50px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 4rem;
+                    box-shadow: 
+                        0 40px 100px rgba(0,0,0,0.08),
+                        inset 0 0 0 1px rgba(255,255,255,1);
+                    position: relative;
                 }
 
-                .queue-number-large {
-                    font-size: 10rem;
-                    font-weight: 900;
-                    color: #1f2937;
-                    line-height: 1;
-                    letter-spacing: -0.05em;
-                    margin-bottom: 1rem;
-                    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+                .qd-number-badge {
+                    font-size: 14rem;
+                    font-weight: 1000;
+                    color: #1e293b;
+                    line-height: 0.85;
+                    margin-bottom: 2rem;
+                    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
-                    background-clip: text;
+                    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
                 }
 
-                .patient-name {
-                    font-size: 2.5rem;
-                    color: #4b5563;
-                    font-weight: 600;
-                    margin-bottom: 2rem;
+                .qd-patient-display {
+                    font-size: 4rem;
+                    font-weight: 900;
+                    color: #475569;
+                    margin: 0 0 3rem 0;
+                    letter-spacing: -0.02em;
                 }
 
-                .room-badge {
-                    display: inline-flex;
+                .qd-room-indicator {
+                    display: flex;
                     align-items: center;
-                    gap: 0.75rem;
-                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                    color: white;
-                    padding: 1.25rem 3rem;
-                    border-radius: 20px;
-                    font-size: 2rem;
-                    font-weight: 700;
-                    box-shadow: 0 10px 40px rgba(16, 185, 129, 0.4);
+                    justify-content: center;
+                    gap: 1.5rem;
+                    color: var(--qd-gold);
+                    font-size: 3rem;
+                    font-weight: 800;
                 }
 
-                .empty-state {
-                    text-align: center;
-                    padding: 3rem;
-                }
+                .qd-decorator { opacity: 0.3; }
 
-                .coffee-icon {
-                    font-size: 6rem;
-                    margin-bottom: 1.5rem;
-                    filter: grayscale(0.3);
-                    opacity: 0.8;
-                }
+                .qd-empty-display { text-align: center; }
+                .qd-gold-star { color: var(--qd-gold); margin-bottom: 2rem; opacity: 0.4; }
 
-                .empty-title {
-                    font-size: 2.5rem;
-                    color: #9ca3af;
-                    font-weight: 600;
-                    margin: 0 0 0.5rem 0;
-                }
-
-                .empty-subtitle {
-                    font-size: 1.5rem;
-                    color: #d1d5db;
-                    margin: 0;
-                }
-
-                /* Next Queue Section */
-                .next-queue-section {
+                /* Waiting Section */
+                .qd-waiting-section {
                     display: flex;
                     flex-direction: column;
                     gap: 1.5rem;
                 }
 
-                .next-queue-title {
+                .qd-waiting-header {
                     display: flex;
-                    align-items: center;
+                    align-items: center; 
                     justify-content: space-between;
-                    font-size: 1.75rem;
-                    font-weight: 700;
-                    color: #374151;
-                    margin: 0;
-                    padding: 0 0.5rem;
+                    padding: 0 1rem;
                 }
 
-                .queue-count {
-                    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-                    color: white;
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 50%;
+                .qd-section-label {
                     display: flex;
                     align-items: center;
-                    justify-content: center;
-                    font-size: 1rem;
-                    font-weight: 700;
+                    gap: 0.75rem;
+                    font-size: 1.5rem;
+                    font-weight: 800;
+                    color: #475569;
                 }
 
-                .queue-list {
+                .qd-queue-stats {
+                    background: var(--qd-teal);
+                    color: white;
+                    padding: 0.5rem 1.25rem;
+                    border-radius: 12px;
+                    font-weight: 800;
+                }
+
+                .qd-waiting-list {
                     display: flex;
                     flex-direction: column;
                     gap: 1rem;
                 }
 
-                .queue-card {
+                .qd-waiting-card {
                     background: white;
-                    border-radius: 24px;
-                    padding: 1.75rem 2rem;
+                    padding: 1.75rem 2.5rem;
+                    border-radius: 28px;
                     display: flex;
-                    justify-content: space-between;
                     align-items: center;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-                    border-left: 5px solid #f59e0b;
+                    gap: 2rem;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+                    border: 1px solid rgba(0,0,0,0.03);
                     transition: all 0.3s ease;
+                    position: relative;
                 }
 
-                .queue-card:hover {
-                    transform: translateX(4px);
-                    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+                .qd-waiting-card:hover {
+                    transform: translateX(10px);
+                    box-shadow: 0 20px 40px rgba(13, 148, 136, 0.08);
+                    border-color: var(--qd-teal);
                 }
 
-                .queue-info {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.25rem;
+                .qd-waiting-num {
+                    font-size: 3rem;
+                    font-weight: 900;
+                    color: var(--qd-teal);
+                    width: 120px;
                 }
 
-                .queue-number {
-                    font-size: 2.5rem;
-                    font-weight: 800;
-                    color: #1f2937;
-                    line-height: 1;
-                }
+                .qd-waiting-info { flex: 1; }
+                .qd-waiting-name { font-size: 1.75rem; font-weight: 800; color: #1e293b; }
+                .qd-waiting-type { color: #94a3b8; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 
-                .queue-patient {
-                    font-size: 1.25rem;
-                    color: #6b7280;
-                    font-weight: 500;
-                }
-
-                .status-badge {
-                    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-                    color: #92400e;
-                    padding: 0.75rem 1.5rem;
-                    border-radius: 12px;
-                    font-size: 1rem;
-                    font-weight: 700;
-                    border: 2px solid #fbbf24;
-                }
-
-                .next-empty {
-                    flex: 1;
+                .qd-waiting-status {
                     display: flex;
                     align-items: center;
-                    justify-content: center;
-                    background: rgba(255, 255, 255, 0.6);
-                    border-radius: 24px;
-                    border: 3px dashed #d1d5db;
-                    min-height: 200px;
+                    gap: 0.5rem;
+                    font-weight: 700;
+                    color: var(--qd-gold);
                 }
 
-                .next-empty p {
-                    font-size: 1.75rem;
-                    color: #9ca3af;
+                .qd-status-dot { width: 10px; height: 10px; background: var(--qd-gold); border-radius: 50%; }
+                .qd-card-arrow { color: #e2e8f0; }
+
+                .qd-ads-panel {
+                    margin-top: auto;
+                    padding: 2rem;
+                    border-radius: 32px;
+                    display: flex;
+                    align-items: center;
+                    gap: 1.5rem;
+                    background: linear-gradient(135deg, white 0%, #fefcf8 100%);
+                    border: 1px solid var(--qd-gold);
+                }
+
+                .qd-ads-content h4 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #1e293b; }
+                .qd-ads-content p { margin: 0.25rem 0 0 0; color: #64748b; font-weight: 600; }
+
+                /* Footer Ticker */
+                .qd-footer {
+                    background: #1e293b;
+                    height: 80px;
+                    display: flex;
+                    align-items: center;
+                    overflow: hidden;
+                    position: relative;
+                }
+
+                .qd-ticker {
+                    display: flex;
+                    gap: 5rem;
+                    white-space: nowrap;
+                    animation: qd-ticker-anim 35s linear infinite;
+                    color: rgba(255, 255, 255, 0.8);
+                    font-size: 1.5rem;
                     font-weight: 600;
                 }
 
-                /* Modern Footer */
-                .queue-footer {
-                    background: linear-gradient(90deg, #064e3b 0%, #065f46 50%, #047857 100%);
-                    color: white;
-                    padding: 1.25rem 3rem;
-                    text-align: center;
+                @keyframes qd-ticker-anim {
+                    0% { transform: translateX(100vw); }
+                    100% { transform: translateX(-100%); }
                 }
 
-                .footer-content {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 1rem;
-                    font-size: 1.1rem;
-                    font-weight: 500;
-                    flex-wrap: wrap;
-                }
+                .animate-pop-in { animation: qd-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+                @keyframes qd-pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-                .footer-icon {
-                    font-size: 1.25rem;
-                }
+                .animate-slide-up { animation: qd-up 0.8s ease-out both; }
+                .delay-200 { animation-delay: 0.2s; }
+                @keyframes qd-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 
-                .footer-separator {
-                    opacity: 0.5;
-                    font-weight: 300;
-                }
+                .animate-slide-right { animation: qd-right 0.6s ease-out backwards; }
+                @keyframes qd-right { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
 
-                /* Responsive */
-                @media (max-width: 1200px) {
-                    .queue-main {
-                        grid-template-columns: 1fr;
-                        gap: 2rem;
-                    }
+                .qd-icon-gold { color: var(--qd-gold); }
+                .qd-icon-teal { color: var(--qd-teal); }
 
-                    .queue-number-large {
-                        font-size: 7rem;
-                    }
-
-                    .patient-name {
-                        font-size: 1.75rem;
-                    }
+                @media (max-width: 1400px) {
+                    .qd-main-grid { gap: 2rem; padding: 2rem; }
+                    .qd-number-badge { font-size: 10rem; }
+                    .qd-patient-display { font-size: 3rem; }
                 }
             `}</style>
         </div>

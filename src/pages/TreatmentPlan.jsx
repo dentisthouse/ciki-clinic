@@ -18,7 +18,7 @@ const TreatmentPlan = () => {
         if (patients) {
             const filtered = patients.filter(patient =>
                 patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                patient.id.toLowerCase().includes(searchTerm.toLowerCase())
+                (patient.hn && patient.hn.toLowerCase().includes(searchTerm.toLowerCase()))
             );
             setFilteredPatients(filtered);
         }
@@ -116,7 +116,7 @@ const TreatmentPlan = () => {
                                     <div>
                                         <h4 style={{ margin: 0 }}>{patient.name}</h4>
                                         <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--neutral-500)' }}>
-                                            ID: {patient.id} • {patient.age} {language === 'TH' ? 'ปี' : 'y/o'}
+                                            HN: {patient.hn || 'N/A'} • {patient.age} {language === 'TH' ? 'ปี' : 'y/o'}
                                         </p>
                                     </div>
                                 </div>
