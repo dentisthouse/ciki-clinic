@@ -87,9 +87,9 @@
 }
 
 .lp-profile-details-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   margin-top: 0.75rem;
 }
 
@@ -97,9 +97,10 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  opacity: 0.95;
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 1;
+  white-space: nowrap;
 }
 
 .lp-profile-bottom {
