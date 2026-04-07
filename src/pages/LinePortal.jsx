@@ -777,30 +777,44 @@ const LinePortal = () => {
                     </button>
                 </div>
 
-                {/* Split Profile Card */}
-                <div className="lp-profile-card-wrapper animate-pop">
-                    <div className="lp-profile-card">
-                        <div className="lp-profile-top">
-                            <img 
-                                src={linePictureUrl || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop"} 
-                                className="lp-profile-img" 
-                                alt="Profile" 
-                            />
-                            <div className="lp-profile-info-main">
-                                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, marginBottom: '4px', color: 'white' }}>
-                                    คุณ{currentUser?.name || pt('guest_user')}
-                                </h3>
-                                <div className="lp-profile-details-grid">
-                                    <div className="lp-detail-item">
-                                        <span>เลขคนไข้ (HN): {currentUser?.hn || '620200'}</span>
-                                    </div>
+                {/* Unified Premium Profile Card V2 */}
+                <div className="lp-profile-card-wrapper-v2 animate-pop">
+                    <div className="lp-profile-card-v2 glass-panel-premium">
+                        <div className="lp-profile-header-v2">
+                            <div className="lp-profile-avatar-group">
+                                <img 
+                                    src={linePictureUrl || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop"} 
+                                    className="lp-profile-img-v2" 
+                                    alt="Profile" 
+                                />
+                                <div className="lp-member-badge">
+                                    <Star size={10} fill="currentColor" />
+                                    <span>GOLD MEMBER</span>
                                 </div>
                             </div>
+                            
+                            <div className="lp-profile-info-v2">
+                                <h3 className="lp-user-name-v2">
+                                    คุณ{currentUser?.name || pt('guest_user')}
+                                </h3>
+                                <p className="lp-hn-label-v2">HN: {currentUser?.hn || '6225-001'}</p>
+                            </div>
                         </div>
-                        <div className="lp-profile-bottom">
-                            <div className="lp-contact-item">
-                                <Phone size={14} className="lp-contact-icon" />
-                                <span>{currentUser?.phone || '09x-xxx-xxxx'}</span>
+
+                        <div className="lp-info-grid-v2">
+                            <div className="lp-info-item-v2">
+                                <Phone size={16} className="lp-info-icon-v2" />
+                                <div className="lp-info-content-v2">
+                                    <label>เบอร์โทรศัพท์</label>
+                                    <span>{currentUser?.phone || '09x-xxx-xxxx'}</span>
+                                </div>
+                            </div>
+                            <div className="lp-info-item-v2">
+                                <Activity size={16} className="lp-info-icon-v2" />
+                                <div className="lp-info-content-v2">
+                                    <label>สิทธิ์การรักษา</label>
+                                    <span>ประกันสังคม (SSO)</span>
+                                </div>
                             </div>
                         </div>
                     </div>
