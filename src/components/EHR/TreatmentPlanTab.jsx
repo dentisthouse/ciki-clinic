@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Printer, CheckCircle, FileText, ChevronRight, AlertCircle, ChevronDown, MoreVertical, Clock, Calendar } from 'lucide-react';
+import { Plus, Trash2, Printer, CheckCircle, FileText, ChevronRight, AlertCircle, ChevronDown, MoreVertical, Clock, Calendar, Eraser } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useLanguage } from '../../context/LanguageContext';
 import DigitalToothChart from './DigitalToothChart';
@@ -134,10 +133,20 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
     };
 
     const statusTools = [
-        { id: 'planning', label: t('trt_btn_add_procedure'), icon: Plus, color: 'var(--primary-600)' },
-        { id: 'missing', label: t('missing') || 'Missing', icon: Trash2, color: '#ef4444' },
-        { id: 'cavity', label: t('cavity') || 'Cavity', icon: AlertCircle, color: '#f59e0b' },
-        { id: 'filled', label: t('filled') || 'Filled', icon: CheckCircle, color: '#10b981' },
+        { id: 'planning', label: language === 'TH' ? 'เลือกซี่ฟัน (เพิ่มแผน)' : 'Select Teeth', color: '#3b82f6' },
+        { id: 'clear', label: language === 'TH' ? 'ลบ' : 'Clear', icon: Eraser, color: '#94a3b8' },
+        { id: 'cavity', label: language === 'TH' ? 'ฟันผุ' : 'Cavity', color: '#ef4444' },
+        { id: 'filled', label: language === 'TH' ? 'อุดฟัน' : 'Filled', color: '#3b82f6' },
+        { id: 'extracted', label: language === 'TH' ? 'ถอนฟัน' : 'Extracted', color: '#b91c1c' },
+        { id: 'rootCanal', label: language === 'TH' ? 'รักษารากฟัน' : 'Root Canal', color: '#f59e0b' },
+        { id: 'crown', label: language === 'TH' ? 'ครอบฟัน' : 'Crown', color: '#8b5cf6' },
+        { id: 'denture', label: language === 'TH' ? 'ฟันปลอม' : 'Denture', color: '#0ea5e9' },
+        { id: 'implant', label: language === 'TH' ? 'รากฟันเทียม' : 'Implant', color: '#22c55e' },
+        { id: 'sealant', label: language === 'TH' ? 'เคลือบหลุมร่องฟัน' : 'Sealant', color: '#10b981' },
+        { id: 'scaling', label: language === 'TH' ? 'ขูดหินปูน' : 'Scaling', color: '#78350f' },
+        { id: 'abscess', label: language === 'TH' ? 'ฝีหนอง' : 'Abscess', color: '#dc2626' },
+        { id: 'broken', label: language === 'TH' ? 'ฟันแตก/หัก' : 'Broken', color: '#ea580c' },
+        { id: 'bridge', label: language === 'TH' ? 'สะพานฟัน' : 'Bridge', color: '#2563eb' }
     ];
 
     const activePlan = plans.find(p => p.id === activePlanId) || plans[0];
@@ -465,11 +474,24 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '2rem' }}>
-                {/* Left: Input */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {/* Tool Selector */}
-                    <div style={{ display: 'flex', gap: '0.5rem', background: '#f1f5f9', padding: '0.5rem', borderRadius: '12px' }}>
+            {/* Full-width Dental Chart matching image */}
+            <div className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                <div style={{ 
+                    padding: '0.75rem 1.5rem', background: '#3b82f6', color: 'white', 
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center' 
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
+                        🦷 แผนภูมิฟัน (Dental Chart)
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.25rem', background: 'rgba(255,255,255,0.2)', padding: '4px', borderRadius: '8px' }}>
+                        <button style={{ background: 'white', color: '#3b82f6', border: 'none', padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>ฟันแท้</button>
+                        <button style={{ background: 'transparent', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>ฟันน้ำนม</button>
+                    </div>
+                </div>
+
+                {/* Tool Selector matching image layout */}
+                <div style={{ display: 'flex', padding: '0.75rem 1.5rem', background: 'white', borderBottom: '1px solid #f1f5f9', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', overflowX: 'auto' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         {statusTools.map(tool => (
                             <button
                                 key={tool.id}
@@ -478,34 +500,42 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
                                     if (tool.id !== 'planning') setSelectedTeeth([]);
                                 }}
                                 style={{
-                                    flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid',
-                                    borderColor: activeTool === tool.id ? tool.color : 'transparent',
-                                    background: activeTool === tool.id ? 'white' : 'transparent',
-                                    color: activeTool === tool.id ? tool.color : '#64748b',
-                                    fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                                    cursor: 'pointer', transition: 'all 0.2s', boxShadow: activeTool === tool.id ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                    padding: '0.35rem 0.75rem', borderRadius: '24px', border: '1px solid',
+                                    borderColor: activeTool === tool.id ? '#93c5fd' : '#e2e8f0',
+                                    background: activeTool === tool.id ? '#eff6ff' : 'white',
+                                    color: activeTool === tool.id ? '#1e40af' : '#475569',
+                                    fontWeight: activeTool === tool.id ? 700 : 500, 
+                                    fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s',
+                                    boxShadow: activeTool === tool.id ? '0 1px 2px rgba(59, 130, 246, 0.1)' : '0 1px 2px rgba(0,0,0,0.02)',
+                                    whiteSpace: 'nowrap'
                                 }}
                             >
-                                <tool.icon size={16} />
+                                {tool.icon ? (
+                                    <tool.icon size={14} color={tool.color} />
+                                ) : (
+                                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: tool.color }}></div>
+                                )}
                                 {tool.label}
                             </button>
                         ))}
                     </div>
-
-                    {/* Tooth Selection */}
-                    <div className="card" style={{ padding: '0' }}>
-                        <div style={{ padding: '1rem', borderBottom: '1px solid var(--neutral-100)', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{activeTool === 'planning' ? `1. ${language === 'TH' ? 'ขั้นตอนเลือกซี่ฟัน' : 'Select Teeth'}` : (language === 'TH' ? 'เลือกซี่ฟันเพื่ออัปเดตสถานะ' : 'Select Teeth to Update Status')}</span>
-                            {activeTool !== 'planning' && <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{language === 'TH' ? 'คลิกที่ซี่ฟันเพื่อเปลี่ยนสถานะ' : 'Click tooth to toggle status'}</span>}
-                        </div>
-                        <DigitalToothChart
-                            onToothSelect={handleToothSelect}
-                            selectedTeeth={selectedTeeth}
-                            toothChart={toothChart}
-                            treatedTeeth={Array.from(treatedTeeth)}
-                        />
+                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+                        เลือกอาการ แล้วกดที่ตัวของฟัน
                     </div>
+                </div>
 
+                <DigitalToothChart
+                    onToothSelect={handleToothSelect}
+                    selectedTeeth={selectedTeeth}
+                    toothChart={toothChart}
+                    treatedTeeth={Array.from(treatedTeeth)}
+                />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '2rem' }}>
+                {/* Left: Input */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     {/* Treatment Entry */}
                     {activeTool === 'planning' && (
                         <div className="card" style={{ padding: '0' }}>

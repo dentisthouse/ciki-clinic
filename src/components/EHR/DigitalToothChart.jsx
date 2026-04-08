@@ -20,10 +20,20 @@ const TOOTH_PATHS = {
 };
 
 const STATUS_COLORS = {
-    cavity: { main: '#ef4444', light: '#fee2e2', dark: '#991b1b' },
-    filled: { main: '#10b981', light: '#d1fae5', dark: '#065f46' },
-    missing: { main: '#64748b', light: '#f1f5f9', dark: '#334155' },
-    treated: { main: '#8b5cf6', light: '#ede9fe', dark: '#5b21b6' },
+    cavity: { main: '#ef4444', light: '#fee2e2', dark: '#991b1b' },          // Red
+    filled: { main: '#3b82f6', light: '#eff6ff', dark: '#1e40af' },          // Blue
+    extracted: { main: '#b91c1c', light: '#fef2f2', dark: '#7f1d1d' },       // Dark Red
+    rootCanal: { main: '#f59e0b', light: '#fffbeb', dark: '#b45309' },       // Orange
+    crown: { main: '#8b5cf6', light: '#f5f3ff', dark: '#5b21b6' },           // Purple
+    denture: { main: '#0ea5e9', light: '#f0f9ff', dark: '#0369a1' },         // Teal
+    implant: { main: '#22c55e', light: '#f0fdf4', dark: '#15803d' },         // Green
+    sealant: { main: '#10b981', light: '#ecfdf5', dark: '#047857' },         // Light Green
+    scaling: { main: '#78350f', light: '#fefce8', dark: '#451a03' },         // Brown
+    abscess: { main: '#dc2626', light: '#fef2f2', dark: '#991b1b' },         // Red
+    broken: { main: '#ea580c', light: '#fff7ed', dark: '#9a3412' },          // Orange
+    bridge: { main: '#2563eb', light: '#eff6ff', dark: '#1d4ed8' },          // Light Blue (diff from filled)
+    missing: { main: '#b91c1c', light: '#fef2f2', dark: '#7f1d1d' },         // Alias for extracted in legacy
+    treated: { main: '#8b5cf6', light: '#ede9fe', dark: '#5b21b6' },         
     healthy: null
 };
 
@@ -48,8 +58,9 @@ const getAnatomicalType = (id) => {
 
 const ToothIcon = ({ id, surfaces, toothStatus, onSurfaceClick, isSelected, onToothClick, isTreated }) => {
     const quadrant = Math.floor(id / 10);
-    const isUpper = quadrant <= 2;
-    const isMissing = toothStatus === 'missing';
+    const isExtracted = toothStatus === 'extracted' || toothStatus === 'missing';
+    const isDenture = toothStatus === 'denture';
+    const isImplant = toothStatus === 'implant';
     const type = getAnatomicalType(id);
     const pathData = TOOTH_PATHS[type];
     const width = getToothWidth(id);
@@ -61,6 +72,7 @@ const ToothIcon = ({ id, surfaces, toothStatus, onSurfaceClick, isSelected, onTo
     const getSurfaceColor = (surface, isStroke = false) => {
         const status = surfaces[surface];
         if (!status || status === 'healthy') return isStroke ? '#cbd5e1' : 'transparent';
+        if (!STATUS_COLORS[status]) return isStroke ? '#cbd5e1' : 'transparent';
         return isStroke ? STATUS_COLORS[status].dark : STATUS_COLORS[status].main;
     };
 
@@ -76,17 +88,16 @@ const ToothIcon = ({ id, surfaces, toothStatus, onSurfaceClick, isSelected, onTo
         }}>
             {/* FDI Number Badge */}
             <span style={{
-                fontSize: '10px',
+                fontSize: '11px',
                 fontWeight: 700,
-                color: isMissing ? '#94a3b8' : isSelected ? 'var(--primary-600)' : '#64748b',
+                color: '#64748b',
                 background: isSelected ? 'var(--primary-50)' : 'transparent',
                 padding: '2px 6px',
                 borderRadius: '10px',
-                marginBottom: isUpper ? '4px' : 0,
-                marginTop: isUpper ? 0 : '4px',
+                marginBottom: isUpper ? '8px' : 0,
+                marginTop: isUpper ? 0 : '8px',
                 transition: 'all 0.2s',
-                textDecoration: isMissing ? 'line-through' : 'none',
-                opacity: 0.8
+                opacity: 0.9
             }}>{id}</span>
 
             {/* Tooth Body Wrapper */}
@@ -97,7 +108,7 @@ const ToothIcon = ({ id, surfaces, toothStatus, onSurfaceClick, isSelected, onTo
                     position: 'relative',
                     transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                     transform: isSelected ? 'scale(1.15) translateY(' + (isUpper ? '5px' : '-5px') + ')' : 'scale(1)',
-                    filter: isMissing ? 'grayscale(0.8) opacity(0.4)' : isSelected ? 'drop-shadow(0 10px 15px rgba(13, 148, 136, 0.2))' : 'none'
+                    filter: isExtracted ? 'opacity(0.3)' : isSelected ? 'drop-shadow(0 10px 15px rgba(13, 148, 136, 0.2))' : 'none'
                 }}
             >
                 <svg width={width} height="85" viewBox="0 -15 100 130" style={{ display: 'block', overflow: 'visible' }}>
@@ -106,38 +117,49 @@ const ToothIcon = ({ id, surfaces, toothStatus, onSurfaceClick, isSelected, onTo
                             <stop offset="0%" stopColor="#ffffff" />
                             <stop offset="100%" stopColor="#e2e8f0" />
                         </radialGradient>
-                        <filter id={`shadow-${id}`}>
-                            <feDropShadow dx="0" dy="1" stdDeviation="1" floodOpacity="0.2"/>
-                        </filter>
                     </defs>
 
                     {/* Main Enamel Body */}
                     <path d={pathData} 
-                        fill={isMissing ? '#f1f5f9' : `url(#gloss-${id})`}
+                        fill={`url(#gloss-${id})`}
                         stroke={isSelected ? 'var(--primary-500)' : '#cbd5e1'}
-                        strokeWidth={isSelected ? '2.5' : '1'}
-                        filter={isMissing ? 'none' : `url(#shadow-${id})`}
+                        strokeWidth={isSelected ? '2.5' : '1.5'}
                         style={{ transition: 'all 0.3s' }}
                     />
 
                     {/* Integrated Indicators */}
-                    {!isMissing && (
-                        <g opacity="0.9">
-                            {hasCavity && <circle cx="50" cy={isUpper ? "85" : "15"} r="8" fill="#ef4444" stroke="white" strokeWidth="2" />}
-                            {hasFilled && <circle cx={hasCavity ? "30" : "50"} cy={isUpper ? "85" : "15"} r="8" fill="#10b981" stroke="white" strokeWidth="2" />}
-                            {isTreated && <circle cx={hasCavity || hasFilled ? "70" : "50"} cy={isUpper ? "85" : "15"} r="8" fill="#8b5cf6" stroke="white" strokeWidth="2" />}
+                    <g opacity="0.9">
+                        {hasCavity && <circle cx="50" cy={isUpper ? "85" : "15"} r="8" fill={STATUS_COLORS.cavity.main} stroke="white" strokeWidth="2" />}
+                        {hasFilled && <circle cx={hasCavity ? "30" : "50"} cy={isUpper ? "85" : "15"} r="8" fill={STATUS_COLORS.filled.main} stroke="white" strokeWidth="2" />}
+                        {isTreated && <circle cx={hasCavity || hasFilled ? "70" : "50"} cy={isUpper ? "85" : "15"} r="8" fill={STATUS_COLORS.treated.main} stroke="white" strokeWidth="2" />}
+                    </g>
+
+                    {/* Missing/Extracted Indicator (Red X) */}
+                    {isExtracted && (
+                        <g stroke="#dc2626" strokeWidth="8" strokeLinecap="round" opacity="0.8">
+                            <path d="M20,20 L80,110" />
+                            <path d="M80,20 L20,110" />
                         </g>
                     )}
-
-                    {/* Missing Indicator */}
-                    {isMissing && (
-                        <path d="M25,25 L75,75 M75,25 L25,75" stroke="#ef4444" strokeWidth="6" strokeLinecap="round" opacity="0.6" />
+                    {/* Denture Indicator (P within a colored box) */}
+                    {isDenture && (
+                        <g opacity="0.9">
+                            <rect x="25" y={isUpper ? "50" : "30"} width="50" height="50" fill="white" stroke={STATUS_COLORS.denture.main} strokeWidth="3" rx="8" />
+                            <text x="50" y={isUpper ? "83" : "63"} fill={STATUS_COLORS.denture.main} fontSize="40" fontWeight="bold" textAnchor="middle">P</text>
+                        </g>
+                    )}
+                    {/* Implant Indicator (I within green box) */}
+                    {isImplant && (
+                        <g opacity="0.9">
+                            <rect x="25" y={isUpper ? "50" : "30"} width="50" height="50" fill="white" stroke={STATUS_COLORS.implant.main} strokeWidth="3" rx="8" />
+                            <text x="50" y={isUpper ? "83" : "63"} fill={STATUS_COLORS.implant.main} fontSize="40" fontWeight="bold" textAnchor="middle">I</text>
+                        </g>
                     )}
                 </svg>
             </div>
 
             {/* Premium Surface Selection Hub */}
-            {isSelected && !isMissing && (
+            {isSelected && !isExtracted && (
                 <div style={{
                     position: 'absolute',
                     top: isUpper ? '100%' : 'auto',
@@ -218,33 +240,29 @@ const DigitalToothChart = ({ onToothSelect, selectedTeeth = [], toothChart = {},
 
     return (
         <div style={{
-            display: 'flex', flexDirection: 'column', gap: '3rem', padding: '2.5rem 1rem',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-            borderRadius: '24px',
-            border: '1px solid #f1f5f9',
+            display: 'flex', flexDirection: 'column', gap: '3rem', padding: '2.5rem 1rem 1rem 1rem',
+            background: 'linear-gradient(to bottom, #ffffff 0%, #f4f7fb 100%)', // matching the light blue tint in image
             alignItems: 'center',
             maxWidth: '100%',
             overflowX: 'auto',
             minHeight: '420px',
-            boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)'
         }}>
-            <div style={{ minWidth: 'fit-content', padding: '0 1rem' }}>
-                {/* Upper Arch (Maxilla) */}
+            <div style={{ minWidth: 'fit-content', padding: '0 1rem', position: 'relative' }}>
+                {/* Horizontal Divider Line */}
+                <div style={{ 
+                    position: 'absolute', top: '50%', left: '-20px', right: '-20px', 
+                    height: '1px', background: '#e2e8f0', zIndex: 0 
+                }}></div>
+
                 <div style={{
                     position: 'relative',
-                    padding: '0.5rem 1rem 1.5rem 1rem',
-                    borderBottom: '2px solid #f1f5f9',
+                    padding: '0 1rem 1.5rem 1rem',
                     display: 'flex', justifyContent: 'center',
-                    gap: '4px',
+                    gap: '8px',
                     // ELEVATE active row
                     zIndex: isUpperSelected ? 100 : 1
                 }}>
-                    {/* Anatomical Arch Curve Background */}
-                    <div style={{ 
-                        position: 'absolute', bottom: 0, left: '5%', right: '5%', height: '140%', 
-                        background: 'radial-gradient(ellipse at bottom, rgba(13, 148, 136, 0.03) 0%, transparent 70%)', 
-                        borderRadius: '1000px 1000px 0 0', zIndex: 0 
-                    }}></div>
+
                     
                     <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'flex-end', gap: '2px' }}>
                         {UPPER_TEETH.map(id => (
@@ -260,20 +278,15 @@ const DigitalToothChart = ({ onToothSelect, selectedTeeth = [], toothChart = {},
                     </div>
                 </div>
 
-                {/* Lower Arch (Mandible) */}
                 <div style={{
                     position: 'relative',
-                    padding: '1.5rem 1rem 0.5rem 1rem',
+                    padding: '1.5rem 1rem 0 1rem',
                     display: 'flex', justifyContent: 'center',
-                    gap: '4px',
+                    gap: '8px',
                     // ELEVATE active row
                     zIndex: isLowerSelected ? 100 : 1
                 }}>
-                    <div style={{ 
-                        position: 'absolute', top: 0, left: '5%', right: '5%', height: '140%', 
-                        background: 'radial-gradient(ellipse at top, rgba(13, 148, 136, 0.03) 0%, transparent 70%)', 
-                        borderRadius: '0 0 1000px 1000px', zIndex: 0 
-                    }}></div>
+
 
                     <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'flex-start', gap: '2px' }}>
                         {LOWER_TEETH.map(id => (
@@ -292,30 +305,28 @@ const DigitalToothChart = ({ onToothSelect, selectedTeeth = [], toothChart = {},
 
             {/* Premium Clinical Legend */}
             <div style={{ 
-                display: 'flex', gap: '2rem', justifyContent: 'center', 
-                fontSize: '0.85rem', fontWeight: 600, color: '#475569', 
-                flexWrap: 'wrap',
-                padding: '1rem 2rem',
-                background: 'white',
-                borderRadius: '50px',
-                border: '1px solid #f1f5f9',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                display: 'flex', gap: '1.5rem', justifyContent: 'flex-start', alignItems: 'center',
+                width: '100%',
+                fontSize: '0.85rem', fontWeight: 500, color: '#64748b', 
+                padding: '1rem',
+                borderTop: '1px solid #e2e8f0',
+                marginTop: '1rem'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 10, height: 10, background: '#ef4444', borderRadius: '50%', boxShadow: '0 0 0 3px #fee2e2' }}></div> 
-                    Cavity
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: 14, height: 14, background: '#bfdbfe', borderRadius: '4px' }}></div> 
+                    ข้อมูลจากครั้งก่อน
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 10, height: 10, background: '#10b981', borderRadius: '50%', boxShadow: '0 0 0 3px #d1fae5' }}></div> 
-                    Filled
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ color: '#dc2626', fontWeight: 800, fontSize: '1.2rem', lineHeight: '14px' }}>×</div> 
+                    ถอนฟันแล้ว
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 10, height: 10, background: '#64748b', borderRadius: '50%', boxShadow: '0 0 0 3px #f1f5f9' }}></div> 
-                    Missing
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: 14, height: 14, background: 'white', border: '1.5px solid #0ea5e9', color: '#0ea5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, borderRadius: '2px' }}>P</div> 
+                    ฟันปลอม (P)
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 10, height: 10, background: '#8b5cf6', borderRadius: '50%', boxShadow: '0 0 0 3px #ede9fe' }}></div> 
-                    Treated
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: 14, height: 14, background: 'white', border: '1.5px solid #22c55e', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, borderRadius: '2px' }}>I</div> 
+                    รากฟันเทียม (I)
                 </div>
             </div>
         </div>
