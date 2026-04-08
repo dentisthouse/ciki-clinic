@@ -14,9 +14,11 @@ import {
     BarChart3
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useData } from '../context/DataContext';
 
 const ReportsHub = () => {
     const { language, t } = useLanguage();
+    const { invoices, appointments, patients, expenses } = useData();
     const [activeSection, setActiveSection] = useState('financial');
 
     const reportCategories = [
@@ -28,18 +30,46 @@ const ReportsHub = () => {
         { id: 'custom', icon: PieChart, label: language === 'TH' ? 'สร้างรายงาน (Custom)' : 'Custom Builder' }
     ];
 
+    // Calculate live stats
+    const totalPendingInvoices = (invoices || []).filter(inv => inv.status !== 'Paid').length;
+    const totalPendingAmount = (invoices || []).filter(inv => inv.status !== 'Paid').reduce((sum, inv) => sum + (inv.amount || 0), 0);
+    const completedApts = (appointments || []).filter(a => a.status === 'Completed').length;
+    
     const mockFinancialReports = [
-        { id: 1, name: 'รายงานสรุปยอดรายรับประจำวัน', desc: 'ยอดชำระเงินแยกตามช่องทาง (เงินสด, โอนเงิน, บัตรเครดิต)' },
-        { id: 2, name: 'รายงานลูกหนี้ค้างชำระ', desc: 'รายการที่ยังไม่ได้ชำระเงินทั้งหมด เพื่อการติดตามหนี้' },
-        { id: 3, name: 'รายงานสรุปรายได้ตามสาขา', desc: 'เปรียบเทียบยอดขายสุทธิในแต่ละสาขา' },
-        { id: 4, name: 'รายงานสรุปค่าใช้จ่ายคลินิก', desc: 'รายการเบิกจ่ายและเอกสารค่าใช้จ่ายทั้งหมด' }
+        { id: 1, name: 'รายงานสรุปยอดรายรับประจำวัน', desc: 'ยอดชำระเงินแยกตามช่องทาง (เงินสด, โอนเงิน, บัตรเครดิต)', stat: `รายรับรวมระบบ: ฿${(invoices || []).reduce((sum, inv) => sum + (inv.amount || 0), 0).toLocaleString()}` },
+        { id: 2, name: 'รายงานลูกหนี้ค้างชำระ', desc: 'รายการที่ยังไม่ได้ชำระเงินทั้งหมด เพื่อการติดตามหนี้', stat: `ค้างชำระ: ${totalPendingInvoices} รายการ (฿${totalPendingAmount.toLocaleString()})` },
+        { id: 3, name: 'รายงานสรุปรายได้ตามสาขา', desc: 'เปรียบเทียบยอดขายสุทธิในแต่ละสาขา', stat: 'รองรับหลายสาขา' },
+        { id: 4, name: 'รายงานสรุปค่าใช้จ่ายคลินิก', desc: 'รายการเบิกจ่ายและเอกสารค่าใช้จ่ายทั้งหมด', stat: `รายจ่ายรวม: ฿${(expenses || []).reduce((sum, exp) => sum + (exp.amount || 0), 0).toLocaleString()}` }
     ];
 
     const mockClinicalReports = [
-        { id: 1, name: 'รายงานค่าตอบแทนแพทย์ (DF)', desc: 'ส่วนแบ่งและค่ามือของแพทย์ที่ทำหัตถการ' },
-        { id: 2, name: 'รายงานความนิยมของหัตถการ', desc: 'จำนวนสรุปรายหัตถการที่ให้บริการในแต่ละวัน/เดือน' },
-        { id: 3, name: 'รายงานส่งแล็บ', desc: 'สถานะงานแล็บที่ดำเนินการและยังค้างอยู่' }
+        { id: 1, name: 'รายงานค่าตอบแทนแพทย์ (DF)', desc: 'ส่วนแบ่งและค่ามือของแพทย์ที่ทำหัตถการ', stat: `ทำหัตถการไปแล้ว: ${completedApts} เคส` },
+        { id: 2, name: 'รายงานความนิยมของหัตถการ', desc: 'จำนวนสรุปรายหัตถการที่ให้บริการในแต่ละวัน/เดือน', stat: 'อัปเดตอัตโนมัติ' },
+        { id: 3, name: 'รายงานส่งแล็บ', desc: 'สถานะงานแล็บที่ดำเนินการและยังค้างอยู่', stat: 'เชื่อมต่อศูนย์แล็บ' }
     ];
+
+    const handleExportCSV = (report) => {
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Thai BOM
+        csvContent += `${report.name}\n${report.desc}\n\n`;
+        
+        if (report.id === 2 && activeSection === 'financial') {
+            const pending = (invoices || []).filter(inv => inv.status !== 'Paid');
+            csvContent += "Invoice ID,Date,Patient,Amount,Status\n";
+            pending.forEach(inv => {
+                csvContent += `${inv.id || '-'},${inv.date || '-'},${inv.patientName || '-'},${inv.amount || 0},${inv.status || 'Pending'}\n`;
+            });
+        } else {
+            csvContent += "No detail data exported in demo mode.\n";
+        }
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `report_${report.id}_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const renderReportList = (reports) => (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
@@ -65,13 +95,20 @@ const ReportsHub = () => {
                 }}
                 >
                     <div>
-                        <div style={{ 
-                            width: '40px', height: '40px', borderRadius: '10px', 
-                            background: 'var(--primary-50)', color: 'var(--primary-600)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            marginBottom: '1rem'
-                        }}>
-                            <FileText size={20} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ 
+                                width: '40px', height: '40px', borderRadius: '10px', 
+                                background: 'var(--primary-50)', color: 'var(--primary-600)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                marginBottom: '1rem'
+                            }}>
+                                <FileText size={20} />
+                            </div>
+                            {report.stat && (
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600, background: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '12px' }}>
+                                    {report.stat}
+                                </span>
+                            )}
                         </div>
                         <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--neutral-800)', marginBottom: '0.5rem' }}>
                             {report.name}
@@ -88,11 +125,14 @@ const ReportsHub = () => {
                         }}>
                             <Search size={14} /> {language === 'TH' ? 'ดูรายงาน' : 'View'}
                         </button>
-                        <button style={{ 
-                            flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', 
-                            background: 'var(--primary-600)', color: 'white', fontWeight: 600, fontSize: '0.8rem',
-                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
-                        }}>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); handleExportCSV(report); }}
+                            style={{ 
+                                flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', 
+                                background: 'var(--primary-600)', color: 'white', fontWeight: 600, fontSize: '0.8rem',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                            }}
+                        >
                             <Download size={14} /> {language === 'TH' ? 'ส่งออก' : 'Export'}
                         </button>
                     </div>

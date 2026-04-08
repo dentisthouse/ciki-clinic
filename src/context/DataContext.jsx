@@ -30,6 +30,27 @@ export const DataProvider = ({ children }) => {
     const [attendanceRecords, setAttendanceRecords] = useState([]);
     const [alerts, setAlerts] = useState([]);
     const [patientDocuments, setPatientDocuments] = useState([]);
+    
+    // --- SETTINGS STATE ---
+    const [settings, setSettings] = useState({
+        clinicInfo: {
+            name: { TH: 'คลินิกทันตกรรม CIKI', EN: 'CIKI Dental Clinic' },
+            description: { TH: 'คลินิกทันตกรรมครบวงจร', EN: 'Comprehensive dental clinic' }
+        },
+        services: [
+            { id: 'checkup', name: { TH: 'ตรวจสุขภาพช่องปาก', EN: 'Checkup' }, category: 'general', price: 500, active: true },
+            { id: 'cleaning', name: { TH: 'ขูดหินปูน', EN: 'Cleaning' }, category: 'preventive', price: 800, active: true },
+            { id: 'filling', name: { TH: 'อุดฟัน', EN: 'Filling' }, category: 'restorative', price: 1500, active: true }
+        ],
+        branches: [
+            { id: 'main', name: { TH: 'สาขาหลัก', EN: 'Main Branch' }, status: 'active' }
+        ],
+        workingHours: { weekdays: {}, holidays: [] },
+        paymentMethods: [
+            { id: 'cash', name: { TH: 'เงินสด', EN: 'Cash' }, enabled: true },
+            { id: 'transfer', name: { TH: 'โอนเงิน', EN: 'Bank Transfer' }, enabled: true }
+        ]
+    });
 
     // --- UTILS ---
     const updateLocalState = useCallback((tableName, data) => {
@@ -163,6 +184,14 @@ export const DataProvider = ({ children }) => {
                     await syncWithSupabase();
                 } else {
                     setIsLoading(false);
+                }
+                
+                // Load Settings from LocalStorage
+                const savedSettings = localStorage.getItem('ciki_settings');
+                if (savedSettings) {
+                    try {
+                        setSettings(JSON.parse(savedSettings));
+                    } catch(e) {}
                 }
             };
 
@@ -481,6 +510,13 @@ export const DataProvider = ({ children }) => {
         return treatmentWithId;
     };
 
+    // Settings
+    const updateSettings = (newSettings) => {
+        const mergedSettings = { ...settings, ...newSettings };
+        setSettings(mergedSettings);
+        localStorage.setItem('ciki_settings', JSON.stringify(mergedSettings));
+    };
+
     // Lab & SSO Claims (Missing in prev chunk)
     const addLabOrder = async (order) => {
         const newOrder = { ...order, id: `LAB-${Date.now()}` };
@@ -499,6 +535,7 @@ export const DataProvider = ({ children }) => {
         invoices, addInvoice,
         expenses, addExpense, deleteExpense,
         staff, attendanceRecords, ssoClaims, addSSOClaim, labOrders, addLabOrder,
+        settings, updateSettings,
         isLoading, isSyncing, lastSyncTime,
         alerts, addAlert: (a) => setAlerts([a, ...alerts]),
         clearAlert: (id) => setAlerts(alerts.filter(a => a.id !== id)),

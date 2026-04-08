@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Settings, Users, Stethoscope, Bed, CreditCard, Box, PieChart, Shield, HelpCircle, ChevronRight, Search, Plus } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useData } from '../context/DataContext';
 
 const ManagementHub = () => {
     const { language, t } = useLanguage();
+    const { patients, staff, settings } = useData();
     const [activeSection, setActiveSection] = useState('dashboard');
+    const [staffSearch, setStaffSearch] = useState('');
 
     const sections = [
         { id: 'dashboard', icon: PieChart, label: language === 'TH' ? 'ภาพรวมระบบ' : 'Dashboard' },
@@ -17,11 +20,13 @@ const ManagementHub = () => {
         { id: 'roles', icon: Shield, label: language === 'TH' ? 'สิทธิ์การใช้งาน' : 'Roles & Permissions' }
     ];
 
-    const mockStaff = [
-        { id: 1, name: 'พญ. สมหญิง รักษ์ดี', role: 'ทันตแพทย์', status: 'Active' },
-        { id: 2, name: 'นพ. สมเกียรติ รักษาการ', role: 'ทันตแพทย์', status: 'Active' },
-        { id: 3, name: 'สมใจ บริการ', role: 'ผู้ช่วยทันตแพทย์', status: 'Inactive' }
-    ];
+    const filteredStaff = useMemo(() => {
+        if (!staffSearch) return staff;
+        return staff.filter(s => 
+            (s.name && s.name.toLowerCase().includes(staffSearch.toLowerCase())) || 
+            (s.role && s.role.toLowerCase().includes(staffSearch.toLowerCase()))
+        );
+    }, [staff, staffSearch]);
 
     const renderContent = () => {
         switch(activeSection) {
@@ -34,15 +39,15 @@ const ManagementHub = () => {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
                             <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderLeft: '4px solid var(--primary-500)' }}>
                                 <div style={{ color: 'var(--neutral-500)', fontSize: '0.85rem', fontWeight: 600 }}>{language === 'TH' ? 'พนักงานทั้งหมด' : 'Total Staff'}</div>
-                                <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-700)' }}>24 <span style={{ fontSize: '1rem', color: 'var(--neutral-400)', fontWeight: 500 }}>คน</span></div>
+                                <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary-700)' }}>{staff?.length || 0} <span style={{ fontSize: '1rem', color: 'var(--neutral-400)', fontWeight: 500 }}>{language === 'TH' ? 'คน' : 'people'}</span></div>
                             </div>
                             <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderLeft: '4px solid #10b981' }}>
                                 <div style={{ color: 'var(--neutral-500)', fontSize: '0.85rem', fontWeight: 600 }}>{language === 'TH' ? 'ผู้ป่วยที่ใช้งาน' : 'Active Patients'}</div>
-                                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#047857' }}>1,204 <span style={{ fontSize: '1rem', color: 'var(--neutral-400)', fontWeight: 500 }}>ราย</span></div>
+                                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#047857' }}>{patients?.filter(p => p.active !== false).length || 0} <span style={{ fontSize: '1rem', color: 'var(--neutral-400)', fontWeight: 500 }}>{language === 'TH' ? 'ราย' : 'cases'}</span></div>
                             </div>
                             <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderLeft: '4px solid #f59e0b' }}>
                                 <div style={{ color: 'var(--neutral-500)', fontSize: '0.85rem', fontWeight: 600 }}>{language === 'TH' ? 'หัตถการในระบบ' : 'Services'}</div>
-                                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#b45309' }}>86 <span style={{ fontSize: '1rem', color: 'var(--neutral-400)', fontWeight: 500 }}>รายการ</span></div>
+                                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#b45309' }}>{settings?.services?.length || 0} <span style={{ fontSize: '1rem', color: 'var(--neutral-400)', fontWeight: 500 }}>{language === 'TH' ? 'รายการ' : 'items'}</span></div>
                             </div>
                         </div>
                     </div>
@@ -66,6 +71,8 @@ const ManagementHub = () => {
                                         type="text" 
                                         placeholder={language === 'TH' ? 'ค้นหาพนักงาน...' : 'Search staff...'} 
                                         className="form-input"
+                                        value={staffSearch}
+                                        onChange={(e) => setStaffSearch(e.target.value)}
                                         style={{ paddingLeft: '32px' }}
                                     />
                                 </div>
@@ -80,18 +87,18 @@ const ManagementHub = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {mockStaff.map((s, i) => (
-                                        <tr key={s.id} style={{ borderBottom: i === mockStaff.length - 1 ? 'none' : '1px solid #f1f5f9' }}>
+                                    {filteredStaff && filteredStaff.length > 0 ? filteredStaff.map((s, i) => (
+                                        <tr key={s.id} style={{ borderBottom: i === filteredStaff.length - 1 ? 'none' : '1px solid #f1f5f9' }}>
                                             <td style={{ padding: '1rem', fontWeight: 600, color: 'var(--neutral-800)' }}>{s.name}</td>
                                             <td style={{ padding: '1rem', color: 'var(--neutral-600)' }}>
-                                                <span style={{ padding: '4px 8px', background: 'var(--primary-50)', color: 'var(--primary-700)', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 600 }}>{s.role}</span>
+                                                <span style={{ padding: '4px 8px', background: 'var(--primary-50)', color: 'var(--primary-700)', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 600 }}>{s.role || 'Staff'}</span>
                                             </td>
                                             <td style={{ padding: '1rem' }}>
                                                 <span style={{ 
                                                     padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700,
-                                                    background: s.status === 'Active' ? '#d1fae5' : '#fee2e2',
-                                                    color: s.status === 'Active' ? '#047857' : '#b91c1c'
-                                                }}>{s.status}</span>
+                                                    background: s.active !== false ? '#d1fae5' : '#fee2e2',
+                                                    color: s.active !== false ? '#047857' : '#b91c1c'
+                                                }}>{s.active !== false ? 'Active' : 'Inactive'}</span>
                                             </td>
                                             <td style={{ padding: '1rem', textAlign: 'center' }}>
                                                 <button style={{ background: 'transparent', border: '1px solid #e2e8f0', padding: '6px 12px', borderRadius: '6px', color: '#64748b', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}>
@@ -99,7 +106,13 @@ const ManagementHub = () => {
                                                 </button>
                                             </td>
                                         </tr>
-                                    ))}
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="4" style={{ padding: '2rem', textAlign: 'center', color: 'var(--neutral-500)' }}>
+                                                {language === 'TH' ? 'ไม่พบข้อมูลพนักงาน' : 'No staff found'}
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -117,12 +130,20 @@ const ManagementHub = () => {
                             </button>
                         </div>
                         <div className="card" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                            {['ขูดหินปูน (Scaling)', 'อุดฟัน (Filling)', 'ถอนฟัน (Extraction)', 'รักษารากฟัน (Root Canal)'].map((svc, idx) => (
+                            {settings?.services?.map((svc, idx) => (
                                 <div key={idx} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '12px', flex: '1 1 200px', minWidth: '200px' }}>
-                                    <div style={{ fontWeight: 700, color: '#334155', marginBottom: '4px' }}>{svc}</div>
-                                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{language === 'TH' ? 'ราคาเริ่มต้น' : 'Start Price'}: ฿800</div>
+                                    <div style={{ fontWeight: 700, color: '#334155', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>{svc.name[language]}</span>
+                                        {!svc.active && <span style={{ fontSize: '0.7rem', background: '#fee2e2', color: '#dc2626', padding: '2px 6px', borderRadius: '8px' }}>Inactive</span>}
+                                    </div>
+                                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{language === 'TH' ? 'ราคาเริ่มต้น' : 'Start Price'}: ฿{(svc.price || 0).toLocaleString()}</div>
                                 </div>
                             ))}
+                            {(!settings?.services || settings.services.length === 0) && (
+                                <div style={{ padding: '2rem', width: '100%', textAlign: 'center', color: 'var(--neutral-500)' }}>
+                                    {language === 'TH' ? 'ไม่พบหัตถการในระบบ' : 'No services found'}
+                                </div>
+                            )}
                         </div>
                     </div>
                 );

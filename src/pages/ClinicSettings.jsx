@@ -38,6 +38,8 @@ const ClinicSettings = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null);
 
+    const { settings, updateSettings } = useData();
+
     // ข้อมูลคลินิกหลัก
     const [clinicInfo, setClinicInfo] = useState({
         name: { TH: 'คลินิกทันตกรรม CIKI', EN: 'CIKI Dental Clinic' },
@@ -199,21 +201,24 @@ const ClinicSettings = () => {
 
     useEffect(() => {
         loadClinicSettings();
-    }, []);
+    }, [settings]);
 
     const loadClinicSettings = () => {
-        // จำลองการโหลดข้อมูลจาก API
-        console.log('Loading clinic settings...');
+        if (!settings) return;
+        if (settings.clinicInfo) setClinicInfo(prev => ({ ...prev, ...settings.clinicInfo }));
+        if (settings.branches && settings.branches.length > 0) setBranches(settings.branches);
+        if (settings.services && settings.services.length > 0) setServices(settings.services);
+        if (settings.workingHours && Object.keys(settings.workingHours.weekdays || {}).length > 0) setWorkingHours(settings.workingHours);
+        if (settings.paymentMethods && settings.paymentMethods.length > 0) setPaymentMethods(settings.paymentMethods);
     };
 
     const saveSettings = async () => {
         setIsSaving(true);
         
         try {
-            // จำลองการบันทึกข้อมูล
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 600));
             
-            console.log('Settings saved:', {
+            updateSettings({
                 clinicInfo,
                 branches,
                 services,
