@@ -103,7 +103,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 { icon: BarChart3, label: language === 'TH' ? 'วิเคราะห์พื้นฐาน' : 'Basic Analytics', path: '/analytics', pKey: 'analytics', excludeRole: 'dentist' },
                 { icon: Brain, label: language === 'TH' ? 'วิเคราะห์ขั้นสูง' : 'Advanced Analytics', path: '/advanced-analytics', pKey: 'analytics', excludeRole: 'dentist' },
                 { icon: TrendingUp, label: language === 'TH' ? 'วิเคราะห์ธุรกิจ' : 'Business Analytics', path: '/business-analytics', pKey: 'analytics', excludeRole: 'dentist' },
-                { icon: ClipboardList, label: language === 'TH' ? 'รายงานเชิงลึก 45+' : 'Reports 45+', path: '/reports', pKey: 'analytics', excludeRole: 'dentist' },
+                { icon: ClipboardList, label: language === 'TH' ? 'ระบบรายงาน (Reports)' : 'Reports Hub', path: '/reports', pKey: 'analytics', excludeRole: 'dentist' },
             ]
         },
         {

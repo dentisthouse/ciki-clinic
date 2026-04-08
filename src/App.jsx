@@ -28,7 +28,7 @@ import BusinessAnalytics from './pages/BusinessAnalytics';
 import CouponManagement from './pages/CouponManagement';
 import EClaimSystem from './pages/EClaimSystem';
 import OnlinePaymentSystem from './pages/OnlinePaymentSystem';
-import AdvancedReports from './pages/AdvancedReports';
+import ReportsHub from './pages/ReportsHub';
 import OwnerDashboard from './pages/OwnerDashboard';
 import FinancialManagement from './pages/FinancialManagement';
 import ClinicSettings from './pages/ClinicSettings';
@@ -103,7 +103,7 @@ function App() {
                         <Route path="coupons" element={<CouponManagement />} />
                         <Route path="e-claim" element={<EClaimSystem />} />
                         <Route path="online-payments" element={<OnlinePaymentSystem />} />
-                        <Route path="reports" element={<AdvancedReports />} />
+                        <Route path="reports" element={<ReportsHub />} />
                         <Route path="owner-dashboard" element={<OwnerDashboard />} />
                         <Route path="financial" element={<FinancialManagement />} />
                         <Route path="settings" element={<ClinicSettings />} />
