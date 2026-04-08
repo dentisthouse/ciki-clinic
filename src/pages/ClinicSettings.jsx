@@ -314,83 +314,91 @@ const ClinicSettings = () => {
     }
 
     return (
-        <div className="clinic-settings" style={{ padding: '2rem' }}>
-            {/* Header */}
-            <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Building size={32} color="var(--primary-600)" />
-                        {language === 'TH' ? 'ตั้งค่าคลินิก' : 'Clinic Settings'}
+        <div style={{ display: 'flex', minHeight: 'calc(100vh - 70px)', background: '#f8fafc', margin: '-1.5rem' }}>
+            {/* Sidebar Menu for Settings */}
+            <div style={{ 
+                width: '280px', background: 'white', borderRight: '1px solid #e2e8f0', 
+                flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '1.5rem 0'
+            }}>
+                <div style={{ padding: '0 1.5rem 1.5rem 1.5rem', borderBottom: '1px solid #f1f5f9', marginBottom: '1rem' }}>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary-800)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Settings color="var(--primary-500)" />
+                        Settings Hub
                     </h1>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        {saveStatus && (
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.75rem 1rem',
-                                borderRadius: '8px',
-                                background: saveStatus === 'success' ? '#d1fae5' : '#fee2e2',
-                                color: saveStatus === 'success' ? '#059669' : '#dc2626'
-                            }}>
-                                {saveStatus === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-                                {saveStatus === 'success' ? 
-                                    (language === 'TH' ? 'บันทึกสำเร็จ' : 'Saved successfully') : 
-                                    (language === 'TH' ? 'บันทึกไม่สำเร็จ' : 'Save failed')
-                                }
-                            </div>
-                        )}
-                        
-                        <button 
-                            onClick={saveSettings}
-                            disabled={isSaving}
-                            className="btn btn-primary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                        >
-                            {isSaving ? (
-                                <>
-                                    <div className="spinner" style={{ width: '18px', height: '18px' }} />
-                                    {language === 'TH' ? 'กำลังบันทึก...' : 'Saving...'}
-                                </>
-                            ) : (
-                                <>
-                                    <Save size={18} />
-                                    {language === 'TH' ? 'บันทึกการตั้งค่า' : 'Save Settings'}
-                                </>
-                            )}
-                        </button>
-                    </div>
+                    <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '4px 0 0 0' }}>Clinic Configuration Profile</p>
                 </div>
-
-                {/* Tabs */}
-                <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--neutral-200)' }}>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '0 1rem', overflowY: 'auto' }}>
                     {[
-                        { id: 'general', label: { TH: 'ข้อมูลทั่วไป', EN: 'General' } },
-                        { id: 'branches', label: { TH: 'สาขา', EN: 'Branches' } },
-                        { id: 'services', label: { TH: 'บริการ', EN: 'Services' } },
-                        { id: 'pricing', label: { TH: 'ราคาบริการ', EN: 'Pricing' } },
-                        { id: 'hours', label: { TH: 'เวลาทำการ', EN: 'Working Hours' } },
-                        { id: 'payments', label: { TH: 'การชำระเงิน', EN: 'Payments' } },
-                        { id: 'system', label: { TH: 'ระบบ', EN: 'System' } }
+                        { id: 'general', icon: Building, label: { TH: 'ข้อมูลทั่วไป', EN: 'General' } },
+                        { id: 'branches', icon: MapPin, label: { TH: 'สาขา', EN: 'Branches' } },
+                        { id: 'services', icon: Stethoscope, label: { TH: 'บริการ', EN: 'Services' } },
+                        { id: 'pricing', icon: CreditCard, label: { TH: 'ราคาบริการ', EN: 'Pricing' } },
+                        { id: 'hours', icon: Clock, label: { TH: 'เวลาทำการ', EN: 'Working Hours' } },
+                        { id: 'payments', icon: CreditCard, label: { TH: 'การชำระเงิน', EN: 'Payments' } },
+                        { id: 'system', icon: Settings, label: { TH: 'ระบบ', EN: 'System' } }
                     ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             style={{
-                                padding: '0.75rem 1.5rem',
-                                border: 'none',
+                                display: 'flex', alignItems: 'center', gap: '12px',
+                                padding: '12px 16px', borderRadius: '12px', border: 'none',
                                 background: activeTab === tab.id ? 'var(--primary-50)' : 'transparent',
-                                color: activeTab === tab.id ? 'var(--primary-700)' : 'var(--neutral-600)',
-                                borderBottom: activeTab === tab.id ? '2px solid var(--primary-600)' : '2px solid transparent',
-                                fontWeight: 600,
-                                cursor: 'pointer'
+                                color: activeTab === tab.id ? 'var(--primary-700)' : '#475569',
+                                fontWeight: activeTab === tab.id ? 700 : 500,
+                                cursor: 'pointer', transition: 'all 0.2s', width: '100%', textAlign: 'left'
                             }}
                         >
-                            {tab.label[language]}
+                            <tab.icon size={18} color={activeTab === tab.id ? 'var(--primary-600)' : '#94a3b8'} />
+                            <span style={{ flex: 1 }}>{tab.label[language]}</span>
                         </button>
                     ))}
                 </div>
             </div>
+
+            {/* Main Content Area */}
+            <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', background: '#f4f7fb' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+                    {saveStatus && (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '8px',
+                            background: saveStatus === 'success' ? '#d1fae5' : '#fee2e2',
+                            color: saveStatus === 'success' ? '#059669' : '#dc2626',
+                            fontSize: '0.85rem',
+                            fontWeight: 600
+                        }}>
+                            {saveStatus === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+                            {saveStatus === 'success' ? 
+                                (language === 'TH' ? 'บันทึกสำเร็จ' : 'Saved successfully') : 
+                                (language === 'TH' ? 'บันทึกไม่สำเร็จ' : 'Save failed')
+                            }
+                        </div>
+                    )}
+                    
+                    <button 
+                        onClick={saveSettings}
+                        disabled={isSaving}
+                        className="btn btn-primary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    >
+                        {isSaving ? (
+                            <>
+                                <div className="spinner" style={{ width: '18px', height: '18px' }} />
+                                {language === 'TH' ? 'กำลังบันทึก...' : 'Saving...'}
+                            </>
+                        ) : (
+                            <>
+                                <Save size={18} />
+                                {language === 'TH' ? 'บันทึกการตั้งค่าทั้งหมด' : 'Save All Settings'}
+                            </>
+                        )}
+                    </button>
+                </div>
 
             {/* General Tab */}
             {activeTab === 'general' && (
@@ -1051,6 +1059,7 @@ const ClinicSettings = () => {
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 };
