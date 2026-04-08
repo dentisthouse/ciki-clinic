@@ -116,6 +116,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 { icon: Lock, label: language === 'TH' ? 'ตรวจสอบความปลอดภัย' : 'Security Audit', path: '/security', pKey: 'staff', excludeRole: 'dentist' },
                 { icon: Bell, label: language === 'TH' ? 'ตั้งค่าแจ้งเตือน' : 'Notifications', path: '/notifications', pKey: 'staff' },
                 { icon: Settings, label: language === 'TH' ? 'ตั้งค่าคลินิก' : 'Clinic Settings', path: '/settings', pKey: 'staff', excludeRole: 'dentist' },
+                { icon: Settings, label: language === 'TH' ? 'การจัดการ (Management)' : 'Management', path: '/management', pKey: 'staff', excludeRole: 'dentist' },
             ]
         }
     ].map(group => ({

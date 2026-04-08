@@ -42,6 +42,7 @@ import HelpCenter from './pages/HelpCenter';
 import QueueDisplay from './pages/QueueDisplay';
 import FloorManagement from './pages/FloorManagement';
 import DailyReport from './pages/DailyReport';
+import ManagementHub from './pages/ManagementHub';
 
 import { AuthProvider } from './context/AuthContext';
 import AuthGuard from './components/System/AuthGuard';
@@ -111,6 +112,7 @@ function App() {
                         <Route path="roles" element={<RoleSettings />} />
                         <Route path="notifications" element={<NotificationSettings />} />
                         <Route path="treatment-plan" element={<TreatmentPlan />} />
+                        <Route path="management" element={<ManagementHub />} />
 
                         <Route path="help" element={<HelpCenter />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
