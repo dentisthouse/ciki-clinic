@@ -6,6 +6,7 @@ import {
     DollarSign, Building2, Zap, Package, Users, MoreHorizontal, X, Check,
     PieChart, BarChart3, Filter
 } from 'lucide-react';
+import '../styles/expenses.css';
 
 const CATEGORIES = [
     { key: 'rent', icon: '🏠', color: '#6366f1', label_TH: 'ค่าเช่า', label_EN: 'Rent' },
@@ -108,40 +109,53 @@ const Expenses = () => {
     };
 
     return (
-        <div className="animate-fade-in" style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div className="expenses-container animate-fade-in">
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>
-                    💰 {isTH ? 'รายจ่าย' : 'Expenses'}
-                </h1>
-                <button className="btn btn-primary" onClick={() => openForm()} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div className="expenses-header">
+                <div className="expenses-title-group">
+                    <h1>
+                        <div className="expenses-icon-box">
+                            <DollarSign size={24} />
+                        </div>
+                        {isTH ? 'รายการรายจ่าย' : 'Clinic Expenses'}
+                    </h1>
+                </div>
+                <button className="btn-billing primary" onClick={() => openForm()} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', border: 'none' }}>
                     <Plus size={18} /> {isTH ? 'เพิ่มรายจ่าย' : 'Add Expense'}
                 </button>
             </div>
 
             {/* Month selector */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <button onClick={() => goMonth(-1)} className="btn btn-secondary" style={{ padding: '0.35rem' }}><ChevronLeft size={20} /></button>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, minWidth: '200px', textAlign: 'center', margin: 0 }}>📅 {monthLabel}</h2>
-                <button onClick={() => goMonth(1)} className="btn btn-secondary" style={{ padding: '0.35rem' }}><ChevronRight size={20} /></button>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem' }}>
+                <button onClick={() => goMonth(-1)} className="btn-billing secondary" style={{ padding: '0.4rem', border: 'none' }}><ChevronLeft size={20} /></button>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 900, minWidth: '220px', textAlign: 'center', margin: 0, color: 'var(--neutral-900)' }}>{monthLabel}</h2>
+                <button onClick={() => goMonth(1)} className="btn-billing secondary" style={{ padding: '0.4rem', border: 'none' }}><ChevronRight size={20} /></button>
             </div>
 
             {/* P&L Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <div className="card" style={{ padding: '1rem', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', marginBottom: '0.25rem' }}>{isTH ? 'รายรับ' : 'Revenue'}</div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#22c55e' }}>{formatCurrency(monthRevenue)}</div>
-                    <TrendingUp size={16} color="#22c55e" style={{ marginTop: '0.25rem' }} />
+            <div className="pl-stats-grid">
+                <div className="pl-stat-card">
+                    <span className="pl-label">{isTH ? 'รายรับ' : 'Revenue'}</span>
+                    <span className="pl-value" style={{ color: '#059669' }}>{formatCurrency(monthRevenue)}</span>
+                    <div className="pl-trend-icon" style={{ background: '#ecfdf5', color: '#059669' }}>
+                        <TrendingUp size={16} />
+                    </div>
                 </div>
-                <div className="card" style={{ padding: '1rem', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', marginBottom: '0.25rem' }}>{isTH ? 'รายจ่าย' : 'Expenses'}</div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ef4444' }}>{formatCurrency(totalExpenses)}</div>
-                    <TrendingDown size={16} color="#ef4444" style={{ marginTop: '0.25rem' }} />
+                <div className="pl-stat-card">
+                    <span className="pl-label">{isTH ? 'รายจ่าย' : 'Expense'}</span>
+                    <span className="pl-value" style={{ color: '#dc2626' }}>{formatCurrency(totalExpenses)}</span>
+                    <div className="pl-trend-icon" style={{ background: '#fef2f2', color: '#dc2626' }}>
+                        <TrendingDown size={16} />
+                    </div>
                 </div>
-                <div className="card" style={{ padding: '1rem', textAlign: 'center', background: profit >= 0 ? '#f0fdf4' : '#fef2f2', border: `1px solid ${profit >= 0 ? '#bbf7d0' : '#fecaca'}` }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', marginBottom: '0.25rem' }}>{isTH ? 'กำไร/ขาดทุน' : 'Profit/Loss'}</div>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: profit >= 0 ? '#16a34a' : '#dc2626' }}>{profit >= 0 ? '+' : ''}{formatCurrency(profit)}</div>
-                    <DollarSign size={16} color={profit >= 0 ? '#16a34a' : '#dc2626'} style={{ marginTop: '0.25rem' }} />
+                <div className={`pl-stat-card ${profit >= 0 ? 'profit' : 'loss'}`}>
+                    <span className="pl-label">{isTH ? 'กำไร/ขาดทุน' : 'Profit/Loss'}</span>
+                    <span className="pl-value" style={{ color: profit >= 0 ? '#059669' : '#dc2626' }}>
+                        {profit >= 0 ? '+' : ''}{formatCurrency(profit)}
+                    </span>
+                    <div className="pl-trend-icon" style={{ background: profit >= 0 ? '#d1fae5' : '#fee2e2', color: profit >= 0 ? '#059669' : '#dc2626' }}>
+                        <DollarSign size={16} />
+                    </div>
                 </div>
             </div>
 
@@ -160,25 +174,26 @@ const Expenses = () => {
 
             {/* CATEGORY SUMMARY TAB */}
             {activeTab === 'summary' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {catBreakdown.length === 0 ? (
-                        <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--neutral-400)' }}>
-                            {isTH ? 'ไม่มีรายจ่ายเดือนนี้' : 'No expenses this month'}
+                        <div className="labs-empty-state">
+                            <PieChart size={40} style={{ color: 'var(--neutral-300)', marginBottom: '1rem' }} />
+                            <h3>{isTH ? 'ไม่มีบันทึกรายจ่าย' : 'No expenses recorded'}</h3>
+                            <p>{isTH ? 'ประวัติรายจ่ายตามหมวดหมู่จะปรากฏที่นี่' : 'Category breakdown will appear here.'}</p>
                         </div>
                     ) : catBreakdown.map(cat => {
                         const pct = totalExpenses > 0 ? ((cat.total / totalExpenses) * 100).toFixed(1) : 0;
                         return (
-                            <div key={cat.key} className="card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <div style={{ width: 44, height: 44, borderRadius: '12px', background: cat.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>{cat.icon}</div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                                        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{isTH ? cat.label_TH : cat.label_EN}</span>
-                                        <span style={{ fontWeight: 700, color: cat.color }}>{formatCurrency(cat.total)}</span>
+                            <div key={cat.key} className="cat-breakdown-card">
+                                <div className="expense-cat-icon" style={{ background: cat.color + '15' }}>{cat.icon}</div>
+                                <div className="breakdown-progress-container">
+                                    <div className="breakdown-label-row">
+                                        <span style={{ fontWeight: 900, color: 'var(--neutral-900)' }}>{isTH ? cat.label_TH : cat.label_EN}</span>
+                                        <span style={{ fontWeight: 950, color: cat.color }}>{formatCurrency(cat.total)}</span>
                                     </div>
-                                    <div style={{ width: '100%', height: '6px', background: 'var(--neutral-100)', borderRadius: '3px', overflow: 'hidden' }}>
-                                        <div style={{ width: `${pct}%`, height: '100%', background: cat.color, borderRadius: '3px', transition: 'width 0.4s' }} />
+                                    <div className="progress-bar-bg">
+                                        <div className="progress-bar-fill" style={{ width: `${pct}%`, background: cat.color }}></div>
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', marginTop: '0.15rem' }}>{pct}%</div>
                                 </div>
                             </div>
                         );
@@ -189,13 +204,21 @@ const Expenses = () => {
             {/* LIST TAB */}
             {activeTab === 'list' && (
                 <div>
-                    {/* Category filter */}
-                    <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-                        <button onClick={() => setFilterCat('all')} style={{ padding: '0.35rem 0.75rem', border: '1px solid', borderColor: filterCat === 'all' ? 'var(--primary-400)' : 'var(--neutral-200)', borderRadius: '20px', background: filterCat === 'all' ? 'var(--primary-50)' : 'white', color: filterCat === 'all' ? 'var(--primary-600)' : 'var(--neutral-500)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    {/* Category filter rail */}
+                    <div className="category-filter-rail">
+                        <button 
+                            onClick={() => setFilterCat('all')} 
+                            className={`cat-filter-btn ${filterCat === 'all' ? 'active' : ''}`}
+                        >
                             {isTH ? 'ทั้งหมด' : 'All'}
                         </button>
                         {CATEGORIES.map(c => (
-                            <button key={c.key} onClick={() => setFilterCat(c.key)} style={{ padding: '0.35rem 0.65rem', border: '1px solid', borderColor: filterCat === c.key ? c.color : 'var(--neutral-200)', borderRadius: '20px', background: filterCat === c.key ? c.color + '15' : 'white', color: filterCat === c.key ? c.color : 'var(--neutral-500)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <button 
+                                key={c.key} 
+                                onClick={() => setFilterCat(c.key)} 
+                                className={`cat-filter-btn ${filterCat === c.key ? 'active' : ''}`}
+                                style={filterCat === c.key ? { borderColor: c.color, color: c.color, background: c.color + '10' } : {}}
+                            >
                                 {c.icon} {isTH ? c.label_TH : c.label_EN}
                             </button>
                         ))}
@@ -203,35 +226,50 @@ const Expenses = () => {
 
                     {/* Expense list */}
                     {filteredExpenses.length === 0 ? (
-                        <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--neutral-400)' }}>
-                            <DollarSign size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-                            {isTH ? 'ไม่มีรายจ่าย' : 'No expenses'}
-                            <br />
-                            <button className="btn btn-primary" onClick={() => openForm()} style={{ marginTop: '1rem' }}>
-                                <Plus size={16} /> {isTH ? 'เพิ่มรายจ่าย' : 'Add Expense'}
+                        <div className="labs-empty-state">
+                            <DollarSign size={40} style={{ color: 'var(--neutral-300)', marginBottom: '1rem' }} />
+                            <h3>{isTH ? 'ไม่พบรายการรายจ่าย' : 'No expenses found'}</h3>
+                            <button className="btn-billing primary" onClick={() => openForm()} style={{ marginTop: '1rem', background: '#f59e0b', border: 'none' }}>
+                                <Plus size={16} /> {isTH ? 'เพิ่มรายการใหม่' : 'Add First Expense'}
                             </button>
                         </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             {filteredExpenses.map(exp => {
                                 const cat = getCat(exp.category);
                                 return (
-                                    <div key={exp.id} className="card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <div style={{ width: 40, height: 40, borderRadius: '10px', background: cat.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{cat.icon}</div>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{exp.description || (isTH ? cat.label_TH : cat.label_EN)}</span>
-                                                <span style={{ fontWeight: 700, color: '#ef4444', fontSize: '0.95rem', whiteSpace: 'nowrap' }}>-{formatCurrency(exp.amount)}</span>
+                                    <div key={exp.id} className="expense-item-card">
+                                        <div className="expense-cat-icon" style={{ background: cat.color + '15' }}>{cat.icon}</div>
+                                        <div className="expense-main-info">
+                                            <div className="expense-header-row">
+                                                <span className="expense-desc">{exp.description || (isTH ? cat.label_TH : cat.label_EN)}</span>
+                                                <span className="expense-amount">-{formatCurrency(exp.amount)}</span>
                                             </div>
-                                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--neutral-400)', marginTop: '0.15rem' }}>
-                                                <span style={{ padding: '1px 6px', background: cat.color + '15', color: cat.color, borderRadius: '4px', fontWeight: 600 }}>{isTH ? cat.label_TH : cat.label_EN}</span>
-                                                <span>{new Date(exp.date).toLocaleDateString(isTH ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short' })}</span>
-                                                {exp.recurring && <span>🔄</span>}
+                                            <div className="expense-meta">
+                                                <span className="expense-tag" style={{ background: cat.color + '15', color: cat.color }}>
+                                                    {isTH ? cat.label_TH : cat.label_EN}
+                                                </span>
+                                                <span className="expense-date">
+                                                    {new Date(exp.date).toLocaleDateString(isTH ? 'th-TH' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                </span>
+                                                {exp.recurring && <span title="Recurring">🔄</span>}
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                            <button onClick={() => openForm(exp)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--neutral-400)', padding: '0.25rem' }}><Edit3 size={16} /></button>
-                                            <button onClick={() => handleDelete(exp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '0.25rem' }}><Trash2 size={16} /></button>
+                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                            <button 
+                                                className="btn-adj"
+                                                onClick={() => openForm(exp)} 
+                                                style={{ padding: '8px' }}
+                                            >
+                                                <Edit3 size={16} />
+                                            </button>
+                                            <button 
+                                                className="btn-adj"
+                                                onClick={() => handleDelete(exp.id)} 
+                                                style={{ color: '#ef4444', padding: '8px' }}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     </div>
                                 );

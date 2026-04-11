@@ -190,13 +190,8 @@ export const AuthProvider = ({ children }) => {
     const fetchStaffData = async (uid, email) => {
         if (!email) return;
         const normalizedEmail = email.toLowerCase();
+        const isOwnerByEmail = OWNER_EMAILS.some(e => e.toLowerCase() === normalizedEmail);
         
-        // Owner bypass check (Case-Insensitive)
-        if (OWNER_EMAILS.some(e => e.toLowerCase() === normalizedEmail)) {
-            setStaffRecord({ name: email.split('@')[0].toUpperCase(), role: 'owner' });
-            return;
-        }
-
         try {
             // Priority 1: Check profiles table first (Supabase auth profiles)
             const { data, error } = await withTimeout(
@@ -208,9 +203,9 @@ export const AuthProvider = ({ children }) => {
             );
 
             if (data) {
-                // Found in profiles table - this is the correct data source
                 setStaffRecord({ 
                     ...data, 
+                    role: isOwnerByEmail ? 'owner' : data.role,
                     name: data.full_name || data.name || email.split('@')[0]
                 });
                 return;
@@ -218,23 +213,19 @@ export const AuthProvider = ({ children }) => {
                 // Critical Fallback: Check hardcoded list first
                 const localMatch = HARDCODED_STAFF[normalizedEmail];
                 if (localMatch) {
-                    setStaffRecord({ ...localMatch, email: normalizedEmail, user_id: uid });
+                    setStaffRecord({ 
+                        ...localMatch, 
+                        role: isOwnerByEmail ? 'owner' : localMatch.role,
+                        email: normalizedEmail, 
+                        user_id: uid 
+                    });
                     return;
                 }
 
-                // If still not found, search one more time by UID in profiles table
-                if (uid) {
-                    const { data: uidMatch } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
-                    if (uidMatch) {
-                        setStaffRecord({ ...uidMatch, name: uidMatch.full_name || uidMatch.name });
-                        return;
-                    }
-                }
-                
                 // Final Fallback for unknown users
                 setStaffRecord({ 
                     name: email.split('@')[0], 
-                    role: 'receptionist',
+                    role: isOwnerByEmail ? 'owner' : 'receptionist',
                     email: normalizedEmail
                 });
             }
@@ -297,7 +288,7 @@ export const AuthProvider = ({ children }) => {
 
     const value = { 
         user, 
-        staff: isOwner ? { name: currentEmail.split('@')[0].toUpperCase(), role: 'owner' } : staffRecord,
+        staff: staffRecord || (isOwner ? { name: currentEmail.split('@')[0].toUpperCase(), full_name: currentEmail.split('@')[0].toUpperCase(), role: 'owner' } : null),
         isAdmin, 
         permissions, 
         rolePermissions, 

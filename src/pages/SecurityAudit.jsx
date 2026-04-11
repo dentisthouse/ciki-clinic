@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
     Shield, 
     Eye, 
@@ -28,7 +28,9 @@ import {
     UserCheck,
     UserX,
     LogIn,
-    LogOut
+    LogOut,
+    X,
+    Plus
 } from 'lucide-react';
 import { format, subDays, subHours } from 'date-fns';
 import { th, enUS } from 'date-fns/locale';
@@ -48,224 +50,106 @@ const SecurityAudit = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    
+    const { patients = [], appointments = [], invoices = [], staff = [], logs = [] } = useData();
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // จำลองข้อมูล Activity Logs
-    const [mockActivityLogs] = useState([
-        {
-            id: 1,
-            timestamp: new Date(),
-            user: 'หมออ้อม',
-            email: 'aom@dental.com',
-            action: 'login',
-            module: 'authentication',
-            details: 'เข้าสู่ระบบจาก IP 192.168.1.100',
-            ip: '192.168.1.100',
-            device: 'Chrome on Windows',
-            status: 'success',
-            severity: 'low'
-        },
-        {
-            id: 2,
-            timestamp: subDays(new Date(), 1),
-            user: 'สมศรี ใจดี',
-            email: 'somsri@ciki.com',
-            action: 'view_patient',
-            module: 'patients',
-            details: 'ดูข้อมูลผู้ป่วย ID: P00123',
-            patientId: 'P00123',
-            status: 'success',
-            severity: 'low'
-        },
-        {
-            id: 3,
-            timestamp: subDays(new Date(), 2),
-            user: 'หมอบิ๊ก',
-            email: 'big@dental.com',
-            action: 'delete_patient',
-            module: 'patients',
-            details: 'ลบข้อมูลผู้ป่วย ID: P00456',
-            patientId: 'P00456',
-            status: 'success',
-            severity: 'medium'
-        },
-        {
-            id: 4,
-            timestamp: subDays(new Date(), 3),
-            user: 'มานี รักงาน',
-            email: 'manee@ciki.com',
-            action: 'failed_login',
-            module: 'authentication',
-            details: 'พยายามผิด 3 ครั้ง',
-            ip: '192.168.1.105',
-            device: 'Mobile App on iOS',
-            status: 'failed',
-            severity: 'high'
-        },
-        {
-            id: 5,
-            timestamp: subDays(new Date(), 5),
-            user: 'ระบบอัตโนมัติ',
-            email: 'system@ciki.com',
-            action: 'backup_completed',
-            module: 'system',
-            details: 'สำรองข้อมูลอัตโนมัติสำเร็จ',
-            status: 'success',
-            severity: 'low'
-        }
-    ]);
+    const loadAuditData = useCallback(() => {
+        setIsLoading(true);
+        // Process Real Logs from Context
+        let allActivityLogs = logs.map(log => ({
+            ...log,
+            timestamp: new Date(log.timestamp),
+            user: log.userName || log.userEmail,
+            email: log.userEmail,
+            details: log.details || `${log.action} in ${log.module}`
+        }));
 
-    // จำลองข้อมูล Security Events
-    const [mockSecurityEvents] = useState([
-        {
-            id: 1,
-            timestamp: subHours(new Date(), 2),
-            type: 'suspicious_login',
-            severity: 'high',
-            title: 'การเข้าสู่ระบบนอกเวลาทำการ',
-            description: 'พยายาพยายามพยายามพยายามเข้าสู่ระบบเวลา 02:30 น.',
-            user: 'ไม่ทราบ',
-            ip: '203.150.10.45',
-            location: 'ประเทศออสเตรเลีย',
-            status: 'blocked',
-            actions: ['block_ip', 'notify_admin']
-        },
-        {
-            id: 2,
-            timestamp: subDays(new Date(), 1),
-            type: 'multiple_failed_attempts',
-            severity: 'medium',
-            title: 'พยายามผิดหลายครั้ง',
-            description: 'พยายามผิด 5 ครั้งจาก IP เดียวก',
-            user: 'ไม่ทราบ',
-            ip: '192.168.1.200',
-            location: 'Network Internal',
-            status: 'blocked',
-            actions: ['temporary_block', 'notify_admin']
-        },
-        {
-            id: 3,
-            timestamp: subDays(new Date(), 3),
-            type: 'privilege_escalation',
-            severity: 'high',
-            title: 'พยายามพยายามพยายามพยายามสิทธิ์พิเศษเกินกำหนด',
-            description: 'ผู้ใช้พยายามพยายามพยายามพยายามพยายามเข้าถึงการตั้งค่าที่ไม่ได้รับอนุญาต',
-            user: 'สมศรี ใจดี',
-            ip: '192.168.1.105',
-            location: 'Network Internal',
-            status: 'alert',
-            actions: ['notify_admin', 'log_violation']
-        },
-        {
-            id: 4,
-            timestamp: subDays(new Date(), 7),
-            type: 'data_export',
-            severity: 'medium',
-            title: 'การส่งออกข้อมูลจำนวนมาก',
-            description: 'ผู้ใช้ส่งออกข้อมูลผู้ป่วย 500 รายการใน 1 นาที',
-            user: 'หมอต้อง',
-            ip: '192.168.1.101',
-            location: 'Network Internal',
-            status: 'alert',
-            actions: ['notify_admin', 'require_approval']
-        }
-    ]);
+        let allSecurityEvents = logs.filter(l => l.severity === 'high' || l.severity === 'medium').map(log => ({
+            ...log,
+            id: `sec_${log.id}`,
+            timestamp: new Date(log.timestamp),
+            title: log.details || log.action,
+            description: `Detected ${log.severity} severity event in ${log.module}`,
+            user: log.userName || log.userEmail,
+            location: 'Remote'
+        }));
 
-    // จำลองข้อมูล Access Logs
-    const [mockAccessLogs] = useState([
-        {
-            id: 1,
-            timestamp: new Date(),
-            user: 'หมออ้อม',
-            resource: '/patients',
-            action: 'read',
-            result: 'success',
-            duration: 1200,
-            ip: '192.168.1.100'
-        },
-        {
-            id: 2,
-            timestamp: subHours(new Date(), 1),
-            user: 'สมศรี ใจดี',
-            resource: '/billing',
-            action: 'create',
-            result: 'success',
-            duration: 2500,
-            ip: '192.168.1.105'
-        },
-        {
-            id: 3,
-            timestamp: subHours(new Date(), 3),
-            user: 'หมอบิ๊ก',
-            resource: '/reports',
-            action: 'read',
-            result: 'denied',
-            duration: 0,
-            ip: '192.168.1.101',
-            reason: 'insufficient_permissions'
+        let allAccessLogs = logs.filter(l => l.module === 'access' || l.action === 'login' || l.action === 'logout').map(log => ({
+            ...log,
+            id: `acc_${log.id}`,
+            timestamp: new Date(log.timestamp),
+            user: log.userName || log.userEmail,
+            resource: log.details || log.module,
+            result: log.status,
+            duration: Math.floor(Math.random() * 500) + 100 // Simulated for now
+        }));
+
+        // Default system event if empty
+        if (allSecurityEvents.length === 0) {
+            allSecurityEvents.push({ 
+                id: 'sys_init', 
+                timestamp: subDays(new Date(), 3), 
+                type: 'system_initialized', 
+                severity: 'low', 
+                title: 'System Auditing Initialized', 
+                description: 'เริ่มการบันทึกประวัติความปลอดภัยและการเข้าถึงข้อมูลจริง', 
+                user: 'System', 
+                ip: '127.0.0.1', 
+                location: 'Local', 
+                status: 'resolved', 
+                actions: [] 
+            });
         }
-    ]);
+
+        // Filter by Date Range
+        const now = new Date();
+        let startTime;
+        
+        switch (selectedTimeRange) {
+            case '1h': startTime = subHours(now, 1); break;
+            case '24h': startTime = subDays(now, 1); break;
+            case '7d': startTime = subDays(now, 7); break;
+            case '30d': startTime = subDays(now, 30); break;
+            default: startTime = subDays(now, 1);
+        }
+        
+        allActivityLogs = allActivityLogs.filter(log => log.timestamp >= startTime);
+        allSecurityEvents = allSecurityEvents.filter(event => event.timestamp >= startTime);
+        allAccessLogs = allAccessLogs.filter(log => log.timestamp >= startTime);
+        
+        // Filter by Search Term
+        if (searchTerm) {
+            const lowSearch = searchTerm.toLowerCase();
+            allActivityLogs = allActivityLogs.filter(log => 
+                (log.user || '').toLowerCase().includes(lowSearch) ||
+                (log.action || '').toLowerCase().includes(lowSearch) ||
+                (log.details || '').toLowerCase().includes(lowSearch)
+            );
+            allSecurityEvents = allSecurityEvents.filter(event => 
+                (event.title || '').toLowerCase().includes(lowSearch) ||
+                (event.description || '').toLowerCase().includes(lowSearch)
+            );
+            allAccessLogs = allAccessLogs.filter(log => 
+                (log.user || '').toLowerCase().includes(lowSearch) ||
+                (log.resource || '').toLowerCase().includes(lowSearch)
+            );
+        }
+        
+        setAuditLogs(allActivityLogs);
+        setSecurityEvents(allSecurityEvents);
+        setAccessLogs(allAccessLogs);
+
+        const timer = setTimeout(() => setIsLoading(false), 500);
+        return () => clearTimeout(timer);
+    }, [selectedTimeRange, searchTerm, logs]);
 
     useEffect(() => {
-        loadAuditData();
-    }, [selectedTimeRange, searchTerm]);
-
-    const loadAuditData = () => {
-        setIsLoading(true);
-        
-        // จำลองการโหลดข้อมูล
-        setTimeout(() => {
-            let filteredLogs = mockActivityLogs;
-            let filteredSecurity = mockSecurityEvents;
-            let filteredAccess = mockAccessLogs;
-            
-            // กรองตามช่วงเวลา
-            const now = new Date();
-            let startTime;
-            
-            switch (selectedTimeRange) {
-                case '1h':
-                    startTime = subHours(now, 1);
-                    break;
-                case '24h':
-                    startTime = subDays(now, 1);
-                    break;
-                case '7d':
-                    startTime = subDays(now, 7);
-                    break;
-                case '30d':
-                    startTime = subDays(now, 30);
-                    break;
-                default:
-                    startTime = subDays(now, 1);
-            }
-            
-            filteredLogs = filteredLogs.filter(log => log.timestamp >= startTime);
-            filteredSecurity = filteredSecurity.filter(event => event.timestamp >= startTime);
-            filteredAccess = filteredAccess.filter(log => log.timestamp >= startTime);
-            
-            // กรองตามคำค้นหา
-            if (searchTerm) {
-                filteredLogs = filteredLogs.filter(log => 
-                    log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    log.details.toLowerCase().includes(searchTerm.toLowerCase())
-                );
-                filteredSecurity = filteredSecurity.filter(event => 
-                    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    event.description.toLowerCase().includes(searchTerm.toLowerCase())
-                );
-                filteredAccess = filteredAccess.filter(log => 
-                    log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    log.resource.toLowerCase().includes(searchTerm.toLowerCase())
-                );
-            }
-            
-            setAuditLogs(filteredLogs);
-            setSecurityEvents(filteredSecurity);
-            setAccessLogs(filteredAccess);
-            setIsLoading(false);
-        }, 500);
-    };
+        const cleanup = loadAuditData();
+        return () => {
+            if (cleanup) cleanup();
+        };
+    }, [loadAuditData, refreshTrigger]);
 
     const getSeverityColor = (severity) => {
         switch (severity) {
@@ -302,7 +186,6 @@ const SecurityAudit = () => {
     };
 
     const exportLogs = (format) => {
-        // จำลองการส่งออก logs
         const data = {
             activityLogs: auditLogs,
             securityEvents: securityEvents,
@@ -336,127 +219,98 @@ const SecurityAudit = () => {
         if (!event) return null;
         
         return (
-            <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0,0,0,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000
-            }}>
-                <div style={{
-                    background: 'white',
-                    borderRadius: '12px',
-                    padding: '2rem',
-                    maxWidth: '600px',
-                    width: '90%',
-                    maxHeight: '80vh',
-                    overflow: 'auto'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div className="modal-overlay">
+                <div className="modal-container" style={{ maxWidth: '600px' }}>
+                    <div className="modal-header">
                         <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <AlertTriangle size={20} color={getSeverityColor(event.severity)} />
                             {event.title}
                         </h3>
-                        <button 
-                            onClick={onClose}
-                            style={{ 
-                                background: 'none', 
-                                border: 'none', 
-                                fontSize: '1.5rem', 
-                                cursor: 'pointer',
-                                color: 'var(--neutral-500)'
-                            }}
-                        >
-                            ×
-                        </button>
+                        <button onClick={onClose} className="modal-close"><X size={24} /></button>
                     </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div>
-                            <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                {language === 'TH' ? 'เวลาเกิดเหตุการณ์' : 'Timestamp'}
-                            </label>
-                            <div>{format(event.timestamp, 'dd/MM/yyyy HH:mm:ss')}</div>
-                        </div>
-                        
-                        <div>
-                            <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                {language === 'TH' ? 'ประเภท' : 'Type'}
-                            </label>
-                            <span style={{
-                                padding: '0.25rem 0.75rem',
-                                borderRadius: '20px',
-                                fontSize: '0.875rem',
-                                fontWeight: 600,
-                                background: `${getSeverityColor(event.severity)}20`,
-                                color: getSeverityColor(event.severity)
-                            }}>
-                                {event.type}
-                            </span>
-                        </div>
-                        
-                        <div>
-                            <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                {language === 'TH' ? 'รายละเอียด' : 'Description'}
-                            </label>
-                            <p>{event.description}</p>
-                        </div>
-                        
-                        <div>
-                            <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                {language === 'TH' ? 'ผู้ใช้' : 'User'}
-                            </label>
-                            <div>{event.user}</div>
-                        </div>
-                        
-                        <div>
-                            <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                {language === 'TH' ? 'ที่อยู่ IP' : 'IP Address'}
-                            </label>
-                            <div>{event.ip}</div>
-                        </div>
-                        
-                        <div>
-                            <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                {language === 'TH' ? 'สถานที่' : 'Location'}
-                            </label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <MapPin size={16} color="var(--neutral-500)" />
-                                <span>{event.location}</span>
+                    <div className="modal-body" style={{ padding: '2rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div>
+                                <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                    {language === 'TH' ? 'เวลาเกิดเหตุการณ์' : 'Timestamp'}
+                                </label>
+                                <div>{format(event.timestamp, 'dd/MM/yyyy HH:mm:ss')}</div>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                {language === 'TH' ? 'สถานะ' : 'Status'}
-                            </label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                {getStatusIcon(event.status)}
-                                <span>{event.status}</span>
+                            
+                            <div>
+                                <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                    {language === 'TH' ? 'ประเภท' : 'Type'}
+                                </label>
+                                <span style={{
+                                    padding: '0.25rem 0.75rem',
+                                    borderRadius: '20px',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 600,
+                                    background: `${getSeverityColor(event.severity)}20`,
+                                    color: getSeverityColor(event.severity)
+                                }}>
+                                    {event.type}
+                                </span>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <label style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                                {language === 'TH' ? 'การกระทำ' : 'Actions Taken'}
-                            </label>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                {event.actions?.map((action, index) => (
-                                    <span key={index} style={{
-                                        padding: '0.25rem 0.75rem',
-                                        borderRadius: '20px',
-                                        fontSize: '0.75rem',
-                                        background: '#f3f4f6',
-                                        color: '#6b7280'
-                                    }}>
-                                        {action}
-                                    </span>
-                                ))}
+                            
+                            <div>
+                                <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                    {language === 'TH' ? 'รายละเอียด' : 'Description'}
+                                </label>
+                                <p>{event.description}</p>
+                            </div>
+                            
+                            <div>
+                                <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                    {language === 'TH' ? 'ผู้ใช้' : 'User'}
+                                </label>
+                                <div>{event.user}</div>
+                            </div>
+                            
+                            <div>
+                                <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                    {language === 'TH' ? 'ที่อยู่ IP' : 'IP Address'}
+                                </label>
+                                <div>{event.ip}</div>
+                            </div>
+                            
+                            <div>
+                                <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                    {language === 'TH' ? 'สถานที่' : 'Location'}
+                                </label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <MapPin size={16} color="var(--neutral-500)" />
+                                    <span>{event.location}</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                    {language === 'TH' ? 'สถานะ' : 'Status'}
+                                </label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    {getStatusIcon(event.status)}
+                                    <span>{event.status}</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
+                                    {language === 'TH' ? 'การกระทำ' : 'Actions Taken'}
+                                </label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    {event.actions?.map((action, index) => (
+                                        <span key={index} style={{
+                                            padding: '0.25rem 0.75rem',
+                                            borderRadius: '20px',
+                                            fontSize: '0.75rem',
+                                            background: '#f3f4f6',
+                                            color: '#6b7280'
+                                        }}>
+                                            {action}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -789,7 +643,7 @@ const SecurityAudit = () => {
                                             {language === 'TH' ? 'ผู้ใช้' : 'User'}
                                         </th>
                                         <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                            {language === 'TH' ? 'ทรัพพัย์' : 'Resource'}
+                                            {language === 'TH' ? 'ทรัพยากร' : 'Resource'}
                                         </th>
                                         <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
                                             {language === 'TH' ? 'การกระทำ' : 'Action'}
@@ -903,12 +757,12 @@ const SecurityAudit = () => {
                         <div>
                             <h4 style={{ marginBottom: '1rem' }}>
                                 <Smartphone size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
-                                {language === 'TH' ? 'การเข้าถึงจากอุปกรณ์' : 'Mobile Access'}
+                                {language === 'TH' ? 'ความปลอดภัยของอุปกรณ์' : 'Device Security'}
                             </h4>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <input type="checkbox" defaultChecked />
-                                    <span>{language === 'TH' ? 'อนุญาติการใช้งานบนมือถือ' : 'Require device authorization'}</span>
+                                    <span>{language === 'TH' ? 'การอนุญาตอุปกรณ์' : 'Require device authorization'}</span>
                                 </label>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <input type="checkbox" defaultChecked />
@@ -916,7 +770,7 @@ const SecurityAudit = () => {
                                 </label>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <input type="checkbox" defaultChecked />
-                                    <span>{language === 'TH' ? 'รีเซ็ตการเข้าสู่ระบบจากระยะทาง' : 'Remote wipe capability'}</span>
+                                    <span>{language === 'TH' ? 'รีเซ็ตการเข้าระบบระยะไกล' : 'Remote wipe capability'}</span>
                                 </label>
                             </div>
                         </div>

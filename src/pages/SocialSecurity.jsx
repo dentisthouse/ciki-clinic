@@ -4,6 +4,7 @@ import QuotaChecker from '../components/SSO/QuotaChecker';
 import ClaimWizard from '../components/SSO/ClaimWizard';
 import ClaimTracking from '../components/SSO/ClaimTracking';
 import { ShieldCheck, BarChart2 } from 'lucide-react';
+import '../styles/sso.css';
 
 const SocialSecurity = () => {
     const { t } = useLanguage();
@@ -26,7 +27,7 @@ const SocialSecurity = () => {
         <div className="animate-slide-up">
             <header className="page-header" style={{ marginBottom: '2.5rem' }}>
                 <div className="page-title-group">
-                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <h1 className="flex items-center gap-4">
                         <div className="floating-icon" style={{ padding: '0.75rem', background: 'var(--primary-50)', color: 'var(--primary-600)', borderRadius: '20px', boxShadow: '0 8px 16px -4px rgba(20, 184, 166, 0.2)' }}>
                             <ShieldCheck size={32} />
                         </div>
@@ -37,7 +38,7 @@ const SocialSecurity = () => {
             </header>
 
             {/* Tabs */}
-            <div className="tabs" style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', padding: '0.5rem', background: 'var(--neutral-100)', borderRadius: '20px', width: 'fit-content' }}>
+            <div className="sso-tabs-container">
                 <button
                     className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`}
                     onClick={() => setActiveTab('dashboard')}

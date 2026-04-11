@@ -106,7 +106,33 @@ const ReceiptModal = ({ isOpen, onClose, data }) => {
                     {/* Totals Section */}
                     <div style={{ marginLeft: 'auto', width: '320px', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
-                            <span style={{ color: 'var(--neutral-500)', fontWeight: 700 }}>Sub-Total / รวม</span>
+                            <span style={{ color: 'var(--neutral-500)', fontWeight: 700 }}>Items / รวมรายการ</span>
+                            <span style={{ fontWeight: 700 }}>฿{Number(data.baseTotal || total).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        {data.serviceFee > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
+                                <span style={{ color: 'var(--neutral-500)', fontWeight: 700 }}>Service Fee / ค่าบริการ</span>
+                                <span style={{ fontWeight: 700 }}>+฿{Number(data.serviceFee).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        )}
+
+                        {data.cardFeeAmount > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
+                                <span style={{ color: 'var(--neutral-500)', fontWeight: 700 }}>Bank Fee / ค่าธรรมเนียมบัตร</span>
+                                <span style={{ fontWeight: 700 }}>+฿{Number(data.cardFeeAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        )}
+
+                        {data.discount > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: '#e11d48' }}>
+                                <span style={{ fontWeight: 700 }}>Discount / ส่วนลด</span>
+                                <span style={{ fontWeight: 800 }}>-฿{Number(data.discount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', borderTop: '1px solid #eee', paddingTop: '0.5rem' }}>
+                            <span style={{ color: 'var(--neutral-500)', fontWeight: 700 }}>Sub-Total / รวมทั้งสิ้น</span>
                             <span style={{ fontWeight: 700 }}>฿{Number(total).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
 
@@ -131,9 +157,36 @@ const ReceiptModal = ({ isOpen, onClose, data }) => {
                             <span>฿{Number(finalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         
-                        <div style={{ textAlign: 'right', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--neutral-400)', fontWeight: 800 }}>
-                            Method / วิธีชำระ: {method || 'Cash'}
-                        </div>
+                        {data.splitAmounts ? (
+                            <div style={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: '0.4rem', 
+                                padding: '1rem', 
+                                background: 'var(--neutral-50)', 
+                                borderRadius: '16px',
+                                marginTop: '0.5rem'
+                            }}>
+                                {Object.entries(data.splitAmounts)
+                                    .filter(([, val]) => val > 0)
+                                    .map(([key, val]) => (
+                                        <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                            <span style={{ color: 'var(--neutral-500)', fontWeight: 800, textTransform: 'uppercase' }}>
+                                                {key === 'cash' ? 'Cash / เงินสด' : 
+                                                 key === 'card' ? 'Card / บัตร' : 
+                                                 key === 'transfer' ? 'Transfer / โอน' : 
+                                                 key === 'claim' ? 'Insurance / ประกัน' : 
+                                                 key === 'debt' ? 'Debt / ค้างชำระ' : key}
+                                            </span>
+                                            <span style={{ fontWeight: 800 }}>฿{Number(val).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                    ))}
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'right', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--neutral-400)', fontWeight: 800 }}>
+                                Method / วิธีชำระ: {method || 'Cash'}
+                            </div>
+                        )}
                     </div>
 
                     {/* Footer / Signatures */}

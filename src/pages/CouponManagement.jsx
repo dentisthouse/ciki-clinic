@@ -3,24 +3,34 @@ import {
     Ticket, Plus, Search, Tag, Percent, DollarSign, Calendar,
     Users, BarChart3, Clock, Trash2, Edit2, Copy, Eye,
     CheckCircle, XCircle, AlertTriangle, Gift, Zap, TrendingUp,
-    Filter, Download, Shield
+    Filter, Download, Shield, X
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import '../styles/coupons.css';
 
 const CouponManagement = () => {
-    const { language } = useLanguage();
+    const { language, t } = useLanguage();
     const [activeTab, setActiveTab] = useState('coupons');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Mock coupon data
-    const [coupons, setCoupons] = useState([
-        { id: 1, code: 'WELCOME20', type: 'percent', value: 20, minSpend: 1000, maxDiscount: 500, usageLimit: 100, usedCount: 34, expiresAt: '2026-06-30', status: 'active', description: 'ส่วนลดต้อนรับสมาชิกใหม่' },
-        { id: 2, code: 'SCALING500', type: 'fixed', value: 500, minSpend: 2000, maxDiscount: null, usageLimit: 50, usedCount: 18, expiresAt: '2026-05-31', status: 'active', description: 'ส่วนลดขูดหินปูน' },
-        { id: 3, code: 'ORTHO10K', type: 'fixed', value: 10000, minSpend: 50000, maxDiscount: null, usageLimit: 20, usedCount: 12, expiresAt: '2026-12-31', status: 'active', description: 'ส่วนลดแพ็กเกจจัดฟัน' },
-        { id: 4, code: 'BIRTHDAY', type: 'percent', value: 15, minSpend: 0, maxDiscount: 1000, usageLimit: 999, usedCount: 67, expiresAt: '2026-12-31', status: 'active', description: 'ส่วนลดวันเกิด' },
-        { id: 5, code: 'SUMMER50', type: 'percent', value: 50, minSpend: 3000, maxDiscount: 2000, usageLimit: 30, usedCount: 30, expiresAt: '2026-04-01', status: 'expired', description: 'โปรหน้าร้อน' },
-    ]);
+    const langT = (th, en) => (language === 'TH' ? th : en);
+
+    const [coupons, setCoupons] = useState(() => {
+        const saved = localStorage.getItem('ciki_coupons');
+        if (saved) return JSON.parse(saved);
+        return [
+            { id: 1, code: 'WELCOME20', type: 'percent', value: 20, minSpend: 1000, maxDiscount: 500, usageLimit: 100, usedCount: 34, expiresAt: '2026-06-30', status: 'active', description: 'ส่วนลดต้อนรับสมาชิกใหม่' },
+            { id: 2, code: 'SCALING500', type: 'fixed', value: 500, minSpend: 2000, maxDiscount: null, usageLimit: 50, usedCount: 18, expiresAt: '2026-05-31', status: 'active', description: 'ส่วนลดขูดหินปูน' },
+            { id: 3, code: 'ORTHO10K', type: 'fixed', value: 10000, minSpend: 50000, maxDiscount: null, usageLimit: 20, usedCount: 12, expiresAt: '2026-12-31', status: 'active', description: 'ส่วนลดแพ็กเกจจัดฟัน' },
+            { id: 4, code: 'BIRTHDAY', type: 'percent', value: 15, minSpend: 0, maxDiscount: 1000, usageLimit: 999, usedCount: 67, expiresAt: '2026-12-31', status: 'active', description: 'ส่วนลดวันเกิด' },
+            { id: 5, code: 'SUMMER50', type: 'percent', value: 50, minSpend: 3000, maxDiscount: 2000, usageLimit: 30, usedCount: 30, expiresAt: '2026-04-01', status: 'expired', description: 'โปรหน้าร้อน' }
+        ];
+    });
+
+    React.useEffect(() => {
+        localStorage.setItem('ciki_coupons', JSON.stringify(coupons));
+    }, [coupons]);
 
     const [newCoupon, setNewCoupon] = useState({
         code: '', type: 'percent', value: '', minSpend: '', maxDiscount: '',
@@ -49,133 +59,134 @@ const CouponManagement = () => {
     };
 
     return (
-        <div style={{ padding: '1.5rem' }}>
+        <div className="coupons-container animate-slide-up">
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-                        <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #f59e0b, #f97316)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 8px 16px rgba(245, 158, 11, 0.2)' }}>
-                            <Ticket size={22} />
+            <div className="coupons-header">
+                <div className="coupons-title-group">
+                    <h1>
+                        <div className="coupons-icon-box">
+                            <Ticket size={24} />
                         </div>
-                        {language === 'TH' ? 'ระบบจัดการคูปองและวงเงิน' : 'Coupon & Credit Management'}
+                        {langT('คูปองและโปรโมชั่น', 'Coupons & Rewards')}
                     </h1>
-                    <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem' }}>
-                        {language === 'TH' ? 'บริหารโปรโมชั่นและแพ็กเกจ ตรวจสอบได้แม่นยำ' : 'Manage promotions and packages with precision tracking'}
-                    </p>
+                    <p>{langT('บริหารจัดการสิทธิพิเศษและแคมเปญการตลาดของคลินิก', 'Manage clinical perks, marketing campaigns, and loyalty programs')}</p>
                 </div>
-                <button onClick={() => setShowCreateModal(true)} style={{
-                    padding: '0.75rem 1.5rem', borderRadius: '12px', border: 'none',
-                    background: 'linear-gradient(135deg, #f59e0b, #f97316)', color: 'white',
-                    fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    boxShadow: '0 8px 16px rgba(245, 158, 11, 0.25)', fontSize: '0.9rem'
-                }}>
-                    <Plus size={18} /> สร้างคูปองใหม่
+                <button 
+                    onClick={() => setShowCreateModal(true)} 
+                    className="btn-billing primary"
+                    style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)', border: 'none' }}
+                >
+                    <Plus size={18} /> {langT('สร้างคูปองใหม่', 'Create Voucher')}
                 </button>
             </div>
 
-            {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+            {/* Stats Grid */}
+            <div className="coupons-stats-grid">
                 {[
-                    { label: 'คูปองที่ใช้งานอยู่', value: activeCoupons.length, icon: Ticket, color: '#22c55e', bg: '#f0fdf4' },
-                    { label: 'จำนวนครั้งที่ใช้', value: totalRedemptions, icon: Users, color: '#3b82f6', bg: '#eff6ff' },
-                    { label: 'ส่วนลดที่ให้ไป', value: `฿${(totalDiscountGiven).toLocaleString()}`, icon: DollarSign, color: '#ef4444', bg: '#fef2f2' },
-                    { label: 'แคมเปญทั้งหมด', value: coupons.length, icon: TrendingUp, color: '#8b5cf6', bg: '#f5f3ff' },
+                    { label: langT('คูปองที่ใช้งานอยู่', 'Active Coupons'), value: activeCoupons.length, icon: Ticket, color: '#f59e0b', bg: '#fffbeb' },
+                    { label: langT('จำนวนการใช้งาน', 'Redemptions'), value: totalRedemptions, icon: Users, color: '#3b82f6', bg: '#eff6ff' },
+                    { label: langT('ส่วนลดสะสมทังหมด', 'Total Savings'), value: `฿${(totalDiscountGiven).toLocaleString()}`, icon: DollarSign, color: '#10b981', bg: '#f0fdf4' },
+                    { label: langT('แคมเปญทั้งหมด', 'Total Campaigns'), value: coupons.length, icon: TrendingUp, color: '#8b5cf6', bg: '#f5f3ff' },
                 ].map((stat, i) => (
-                    <div key={i} className="card" style={{ padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <div style={{ width: 44, height: 44, borderRadius: '14px', background: stat.bg, color: stat.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <stat.icon size={20} />
+                    <div key={i} className="coupons-stat-card">
+                        <div className="coupons-stat-icon-wrapper" style={{ background: stat.bg, color: stat.color }}>
+                            <stat.icon size={22} />
                         </div>
-                        <div>
-                            <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--neutral-800)' }}>{stat.value}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{stat.label}</div>
+                        <div className="coupons-stat-info">
+                            <div className="value">{stat.value}</div>
+                            <div className="label">{stat.label}</div>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Search */}
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ flex: 1, position: 'relative' }}>
-                    <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-400)' }} />
-                    <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                        placeholder="ค้นหาคูปอง..."
-                        style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', border: '1.5px solid var(--neutral-200)', borderRadius: '12px', fontSize: '0.9rem' }}
+            {/* Content Filters & Search */}
+            <div className="tab-navigation-premium" style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                        onClick={() => setActiveTab('coupons')} 
+                        className={`tab-btn-premium ${activeTab === 'coupons' ? 'active' : ''}`}
+                    >
+                        {langT('คูปองส่วนลด', 'Vouchers')}
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('credits')} 
+                        className={`tab-btn-premium ${activeTab === 'credits' ? 'active' : ''}`}
+                    >
+                        {langT('ประวัติการใช้งาน', 'Redemption Log')}
+                    </button>
+                </div>
+
+                <div className="coupons-search-bar" style={{ minWidth: '350px', marginBottom: 0 }}>
+                    <Search size={18} color="var(--neutral-400)" />
+                    <input 
+                        type="text" 
+                        value={searchTerm} 
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder={langT('ค้นหาคูปอง หรือคำอธิบาย...', 'Search coupon code, description...')}
                     />
                 </div>
             </div>
 
-            {/* Coupon Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+            {/* Coupon Lists Grid */}
+            <div className="coupons-list-grid">
                 {coupons.filter(c => !searchTerm || c.code.toLowerCase().includes(searchTerm.toLowerCase()) || c.description.includes(searchTerm)).map(coupon => {
                     const isExpired = coupon.status === 'expired' || new Date(coupon.expiresAt) < new Date();
                     const isFullyUsed = coupon.usedCount >= coupon.usageLimit;
                     const usagePercent = Math.min(100, (coupon.usedCount / coupon.usageLimit) * 100);
 
                     return (
-                        <div key={coupon.id} className="card" style={{
-                            padding: '1.5rem', position: 'relative', overflow: 'hidden',
-                            opacity: isExpired || isFullyUsed ? 0.6 : 1,
-                            borderLeft: `4px solid ${isExpired ? '#94a3b8' : isFullyUsed ? '#ef4444' : '#22c55e'}`
-                        }}>
-                            {/* Ticket decoration */}
-                            <div style={{ position: 'absolute', right: '-10px', top: '50%', transform: 'translateY(-50%)', width: '20px', height: '20px', background: 'var(--neutral-50)', borderRadius: '50%', border: '1px solid var(--neutral-200)' }} />
-                            <div style={{ position: 'absolute', left: '-10px', top: '50%', transform: 'translateY(-50%)', width: '20px', height: '20px', background: 'var(--neutral-50)', borderRadius: '50%', border: '1px solid var(--neutral-200)' }} />
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                        <div key={coupon.id} className={`coupon-ticket ${isExpired || isFullyUsed ? 'expired' : ''}`}>
+                            <div className="coupon-dash-line" />
+                            
+                            <div className="coupon-top-section">
                                 <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                        <span style={{
-                                            background: coupon.type === 'percent' ? '#f0fdf4' : '#eff6ff',
-                                            color: coupon.type === 'percent' ? '#15803d' : '#1d4ed8',
-                                            padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800
-                                        }}>
+                                    <div className="coupon-badge-group">
+                                        <span className={`coupon-type-badge ${coupon.type === 'percent' ? 'coupon-type-percent' : 'coupon-type-fixed'}`}>
                                             {coupon.type === 'percent' ? `${coupon.value}%` : `฿${coupon.value.toLocaleString()}`}
                                         </span>
-                                        <span style={{
-                                            padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700,
-                                            background: isExpired ? '#f1f5f9' : isFullyUsed ? '#fef2f2' : '#f0fdf4',
-                                            color: isExpired ? '#64748b' : isFullyUsed ? '#dc2626' : '#16a34a'
-                                        }}>
-                                            {isExpired ? 'หมดอายุ' : isFullyUsed ? 'ใช้หมดแล้ว' : 'ใช้งานอยู่'}
+                                        <span className={`coupon-status-badge ${isExpired ? 'status-expired' : isFullyUsed ? 'status-full' : 'status-active'}`}>
+                                            {isExpired ? langT('หมดอายุ', 'Expired') : isFullyUsed ? langT('สิทธิ์เต็ม', 'Fully Used') : langT('ใช้งานอยู่', 'Active')}
                                         </span>
                                     </div>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '0.05em', color: 'var(--neutral-800)' }}>
-                                        {coupon.code}
-                                    </h3>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--neutral-500)', marginTop: '0.15rem' }}>{coupon.description}</p>
+                                    <h3 className="coupon-code">{coupon.code}</h3>
+                                    <p className="coupon-description">{coupon.description}</p>
                                 </div>
-                                <div style={{ display: 'flex', gap: '0.35rem' }}>
-                                    <button style={{ padding: '0.4rem', border: 'none', background: 'var(--neutral-50)', borderRadius: '8px', cursor: 'pointer' }}>
-                                        <Copy size={14} color="var(--neutral-500)" />
+                                <div className="coupon-action-btns">
+                                    <button className="btn-icon-square" title="Copy Code">
+                                        <Copy size={16} />
                                     </button>
-                                    <button style={{ padding: '0.4rem', border: 'none', background: 'var(--neutral-50)', borderRadius: '8px', cursor: 'pointer' }}>
-                                        <Edit2 size={14} color="var(--neutral-500)" />
+                                    <button className="btn-icon-square" title="Edit Campaign">
+                                        <Edit2 size={16} />
                                     </button>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.75rem', color: 'var(--neutral-500)', marginBottom: '0.75rem' }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                    <DollarSign size={12} /> ขั้นต่ำ ฿{coupon.minSpend.toLocaleString()}
-                                </span>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                    <Calendar size={12} /> หมดอายุ {coupon.expiresAt}
-                                </span>
+                            <div className="coupon-meta-grid">
+                                <div className="coupon-meta-item">
+                                    <DollarSign size={14} /> 
+                                    {langT('ขั้นต่ำ:', 'Min:')} ฿{coupon.minSpend.toLocaleString()}
+                                </div>
+                                <div className="coupon-meta-item">
+                                    <Clock size={14} /> 
+                                    {langT('หมดอายุ:', 'Exp:')} {coupon.expiresAt}
+                                </div>
                             </div>
 
-                            {/* Usage Bar */}
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: 700, marginBottom: '0.3rem' }}>
-                                    <span>ใช้แล้ว {coupon.usedCount}/{coupon.usageLimit}</span>
-                                    <span>{usagePercent.toFixed(0)}%</span>
+                            {/* Usage Statistics */}
+                            <div className="coupon-usage-area">
+                                <div className="usage-label-row">
+                                    <span>{langT('ความคืบหน้าการใช้งาน', 'Usage Progress')}</span>
+                                    <span>{coupon.usedCount} / {coupon.usageLimit}</span>
                                 </div>
-                                <div style={{ height: '6px', background: 'var(--neutral-100)', borderRadius: '3px', overflow: 'hidden' }}>
-                                    <div style={{
-                                        height: '100%', borderRadius: '3px',
-                                        width: `${usagePercent}%`,
-                                        background: usagePercent > 80 ? '#ef4444' : usagePercent > 50 ? '#f59e0b' : '#22c55e',
-                                        transition: 'width 0.5s ease'
-                                    }} />
+                                <div className="usage-bar-bg">
+                                    <div 
+                                        className="usage-bar-fill"
+                                        style={{ 
+                                            width: `${usagePercent}%`,
+                                            background: usagePercent > 80 ? 'var(--danger-500)' : usagePercent > 50 ? '#f59e0b' : 'var(--success-500)'
+                                        }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -185,23 +196,23 @@ const CouponManagement = () => {
 
             {/* Create Coupon Modal */}
             {showCreateModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                    <div style={{ background: 'white', borderRadius: '24px', padding: '2rem', width: '90%', maxWidth: '550px', maxHeight: '90vh', overflow: 'auto' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 900 }}>🎫 สร้างคูปองใหม่</h2>
-                            <button onClick={() => setShowCreateModal(false)} style={{ border: 'none', background: 'var(--neutral-50)', borderRadius: '10px', padding: '0.5rem', cursor: 'pointer' }}>
-                                <XCircle size={20} color="var(--neutral-500)" />
+                <div className="modal-overlay">
+                    <div className="modal-container" style={{ maxWidth: '550px' }}>
+                        <div className="modal-header">
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0 }}>🎫 สร้างคูปองใหม่</h2>
+                            <button onClick={() => setShowCreateModal(false)} className="modal-close">
+                                <X size={20} />
                             </button>
                         </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div>
-                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.3rem', display: 'block' }}>รหัสคูปอง</label>
-                                <input type="text" value={newCoupon.code} onChange={e => setNewCoupon(p => ({ ...p, code: e.target.value.toUpperCase() }))}
-                                    placeholder="เช่น NEWYEAR2026"
-                                    style={{ width: '100%', padding: '0.75rem 1rem', border: '1.5px solid var(--neutral-200)', borderRadius: '10px', fontSize: '1rem', fontFamily: 'monospace', fontWeight: 800 }}
-                                />
-                            </div>
+                        <div className="modal-body" style={{ padding: '2rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.3rem', display: 'block' }}>รหัสคูปอง</label>
+                                    <input type="text" value={newCoupon.code} onChange={e => setNewCoupon(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+                                        placeholder="เช่น NEWYEAR2026"
+                                        style={{ width: '100%', padding: '0.75rem 1rem', border: '1.5px solid var(--neutral-200)', borderRadius: '10px', fontSize: '1rem', fontFamily: 'monospace', fontWeight: 800 }}
+                                    />
+                                </div>
 
                             <div>
                                 <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.3rem', display: 'block' }}>ประเภทส่วนลด</label>
@@ -277,8 +288,9 @@ const CouponManagement = () => {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            </div>
+        )}
+    </div>
     );
 };
 

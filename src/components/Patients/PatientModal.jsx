@@ -199,7 +199,7 @@ const PatientModal = ({ isOpen, onClose, onSave, patient }) => {
                                 </div>
 
                                 {!isCameraOpen && (
-                                    <button type="button" onClick={startCamera} className="btn btn-secondary" style={{ width: '100%', padding: '0.85rem', borderRadius: '16px', fontWeight: 700 }}>
+                                    <button type="button" onClick={startCamera} className="btn btn-secondary" style={{ width: '100%' }}>
                                         📷 {language === 'TH' ? 'ถ่ายรูปคนไข้' : 'Capture Photo'}
                                     </button>
                                 )}
@@ -373,11 +373,11 @@ const PatientModal = ({ isOpen, onClose, onSave, patient }) => {
 
                 {/* Modal Footer - FIXED AT BOTTOM */}
                 <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={onClose} style={{ padding: '0.85rem 2.5rem', borderRadius: '16px', fontWeight: 600 }}>
+                    <button type="button" className="btn btn-secondary" onClick={onClose}>
                         {language === 'TH' ? 'ยกเลิก' : 'Cancel'}
                     </button>
-                    <button type="submit" form="patient-form" className="btn btn-primary" style={{ padding: '0.85rem 3.5rem', borderRadius: '18px', fontWeight: 800, boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)' }}>
-                        <Save size={20} style={{ marginRight: '8px' }} />
+                    <button type="submit" form="patient-form" className="btn btn-primary">
+                        <Save size={20} />
                         {language === 'TH' ? 'บันทึกข้อมูลคนไข้' : 'Save Patient Record'}
                     </button>
                 </div>

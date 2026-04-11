@@ -9,7 +9,7 @@ const SURFACE_NAMES = {
     TH: { M: 'ด้านใกล้กลาง', D: 'ด้านไกลกลาง', B: 'ด้านแก้ม', L: 'ด้านลิ้น', O: 'ด้านบดเคี้ยว' }
 };
 
-const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment }) => {
+const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment, activeTool }) => {
     const { t, language } = useLanguage();
     const [category, setCategory] = useState('General');
     const [procedure, setProcedure] = useState('');
@@ -42,6 +42,27 @@ const TreatmentEntry = ({ selectedTeeth, selectedSurfaces = {}, onAddTreatment }
             { id: 'crown_zirconia', name: 'Crown (Zirconia)', nameTh: 'ครอบฟัน Zirconia', price: 18000 },
         ]
     };
+    
+    // Auto-select procedure based on chart tool
+    useEffect(() => {
+        if (!activeTool || activeTool === 'planning' || activeTool === 'clear') return;
+        
+        const toolMapping = {
+            'filled': { cat: 'Restorative', proc: 'fill_composite_1' },
+            'extracted': { cat: 'Surgery', proc: 'extraction_simple' },
+            'rootCanal': { cat: 'Endodontics', proc: 'rct_anterior' },
+            'crown': { cat: 'Prosthetics', proc: 'crown_pfm' },
+            'scaling': { cat: 'General', proc: 'cleaning' }
+        };
+        
+        const match = toolMapping[activeTool];
+        if (match) {
+            setCategory(match.cat);
+            setProcedure(match.proc);
+            const p = procedures[match.cat].find(x => x.id === match.proc);
+            if (p) setPrice(p.price);
+        }
+    }, [activeTool]);
 
     useEffect(() => {
         // Reset procedure when category changes

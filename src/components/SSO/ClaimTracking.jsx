@@ -24,11 +24,7 @@ const ClaimTracking = () => {
         };
         const s = styles[status] || styles['Pending'];
         return (
-            <span style={{
-                background: s.bg, color: s.color,
-                padding: '0.25rem 0.75rem', borderRadius: '1rem',
-                fontSize: '0.9rem', fontWeight: 500
-            }}>
+            <span className="sso-status-badge" style={{ background: s.bg, color: s.color }}>
                 {s.label}
             </span>
         );
@@ -54,7 +50,7 @@ const ClaimTracking = () => {
     return (
         <div className="animate-fade-in">
             {/* Stats Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
+            <div className="sso-stats-grid">
                 <StatusCard title={t('sso_status_pending')} count={stats.pending} icon={Clock} color="#d97706" onClick={() => setFilter('Pending')} />
                 <StatusCard title={t('sso_status_approved')} count={stats.approved} icon={CheckCircle} color="#166534" onClick={() => setFilter('Approved')} />
                 <StatusCard title={t('sso_status_paid')} count={stats.paid} icon={FileText} color="#3b82f6" onClick={() => setFilter('Paid')} />

@@ -1,0 +1,296 @@
+/* coupons.css - Premium Promotion & Rewards Management UI */
+
+.coupons-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Page Header */
+.coupons-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.coupons-title-group h1 {
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: var(--neutral-900);
+    letter-spacing: -0.04em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.coupons-icon-box {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 8px 20px -5px rgba(245, 158, 11, 0.4);
+}
+
+.coupons-title-group p {
+    font-size: 1rem;
+    color: var(--neutral-500);
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* Stats Dashboard */
+.coupons-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+}
+
+.coupons-stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 24px;
+    border: 1.5px solid var(--neutral-100);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.coupons-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-100);
+}
+
+.coupons-stat-icon-wrapper {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.coupons-stat-info .value {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--neutral-900);
+    font-family: 'Outfit', sans-serif;
+    line-height: 1.2;
+}
+
+.coupons-stat-info .label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--neutral-400);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Search Header */
+.coupons-search-bar {
+    margin-bottom: 2rem;
+    background: white;
+    padding: 0.75rem 1rem;
+    border-radius: 18px;
+    border: 1.5px solid var(--neutral-100);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.coupons-search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--neutral-800);
+}
+
+/* Coupon Cards Grid */
+.coupons-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.coupon-ticket {
+    background: white;
+    border-radius: 28px;
+    padding: 1.75rem;
+    position: relative;
+    border: 1.5px solid var(--neutral-100);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.coupon-ticket:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-xl);
+    border-color: #f59e0b;
+}
+
+.coupon-ticket.expired {
+    opacity: 0.6;
+    filter: grayscale(0.5);
+}
+
+/* Ticket Notches */
+.coupon-ticket::before,
+.coupon-ticket::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    background: var(--neutral-50);
+    border-radius: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    border: 1.5px solid var(--neutral-100);
+}
+
+.coupon-ticket::before { left: -11px; }
+.coupon-ticket::after { right: -11px; }
+
+/* Dash Line */
+.coupon-dash-line {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    right: 1rem;
+    height: 0;
+    border-top: 1.5px dashed var(--neutral-100);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Coupon Content */
+.coupon-top-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.coupon-badge-group {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.coupon-type-badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.coupon-type-percent { background: #fffbeb; color: #d97706; }
+.coupon-type-fixed { background: #eff6ff; color: #1d4ed8; }
+
+.coupon-status-badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.status-active { background: #f0fdf4; color: #16a34a; }
+.status-expired { background: #f1f5f9; color: #64748b; }
+.status-full { background: #fef2f2; color: #dc2626; }
+
+.coupon-code {
+    font-size: 1.35rem;
+    font-weight: 900;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em;
+    color: var(--neutral-900);
+    margin: 0.25rem 0;
+}
+
+.coupon-description {
+    font-size: 0.85rem;
+    color: var(--neutral-500);
+    font-weight: 500;
+}
+
+.coupon-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--neutral-400);
+}
+
+.coupon-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+/* Usage Progress */
+.coupon-usage-area {
+    margin-top: auto;
+}
+
+.usage-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--neutral-700);
+    margin-bottom: 6px;
+}
+
+.usage-bar-bg {
+    height: 8px;
+    background: var(--neutral-100);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.usage-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Premium Buttons in card */
+.coupon-action-btns {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-icon-square {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--neutral-50);
+    border: none;
+    color: var(--neutral-400);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon-square:hover {
+    background: var(--neutral-100);
+    color: var(--neutral-900);
+    transform: translateY(-2px);
+}

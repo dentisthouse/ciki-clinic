@@ -6,7 +6,6 @@ export const AnalyticsDashboard = lazy(() => import('./components/Analytics/Anal
 export const AdvancedAnalyticsDashboard = lazy(() => import('./components/Analytics/AdvancedAnalyticsDashboard'));
 export const FloorManagement = lazy(() => import('./pages/FloorManagement'));
 export const Staff = lazy(() => import('./pages/Staff'));
-export const CustomerRelationship = lazy(() => import('./pages/CustomerRelationship'));
 
 // Heavy components
 export const TreatmentPlanTab = lazy(() => import('./components/EHR/TreatmentPlanTab'));

@@ -1,26 +1,26 @@
 :root {
   /* ===== LUXURY DENTAL COLOR PALETTE ===== */
   /* Primary: Deep sophisticated Teal-Emerald blend */
-  --primary-50: #f0fdfa;
-  --primary-100: #ccfbf1;
-  --primary-200: #99f6e4;
-  --primary-300: #5eead4;
-  --primary-400: #2dd4bf;
-  --primary-500: #14b8a6; /* Main Medical Teal */
-  --primary-600: #0d9488;
-  --primary-700: #0f766e;
-  --primary-800: #115e59;
-  --primary-900: #134e4a;
+  --primary-50: #f0fdf9;
+  --primary-100: #ccfbf0;
+  --primary-200: #99f6e0;
+  --primary-300: #5ee9d1;
+  --primary-400: #2dd4ba;
+  --primary-500: #14b8a1; /* Refined Medical Teal-Emerald */
+  --primary-600: #0d9483;
+  --primary-700: #0f7669;
+  --primary-800: #115e54;
+  --primary-900: #134e45;
 
   /* Accent: Sophisticated Champagne Gold for the premium feel */
-  --accent-50: #fbf8f1;
-  --accent-100: #f7eed7;
-  --accent-200: #eedcaf;
-  --accent-300: #e4c680;
-  --accent-400: #d9ab4e;
-  --accent-500: #c5a059; /* Modern Gold */
-  --accent-600: #a68446;
-  --accent-700: #866a39;
+  --accent-50: #fffcf5;
+  --accent-100: #fef3d1;
+  --accent-200: #fce1a3;
+  --accent-300: #f8c971;
+  --accent-400: #f4ab42;
+  --accent-500: #e8912d; /* Refined Gold-Bronze */
+  --accent-600: #ce7121;
+  --accent-700: #ab561f;
 
   /* Neutral: Ultra-refined Slate & Silver */
   --neutral-50: #fcfdfe;
@@ -53,11 +53,12 @@
   --glass-premium-border: rgba(255, 255, 255, 0.4);
   --glass-premium-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05), 0 10px 20px -15px rgba(0, 0, 0, 0.02);
 
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.02);
-  --shadow-sm: 0 2px 4px 0 rgb(0 0 0 / 0.03);
-  --shadow-md: 0 10px 20px -5px rgb(0 0 0 / 0.04), 0 4px 6px -2px rgb(0 0 0 / 0.02);
-  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 10px 10px -5px rgb(0 0 0 / 0.03);
-  --shadow-xl: 0 30px 60px -12px rgb(0 0 0 / 0.1), 0 18px 36px -18px rgb(0 0 0 / 0.05);
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.01);
+  --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 12px 16px -4px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+  --shadow-2xl: 0 35px 60px -15px rgb(0 0 0 / 0.2);
   
   --shadow-premium: 0 15px 40px -10px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
   --shadow-premium-hover: 0 30px 60px -15px rgba(0, 0, 0, 0.08), 0 1px 6px rgba(0, 0, 0, 0.02);

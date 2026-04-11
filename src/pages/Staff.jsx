@@ -109,7 +109,6 @@ const Staff = () => {
                     <button
                         className={`btn ${filterRole === 'all' ? 'btn-primary' : 'btn-secondary'}`}
                         onClick={() => setFilterRole('all')}
-                        style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem' }}
                     >
                         {language === 'TH' ? 'ทั้งหมด' : 'All'}
                     </button>
@@ -118,7 +117,6 @@ const Staff = () => {
                             key={key}
                             className={`btn ${filterRole === key ? 'btn-primary' : 'btn-secondary'}`}
                             onClick={() => setFilterRole(key)}
-                            style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem' }}
                         >
                             {cfg.icon} {language === 'TH' ? cfg.label : cfg.labelEn}
                         </button>
@@ -185,16 +183,16 @@ const Staff = () => {
                                         <button
                                             className="btn btn-secondary"
                                             onClick={(e) => { e.stopPropagation(); handleEdit(s); }}
-                                            style={{ padding: '0.4rem' }}
+                                            style={{ padding: '0.5rem' }}
                                         >
-                                            <Edit2 size={14} />
+                                            <Edit2 size={16} />
                                         </button>
                                         <button
                                             className="btn btn-secondary"
                                             onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
-                                            style={{ padding: '0.4rem', color: '#ef4444' }}
+                                            style={{ padding: '0.5rem', color: '#ef4444' }}
                                         >
-                                            <Trash2 size={14} />
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </div>

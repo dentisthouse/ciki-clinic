@@ -52,7 +52,7 @@ const QuotaChecker = ({ onVerified }) => {
     };
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '2rem' }}>
+        <div className="sso-input-grid">
             {/* Input Section */}
             <div className="card glass-panel-premium" style={{ padding: '2.5rem', background: 'white' }}>
                 <div style={{ marginBottom: '2rem' }}>
@@ -94,7 +94,7 @@ const QuotaChecker = ({ onVerified }) => {
 
                     <div className="form-group">
                         <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.5rem', display: 'block' }}>{t('sso_id_card_placeholder')}</label>
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <div className="sso-id-input-group">
                             <input
                                 type="text"
                                 className="form-input"

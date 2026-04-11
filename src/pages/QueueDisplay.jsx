@@ -21,7 +21,7 @@ const QueueDisplay = () => {
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
         const localTodayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
-        
+
         const todaysApts = (appointments || [])
             .filter(apt => {
                 if (!apt || !apt.date) return false;
@@ -41,22 +41,28 @@ const QueueDisplay = () => {
 
     // Announcement Logic
     useEffect(() => {
-        const handleStorageChange = () => {
-            const announcementData = localStorage.getItem('lastQueueCall');
-            if (announcementData) {
-                const data = JSON.parse(announcementData);
-                const announcementTime = new Date(data.timestamp);
-                const now = new Date();
-                const diffSeconds = (now - announcementTime) / 1000;
-                
-                if (diffSeconds < 5 && (!lastAnnouncement || lastAnnouncement.timestamp !== data.timestamp)) {
-                    setLastAnnouncement(data);
-                    playVoiceAnnouncement(data);
+        const handleStorageChange = (e) => {
+            // Check both old and new keys for compatibility
+            const rawData = localStorage.getItem('clinic_announcement') || localStorage.getItem('lastQueueCall');
+            if (rawData) {
+                try {
+                    const data = JSON.parse(rawData);
+                    const announcementTime = new Date(data.timestamp);
+                    const now = new Date();
+                    const diffSeconds = (now - announcementTime) / 1000;
+
+                    // only process if fresh (within 5 seconds)
+                    if (diffSeconds < 5 && (!lastAnnouncement || lastAnnouncement.id !== data.id)) {
+                        setLastAnnouncement(data);
+                        playVoiceAnnouncement(data);
+                    }
+                } catch (e) {
+                    console.error("Announcement parse error:", e);
                 }
             }
         };
 
-        const interval = setInterval(handleStorageChange, 2000);
+        const interval = setInterval(handleStorageChange, 1000);
         window.addEventListener('storage', handleStorageChange);
         return () => {
             clearInterval(interval);
@@ -65,19 +71,45 @@ const QueueDisplay = () => {
     }, [lastAnnouncement, language]);
 
     const playVoiceAnnouncement = (data) => {
-        if ('speechSynthesis' in window) {
-            const roomText = data.room === 'Room 1' ? 'ห้องตรวจหนึ่ง' : 
-                            data.room === 'Room 2' ? 'ห้องตรวจสอง' : 
-                            data.room === 'Room 3' ? 'ห้องตรวจสาม' : data.room;
-            
-            const text = data.announcement || `ขอเชิญคุณ ${data.patientName} หมายเลขคิว ${data.queueNumber} กรุณาเข้ารับบริการที่ ${roomText}`;
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'th-TH';
-            utterance.rate = 0.85;
-            utterance.pitch = 1.05;
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
+        if (!('speechSynthesis' in window)) return;
+
+        const roomMapping = {
+            'Room 1': { TH: 'ห้องตรวจหนึ่ง', EN: 'Room One' },
+            'Room 2': { TH: 'ห้องตรวจสอง', EN: 'Room Two' },
+            'Room 3': { TH: 'ห้องตรวจสาม', EN: 'Room Three' },
+            'Room 4': { TH: 'ห้องตรวจสี่', EN: 'Room Four' },
+            'Room 5': { TH: 'ห้องตรวจห้า', EN: 'Room Five' },
+            'X-Ray': { TH: 'ห้องเอ็กซเรย์', EN: 'X-Ray Room' },
+            'Lab': { TH: 'ห้องแล็บ', EN: 'Laboratory' }
+        };
+
+        const roomInfo = roomMapping[data.payload?.room || data.room] || { TH: data.room || '', EN: data.room || '' };
+        let text = '';
+
+        if (data.type === 'assistant') {
+            text = `ขอผู้ช่วย ที่ ${roomInfo.TH} ค่ะ. Assistant requested at ${roomInfo.EN}.`;
+        } else if (data.type === 'payment') {
+            text = `เชิญคุณ ${data.payload?.patientName || data.patientName} ชำระเงินที่เคาน์เตอร์ค่ะ. Thank you ${data.payload?.patientName || data.patientName}, please proceed to the payment counter.`;
+        } else {
+            // Default: Queue call
+            const pName = data.payload?.patientName || data.patientName;
+            const qNum = data.payload?.queueNumber || data.queueNumber || '';
+            const rName = roomInfo.TH;
+            text = `ขอเชิญคุณ ${pName} ${qNum ? `หมายเลขคิว ${qNum}` : ''} กรุณาเข้ารับบริการที่ ${rName} ค่ะ.`;
         }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'th-TH';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.05;
+
+        // Find a female voice if possible
+        const voices = window.speechSynthesis.getVoices();
+        const thaiVoice = voices.find(v => v.lang.includes('th'));
+        if (thaiVoice) utterance.voice = thaiVoice;
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
     };
 
     const currentQueue = queueList.find(q => q.queueStatus === 'In Progress');
@@ -94,7 +126,7 @@ const QueueDisplay = () => {
             {/* Ambient Background Elements */}
             <div className="qd-ambient-glow qd-glow-1"></div>
             <div className="qd-ambient-glow qd-glow-2"></div>
-            
+
             {/* Header Section */}
             <header className="qd-header animate-fade-in">
                 <div className="qd-brand">
@@ -103,10 +135,10 @@ const QueueDisplay = () => {
                     </div>
                     <div className="qd-brand-info">
                         <h1 className="qd-clinic-title">บ้านหมอฟัน คลินิก</h1>
-                        <p className="qd-clinic-tagline">DENTIST'S HOUSE LUXURY CLINIC</p>
+                        <p className="qd-clinic-tagline">DENTIST'S HOUSE CLINIC</p>
                     </div>
                 </div>
-                
+
                 <div className="qd-datetime">
                     <div className="qd-time-card">
                         <Clock className="qd-icon-gold" size={32} />
@@ -137,12 +169,12 @@ const QueueDisplay = () => {
                                 <div className="qd-room-indicator">
                                     <Sparkles size={28} className="qd-decorator" />
                                     <span>
-                                        {currentQueue.room ? 
-                                            (language === 'TH' ? 
-                                                (currentQueue.room === 'Room 1' ? 'ห้องตรวจ 1' : 
-                                                 currentQueue.room === 'Room 2' ? 'ห้องตรวจ 2' : 
-                                                 currentQueue.room === 'Room 3' ? 'ห้องตรวจ 3' : currentQueue.room) : 
-                                                currentQueue.room) : 
+                                        {currentQueue.room ?
+                                            (language === 'TH' ?
+                                                (currentQueue.room === 'Room 1' ? 'ห้องตรวจ 1' :
+                                                    currentQueue.room === 'Room 2' ? 'ห้องตรวจ 2' :
+                                                        currentQueue.room === 'Room 3' ? 'ห้องตรวจ 3' : currentQueue.room) :
+                                                currentQueue.room) :
                                             (language === 'TH' ? 'ห้องตรวจ' : 'Examination Room')
                                         }
                                     </span>

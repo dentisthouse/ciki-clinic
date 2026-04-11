@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Lock, User, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
 
 const AuthGuard = ({ children }) => {
     const { user, staff, isAdmin, permissions, loading, login, logout } = useAuth();
+    const { addLog } = useData();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -21,6 +23,13 @@ const AuthGuard = ({ children }) => {
                 setError(loginError.message === 'Invalid login credentials'
                     ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
                     : loginError.message);
+                if (addLog) {
+                    addLog({ action: 'login_failed', module: 'access', details: `เข้าสู่ระบบล้มเหลว: ${email}`, severity: 'medium', userEmail: email, userName: 'Unknown' });
+                }
+            } else {
+                if (addLog) {
+                    addLog({ action: 'login', module: 'access', details: `เข้าสู่ระบบสำเร็จ: ${email}`, severity: 'low', userEmail: email });
+                }
             }
         } catch (err) {
             setError(err.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');

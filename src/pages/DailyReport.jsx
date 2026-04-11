@@ -28,9 +28,30 @@ import {
 } from 'recharts';
 import '../styles/dashboard.css'; // Reusing premium animations and glass styles
 
+const StatCard = ({ title, value, icon: Icon, colorVar, delay, unit = '฿' }) => (
+    <div className={`stat-card glass-panel-premium animate-slide-up ${delay}`} style={{ background: 'white' }}>
+        <div className="stat-header">
+            <div className="stat-info">
+                <p>{title}</p>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                    {unit === '฿' && <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--neutral-400)' }}>฿</span>}
+                    <h3>{typeof value === 'number' ? value.toLocaleString() : value}</h3>
+                </div>
+            </div>
+            <div className={`stat-icon-wrapper floating-icon`} style={{ 
+                background: `linear-gradient(135deg, var(--neutral-50) 0%, white 100%)`, 
+                color: `var(--${colorVar})`,
+                border: `1px solid var(--neutral-100)`
+            }}>
+                <Icon size={24} />
+            </div>
+        </div>
+    </div>
+);
+
 const DailyReport = () => {
     const { t, language } = useLanguage();
-    const { appointments = [], patients = [], billingRecords = [], expenses = [] } = useData();
+    const { appointments = [], patients = [], invoices = [], expenses = [] } = useData();
     const { staff } = useAuth();
     
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -48,7 +69,7 @@ const DailyReport = () => {
             return aptDate >= start && aptDate <= end;
         });
 
-        const dayBilling = billingRecords.filter(bill => {
+        const dayBilling = invoices.filter(bill => {
             const billDate = new Date(bill.date || bill.createdAt);
             return billDate >= start && billDate <= end;
         });
@@ -93,7 +114,7 @@ const DailyReport = () => {
             treatmentStats,
             staff: staff?.name || 'Admin'
         };
-    }, [selectedDate, appointments, billingRecords, expenses, staff, t]);
+    }, [selectedDate, appointments, invoices, expenses, staff, t]);
 
     const exportToPDF = () => {
         window.print();
@@ -120,27 +141,6 @@ const DailyReport = () => {
         setIsClosing(false);
         alert(t('rep_closed_success'));
     };
-
-    const StatCard = ({ title, value, icon: Icon, colorVar, delay, unit = '฿' }) => (
-        <div className={`stat-card glass-panel-premium animate-slide-up ${delay}`} style={{ background: 'white' }}>
-            <div className="stat-header">
-                <div className="stat-info">
-                    <p>{title}</p>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                        {unit === '฿' && <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--neutral-400)' }}>฿</span>}
-                        <h3>{typeof value === 'number' ? value.toLocaleString() : value}</h3>
-                    </div>
-                </div>
-                <div className={`stat-icon-wrapper floating-icon`} style={{ 
-                    background: `linear-gradient(135deg, var(--neutral-50) 0%, white 100%)`, 
-                    color: `var(--${colorVar})`,
-                    border: `1px solid var(--neutral-100)`
-                }}>
-                    <Icon size={24} />
-                </div>
-            </div>
-        </div>
-    );
 
     return (
         <div className="dashboard-container" style={{ padding: '1.5rem' }}>

@@ -1,0 +1,304 @@
+/* staff.css - Premium Clinic Personnel & HR Management UI */
+
+.staff-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Page Header */
+.staff-header-glass {
+    padding: 2.25rem;
+    background: white;
+    border-radius: 32px;
+    border: 1.5px solid var(--neutral-100);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.staff-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .staff-header-glass {
+        padding: 1.5rem;
+    }
+    
+    .staff-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .staff-title-group h1 {
+        font-size: 1.75rem;
+    }
+}
+
+.staff-title-group h1 {
+    font-size: 2.5rem;
+    font-weight: 950;
+    color: var(--neutral-900);
+    letter-spacing: -0.05em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.staff-icon-box {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+}
+
+/* Tab Navigation */
+.staff-tab-rail {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--neutral-50);
+    padding: 6px;
+    border-radius: 20px;
+}
+
+@media (max-width: 768px) {
+    .staff-tab-rail {
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    
+    .staff-tab-rail::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .staff-tab-btn {
+        padding: 0.75rem 1.25rem;
+        white-space: nowrap;
+        flex: none;
+    }
+}
+
+.staff-tab-btn {
+    flex: 1;
+    padding: 0.95rem;
+    border: none;
+    border-radius: 16px;
+    font-size: 0.875rem;
+    font-weight: 850;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all var(--transition-spring);
+    color: var(--neutral-500);
+    background: transparent;
+}
+
+.staff-tab-btn.active {
+    background: white;
+    color: #4f46e5;
+    box-shadow: 0 4px 15px -4px rgba(0, 0, 0, 0.08);
+}
+
+/* Staff Grid */
+.staff-directory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Personnel Card */
+.personnel-card {
+    background: white;
+    border-radius: 28px;
+    padding: 1.75rem;
+    border: 1.5px solid var(--neutral-100);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.personnel-card:hover {
+    transform: translateY(-8px);
+    border-color: #c4b5fd;
+    box-shadow: 0 16px 32px -12px rgba(124, 58, 237, 0.15);
+}
+
+.personnel-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: #7c3aed;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.personnel-card:hover::before {
+    opacity: 1;
+}
+
+.personnel-avatar-group {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.personnel-avatar {
+    width: 68px;
+    height: 68px;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: white;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+}
+
+.personnel-meta h4 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 950;
+    color: var(--neutral-900);
+    letter-spacing: -0.03em;
+}
+
+.personnel-role-tag {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--neutral-400);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.personnel-status-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.status-pill {
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Info Grid */
+.personnel-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+    margin-top: 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px dashed var(--neutral-100);
+}
+
+@media (max-width: 480px) {
+    .personnel-details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--neutral-600);
+}
+
+.detail-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--neutral-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4f46e5;
+}
+
+/* Table Enhancements */
+.staff-premium-table {
+    width: 100%;
+    border-spacing: 0 8px;
+    border-collapse: separate;
+}
+
+.staff-premium-table th {
+    padding: 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: var(--neutral-400);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: left;
+}
+
+.staff-premium-table tr td {
+    background: white;
+    padding: 1.25rem;
+    border: 1.5px solid var(--neutral-100);
+    border-style: solid none;
+}
+
+.staff-premium-table tr td:first-child {
+    border-left-style: solid;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+
+.staff-premium-table tr td:last-child {
+    border-right-style: solid;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+/* Search Box */
+.staff-search-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.staff-search-box {
+    width: 100%;
+    padding: 1.15rem 1.15rem 1.15rem 3.5rem;
+    background: var(--neutral-50);
+    border: 2px solid transparent;
+    border-radius: 20px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--neutral-900);
+    transition: all 0.3s;
+}
+
+.staff-search-box:focus {
+    background: white;
+    border-color: #c4b5fd;
+    box-shadow: 0 8px 20px -6px rgba(124, 58, 237, 0.15);
+    outline: none;
+}

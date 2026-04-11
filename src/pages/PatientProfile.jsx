@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Phone, Mail, MapPin, Calendar, Clock, FileText,
     Shield, Activity, DollarSign, Plus, ArrowLeft,
-    CheckCircle, AlertCircle, Edit2, Trash2, Ruler, Image as ImageIcon,
+    CheckCircle, AlertCircle, Edit2, Trash2, Ruler, ImageIcon,
     ClipboardList, XCircle, User
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
@@ -243,11 +243,22 @@ const AppointmentHistorySection = ({ patientId, patientName, appointments, langu
 // MAIN COMPONENT
 const PatientProfile = () => {
     const { t, language } = useLanguage();
-    const { permissions, isAdmin } = useAuth();
+    const { permissions, isAdmin, staff } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
-    const { patients, updatePatient, appointments } = useData();
+    const { patients, updatePatient, appointments, addLog, broadcastAnnouncement } = useData();
     const patient = patients.find(p => p.id === id);
+
+    useEffect(() => {
+        if (patient && addLog) {
+            addLog({ 
+                action: 'view_patient', 
+                module: 'patients', 
+                details: `เรียกดูข้อมูลคนไข้: ${patient.name} (${patient.hn})`,
+                severity: 'low' 
+            });
+        }
+    }, [id, !!patient, addLog]);
     const [searchParams] = useSearchParams();
 
     // Check permissions (Bypass for Admin/Owner)
@@ -259,8 +270,14 @@ const PatientProfile = () => {
         searchParams.get('tab') || (canViewClinical ? 'history' : 'billing')
     );
 
+    // Sync tab when URL params change
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab) setActiveTab(tab);
+    }, [searchParams]);
+
     // Sync tab when permissions finish loading (Prevent getting stuck on billing tab)
-    React.useEffect(() => {
+    useEffect(() => {
         if (canViewClinical && activeTab === 'billing' && !searchParams.get('tab')) {
             setActiveTab('plans');
         }
@@ -296,7 +313,8 @@ const PatientProfile = () => {
             id: `TRT${Date.now()}`,
             ...treatmentData,
             date: new Date().toISOString(),
-            paymentStatus: 'unpaid'
+            paymentStatus: 'unpaid',
+            recorder: staff?.full_name || staff?.name || 'Clinic Staff'
         };
 
         const updatedTreatments = [newTreatment, ...(patient.treatments || [])];
@@ -332,6 +350,7 @@ const PatientProfile = () => {
 
     // Calculate total unpaid amount for badge
     const unpaidTreatments = (patient.treatments || []).filter(t => t.paymentStatus !== 'paid');
+    const totalUnpaidAmount = unpaidTreatments.reduce((sum, t) => sum + (t.price || 0), 0);
 
     // Only show tabs the user has permission for
     const tabs = [
@@ -341,7 +360,7 @@ const PatientProfile = () => {
         canViewClinical && { id: 'imaging', label: t('prof_imaging'), icon: ImageIcon },
         canViewHistory && { id: 'history', label: language === 'TH' ? 'ประวัติการรักษา' : 'Treatment History', icon: Calendar },
         canViewClinical && { id: 'appointments', label: language === 'TH' ? 'ประวัติการนัดหมาย' : 'Appointments', icon: ClipboardList },
-        canViewBilling && { id: 'billing', label: t('nav_billing'), icon: DollarSign, badge: unpaidTreatments.length > 0 ? unpaidTreatments.length : null },
+        canViewBilling && { id: 'billing', label: t('nav_billing'), icon: DollarSign, badge: totalUnpaidAmount > 0 ? `฿${totalUnpaidAmount.toLocaleString()}` : null },
     ].filter(Boolean);
 
     return (
@@ -453,33 +472,58 @@ const PatientProfile = () => {
                 </div>
 
                 {/* Right Content */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0', minWidth: 0 }}>
+
+
                     {/* Tabs */}
                     <div style={{ 
-                        display: 'flex', gap: '0.5rem', background: 'var(--neutral-50)', 
-                        padding: '0.5rem', borderRadius: '16px 16px 0 0', border: '1px solid var(--neutral-100)', borderBottom: 'none'
+                        display: 'flex', gap: '4px', 
+                        background: 'linear-gradient(180deg, #f8fafc, #f1f5f9)',
+                        padding: '6px', borderRadius: '18px 18px 0 0', 
+                        border: '1px solid var(--neutral-100)', borderBottom: 'none',
+                        overflowX: 'auto', scrollbarWidth: 'none',
+                        WebkitOverflowScrolling: 'touch',
                     }}>
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 style={{
-                                    flex: 1, padding: '0.85rem', border: 'none', cursor: 'pointer',
-                                    borderRadius: '12px',
-                                    background: activeTab === tab.id ? 'var(--neutral-900)' : 'transparent',
+                                    flex: '0 0 auto', padding: '0.75rem 1.1rem', border: 'none', cursor: 'pointer',
+                                    borderRadius: '12px', whiteSpace: 'nowrap',
+                                    background: activeTab === tab.id 
+                                        ? 'linear-gradient(135deg, var(--neutral-800), var(--neutral-900))' 
+                                        : 'transparent',
                                     color: activeTab === tab.id ? 'white' : 'var(--neutral-500)',
-                                    fontWeight: 800,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem',
-                                    position: 'relative', transition: 'all 0.2s ease',
-                                    boxShadow: activeTab === tab.id ? 'var(--shadow-md)' : 'none'
+                                    fontWeight: activeTab === tab.id ? 800 : 600,
+                                    fontSize: '0.82rem',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                                    position: 'relative', transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    boxShadow: activeTab === tab.id ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
+                                    fontFamily: 'var(--font-sans)',
                                 }}
+                                onMouseEnter={e => { if (activeTab !== tab.id) e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
+                                onMouseLeave={e => { if (activeTab !== tab.id) e.currentTarget.style.background = 'transparent'; }}
                             >
-                                <tab.icon size={16} />
+                                <tab.icon size={15} />
                                 {tab.label}
                                 {tab.badge && (
                                     <span style={{
-                                        background: 'var(--danger-500)', color: 'white', fontSize: '0.7rem',
-                                        padding: '2px 8px', borderRadius: '20px', marginLeft: '4px', fontWeight: 900
+                                        background: activeTab === tab.id 
+                                            ? 'rgba(239, 68, 68, 0.9)' 
+                                            : 'var(--danger)', 
+                                        color: 'white', 
+                                        fontSize: '0.7rem',
+                                        padding: '2px 7px', 
+                                        borderRadius: '20px', 
+                                        marginLeft: '4px', 
+                                        fontWeight: 900,
+                                        boxShadow: '0 2px 6px rgba(239, 68, 68, 0.3)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minWidth: '1.3rem',
+                                        lineHeight: 1.4,
                                     }}>
                                         {tab.badge}
                                     </span>
@@ -507,19 +551,7 @@ const PatientProfile = () => {
                             <AppointmentHistorySection patientId={patient.id} patientName={patient.name} appointments={appointments} language={language} />
                         )}
                         {activeTab === 'billing' && (
-                            <div>
-                                <div style={{ marginBottom: '2rem' }}>
-                                    <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--primary-700)' }}>
-                                        {language === 'TH' ? 'แผนการผ่อนชำระ (จัดฟัน)' : 'Orthodontic Installment Plan'}
-                                    </h3>
-                                    <InstallmentPlan patient={patient} language={language} onUpdate={updatePatient} />
-                                </div>
-                                <hr style={{ border: 'none', borderTop: '1px solid var(--neutral-200)', margin: '2rem 0' }} />
-                                <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--neutral-600)' }}>
-                                    {language === 'TH' ? 'รายการทั่วไป' : 'General Billing'}
-                                </h3>
-                                <BillingTab patient={patient} language={language} />
-                            </div>
+                            <BillingTab patient={patient} language={language} />
                         )}
                     </div>
                 </div>

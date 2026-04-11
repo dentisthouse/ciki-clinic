@@ -9,7 +9,8 @@ const InventoryModal = ({ isOpen, onClose, onSave, item }) => {
         category: 'Consumables',
         stock: 0,
         unit: 'Boxes',
-        reorderPoint: 10
+        reorderPoint: 10,
+        price: 0
     });
 
     useEffect(() => {
@@ -21,7 +22,8 @@ const InventoryModal = ({ isOpen, onClose, onSave, item }) => {
                 category: 'Consumables',
                 stock: 0,
                 unit: 'Boxes',
-                reorderPoint: 10
+                reorderPoint: 10,
+                price: 0
             });
         }
     }, [item, isOpen]);
@@ -124,16 +126,28 @@ const InventoryModal = ({ isOpen, onClose, onSave, item }) => {
                                 />
                             </div>
                         </div>
+
+                        <div className="form-group">
+                            <label className="form-label">{language === 'EN' ? 'Unit Price (THB)' : 'ราคาต่อหน่วย (บาท)'}</label>
+                            <input
+                                type="number"
+                                className="form-input"
+                                min="0"
+                                value={formData.price}
+                                onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                                placeholder="0.00"
+                            />
+                        </div>
                     </form>
                 </div>
 
                 {/* Modal Footer - FIXED AT BOTTOM */}
                 <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" style={{ padding: '0.85rem 2rem', borderRadius: '16px', fontWeight: 600 }} onClick={onClose}>
+                    <button type="button" className="btn btn-secondary" onClick={onClose}>
                         {t('btn_cancel')}
                     </button>
-                    <button type="submit" form="inv-form" className="btn btn-primary" style={{ padding: '0.85rem 2.5rem', borderRadius: '16px', fontWeight: 800, boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)' }}>
-                        <Save size={18} style={{ marginRight: '8px' }} />
+                    <button type="submit" form="inv-form" className="btn btn-primary">
+                        <Save size={20} />
                         {t('inv_form_save')}
                     </button>
                 </div>

@@ -126,7 +126,7 @@ const StaffModal = ({ staff, onSave, onClose, language }) => {
 
                 <div className="modal-footer">
                     <button type="button" className="btn btn-secondary" onClick={onClose}>{language === 'TH' ? 'ยกเลิก' : 'Cancel'}</button>
-                    <button type="submit" form="staff-form" className="btn btn-primary" style={{ padding: '0.7rem 2.5rem' }}>
+                    <button type="submit" form="staff-form" className="btn btn-primary">
                         {language === 'TH' ? 'บันทึกข้อมูล' : 'Save'}
                     </button>
                 </div>

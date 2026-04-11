@@ -1,6 +1,8 @@
-import { Plus, Trash2, Printer, CheckCircle, FileText, ChevronRight, AlertCircle, ChevronDown, MoreVertical, Clock, Calendar, Eraser } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Plus, Trash2, Printer, CheckCircle, FileText, ChevronRight, AlertCircle, ChevronDown, MoreVertical, Clock, Calendar, Eraser, Heart, Thermometer, Activity, Scale } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import DigitalToothChart from './DigitalToothChart';
 import TreatmentEntry from './TreatmentEntry';
 import HandwritingCanvas from '../Shared/HandwritingCanvas';
@@ -9,6 +11,7 @@ import { PenTool } from 'lucide-react';
 const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus }) => {
     const { t, language } = useLanguage();
     const { updatePatient, appointments } = useData();
+    const { staff } = useAuth();
     const [plans, setPlans] = useState(patient.treatmentPlans || []);
     const [activePlanId, setActivePlanId] = useState(null);
     const [selectedTeeth, setSelectedTeeth] = useState([]);
@@ -16,6 +19,7 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
     const [activeTool, setActiveTool] = useState('planning'); // 'planning' or status like 'missing'
     const [toothChart, setToothChart] = useState(patient.toothChart || {});
     const [showCanvas, setShowCanvas] = useState(false);
+    const [toothMode, setToothMode] = useState('adult'); // 'adult' or 'primary'
 
     // Dropdown State
     const [showPlanMenu, setShowPlanMenu] = useState(false);
@@ -23,6 +27,22 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
 
     // Get all teeth that have been treated
     const treatedTeeth = new Set((patient.treatments || []).flatMap(tr => tr.teeth || []));
+
+    // Get latest vitals from appointments
+    const latestVitalsApt = useMemo(() => {
+        return (appointments || [])
+            .filter(a => (a.patientId === patient.id || a.patient_id === patient.id) && a.vitals)
+            .sort((a, b) => {
+                const dateA = new Date(`${a.date || a.appointmentDate}T${a.time || a.appointmentTime || '00:00'}`);
+                const dateB = new Date(`${b.date || b.appointmentDate}T${b.time || b.appointmentTime || '00:00'}`);
+                return dateB - dateA;
+            })[0];
+    }, [appointments, patient.id]);
+
+    const vitals = latestVitalsApt?.vitals;
+    
+    // Capture the initial chart state for session-based visual highlighting
+    const initialChart = useMemo(() => patient.toothChart || {}, [patient.id]);
 
     useEffect(() => {
         setToothChart(patient.toothChart || {});
@@ -109,15 +129,28 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
                 if (onUpdateToothStatus) onUpdateToothStatus(newChart);
             } else {
                 // Whole tooth click in charting mode
-                if (activeTool === 'missing') {
-                    // Missing: toggle immediately (no surface needed)
+                const wholeToothTools = ['missing', 'extracted', 'rootCanal', 'crown', 'denture', 'implant', 'sealant', 'scaling', 'abscess', 'broken', 'bridge'];
+                
+                if (wholeToothTools.includes(activeTool)) {
+                    // Toggle immediately (no surface needed)
                     const currentStatus = toothChart[toothId]?.status;
-                    const newStatus = currentStatus === 'missing' ? 'present' : 'missing';
+                    const newStatus = currentStatus === activeTool ? 'normal' : activeTool;
                     const newChart = {
                         ...toothChart,
                         [toothId]: {
                             ...(toothChart[toothId] || {}),
                             status: newStatus
+                        }
+                    };
+                    setToothChart(newChart);
+                    if (onUpdateToothStatus) onUpdateToothStatus(newChart);
+                } else if (activeTool === 'clear') {
+                    // Reset tooth to normal
+                    const newChart = {
+                        ...toothChart,
+                        [toothId]: {
+                            surfaces: {},
+                            status: 'normal'
                         }
                     };
                     setToothChart(newChart);
@@ -137,7 +170,7 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
         { id: 'clear', label: language === 'TH' ? 'ลบ' : 'Clear', icon: Eraser, color: '#94a3b8' },
         { id: 'cavity', label: language === 'TH' ? 'ฟันผุ' : 'Cavity', color: '#ef4444' },
         { id: 'filled', label: language === 'TH' ? 'อุดฟัน' : 'Filled', color: '#3b82f6' },
-        { id: 'extracted', label: language === 'TH' ? 'ถอนฟัน' : 'Extracted', color: '#b91c1c' },
+        { id: 'extracted', label: language === 'TH' ? 'ถอนฟัน' : 'Extracted', color: '#eb5757' },
         { id: 'rootCanal', label: language === 'TH' ? 'รักษารากฟัน' : 'Root Canal', color: '#f59e0b' },
         { id: 'crown', label: language === 'TH' ? 'ครอบฟัน' : 'Crown', color: '#8b5cf6' },
         { id: 'denture', label: language === 'TH' ? 'ฟันปลอม' : 'Denture', color: '#0ea5e9' },
@@ -203,6 +236,39 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
             return p;
         });
 
+        // Update tooth chart status based on treatment
+        const newChart = { ...toothChart };
+        const procId = treatmentData.procedureId;
+        
+        let targetStatus = null;
+        if (procId.startsWith('fill_')) targetStatus = 'filled';
+        else if (procId.startsWith('extraction_')) targetStatus = 'extracted';
+        else if (procId.startsWith('rct_')) targetStatus = 'rootCanal';
+        else if (procId.startsWith('crown_')) targetStatus = 'crown';
+        else if (procId === 'cleaning') targetStatus = 'scaling';
+
+        if (targetStatus) {
+            selectedTeeth.forEach(tId => {
+                const currentTooth = newChart[tId] || { surfaces: {}, status: 'normal' };
+                const updatedSurfaces = { ...currentTooth.surfaces };
+
+                // If restorative, update specific surfaces
+                if (targetStatus === 'filled' && treatmentData.surfaces?.[tId]) {
+                    treatmentData.surfaces[tId].forEach(s => {
+                        updatedSurfaces[s] = 'filled';
+                    });
+                }
+
+                newChart[tId] = {
+                    ...currentTooth,
+                    status: targetStatus,
+                    surfaces: updatedSurfaces
+                };
+            });
+            setToothChart(newChart);
+            if (onUpdateToothStatus) onUpdateToothStatus(newChart);
+        }
+
         setPlans(updatedPlans);
         updatePatientPlans(updatedPlans);
         setSelectedTeeth([]);
@@ -259,6 +325,7 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
                 paymentStatus: 'unpaid',
                 status: 'planned',
                 category: item.category,
+                recorder: staff?.full_name || staff?.name || 'Clinic Staff',
                 note: `${language === 'TH' ? 'จากแผน' : 'From Plan'}: ${activePlan.name}`
             }));
 
@@ -282,94 +349,98 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: '600px' }}>
-
-            {/* Upcoming Appointments Banner */}
-            {(() => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const upcomingApts = (appointments || [])
-                    .filter(a => {
-                        const matchPatient = a.patientId === patient.id || a.patient_id === patient.id;
-                        if (!matchPatient) return false;
-                        const aptDate = new Date(a.date || a.appointmentDate);
-                        return aptDate >= today && a.status !== 'Cancelled' && a.status !== 'Completed';
-                    })
-                    .sort((a, b) => new Date(a.date || a.appointmentDate) - new Date(b.date || b.appointmentDate))
-                    .slice(0, 3);
-
-                if (upcomingApts.length === 0) return null;
-
-                return (
-                    <div style={{
-                        background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
-                        border: '1.5px solid #93c5fd',
-                        borderRadius: '16px',
-                        padding: '1.25rem 1.5rem',
-                        position: 'relative',
-                        overflow: 'hidden'
+            
+            {/* Latest Vitals Display - Safety Check for Procedures */}
+            {vitals && (
+                <div style={{ 
+                    background: 'white', 
+                    borderRadius: '20px', 
+                    border: '1px solid #e2e8f0', 
+                    overflow: 'hidden',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02)'
+                }}>
+                    <div style={{ 
+                        padding: '1rem 1.5rem', 
+                        background: 'linear-gradient(90deg, #f8fafc 0%, #ffffff 100%)', 
+                        borderBottom: '1px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
                     }}>
-                        <div style={{
-                            position: 'absolute', top: '-20px', right: '-10px',
-                            width: '80px', height: '80px', borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.08)'
-                        }} />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                            <Calendar size={16} color="#2563eb" />
-                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e40af' }}>
-                                {language === 'TH' ? `🔔 นัดหมายที่กำลังจะมาถึง (${upcomingApts.length})` : `🔔 Upcoming Appointments (${upcomingApts.length})`}
-                            </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, color: '#1e293b', fontSize: '0.95rem' }}>
+                            <div style={{ 
+                                width: '32px', height: '32px', borderRadius: '10px', background: '#f0f9ff', 
+                                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                            }}>
+                                <Activity size={18} color="#0ea5e9" />
+                            </div>
+                            {language === 'TH' ? 'ข้อมูลคนไข้ก่อนรับบริการ (เพื่อความปลอดภัยในการรักษา)' : 'Pre-service Vitals (Safety Check)'}
                         </div>
-                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                            {upcomingApts.map((apt, i) => {
-                                const aptDate = apt.date || apt.appointmentDate || '';
-                                const aptTime = apt.time || apt.appointmentTime || '';
-                                const service = apt.service || apt.treatment || apt.type || '-';
-                                const doctor = apt.doctor || apt.dentist || '';
-                                const isToday = aptDate === new Date().toISOString().split('T')[0];
-                                return (
-                                    <div key={apt.id || i} style={{
-                                        flex: '1 1 200px',
-                                        background: 'white',
-                                        borderRadius: '12px',
-                                        padding: '0.85rem 1rem',
-                                        border: isToday ? '1.5px solid #22c55e' : '1px solid #e2e8f0',
-                                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                                        position: 'relative'
-                                    }}>
-                                        {isToday && (
-                                            <span style={{
-                                                position: 'absolute', top: '-8px', right: '8px',
-                                                padding: '2px 8px', background: '#22c55e', color: 'white',
-                                                borderRadius: '6px', fontSize: '0.6rem', fontWeight: 900
-                                            }}>
-                                                {language === 'TH' ? 'วันนี้' : 'TODAY'}
-                                            </span>
-                                        )}
-                                        <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.35rem' }}>
-                                            {service}
-                                        </div>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
-                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                                <Calendar size={11} /> {aptDate}
-                                            </span>
-                                            {aptTime && (
-                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                                    <Clock size={11} /> {aptTime}
-                                                </span>
-                                            )}
-                                            {doctor && (
-                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                                    👨‍⚕️ {doctor}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#64748b', background: '#f1f5f9', padding: '4px 12px', borderRadius: '20px' }}>
+                            <Calendar size={12} />
+                            {latestVitalsApt.date} • <Clock size={12} style={{ marginLeft: '4px' }} /> {latestVitalsApt.time}
                         </div>
                     </div>
-                );
-            })()}
+                    <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1.5rem' }}>
+                        {vitals.weight && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'น้ำหนัก (กก.)' : 'Weight (kg)'}</span>
+                                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b' }}>{vitals.weight}</span>
+                            </div>
+                        )}
+                        {vitals.height && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'ส่วนสูง (ซม.)' : 'Height (cm)'}</span>
+                                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b' }}>{vitals.height}</span>
+                            </div>
+                        )}
+                        {(vitals.bp_high || vitals.bp_low) && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'ความดันเลือด' : 'Blood Pressure'}</span>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: (parseInt(vitals.bp_high) > 140 || parseInt(vitals.bp_low) > 90) ? '#ef4444' : '#1e293b' }}>
+                                        {vitals.bp_high || '-'}/{vitals.bp_low || '-'}
+                                    </span>
+                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 500 }}>mmHg</span>
+                                </div>
+                            </div>
+                        )}
+                        {vitals.temperature && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'อุณหภูมิ' : 'Temp'}</span>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: parseFloat(vitals.temperature) > 37.5 ? '#ef4444' : '#1e293b' }}>{vitals.temperature}</span>
+                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 500 }}>°C</span>
+                                </div>
+                            </div>
+                        )}
+                        {vitals.pulse && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'ชีพจร' : 'Pulse'}</span>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: (parseInt(vitals.pulse) > 100 || parseInt(vitals.pulse) < 60) ? '#f59e0b' : '#1e293b' }}>{vitals.pulse}</span>
+                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 500 }}>bpm</span>
+                                </div>
+                            </div>
+                        )}
+                        {vitals.notes && (
+                            <div style={{ gridColumn: '1 / -1', borderTop: '1px dashed #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                    <FileText size={14} /> {language === 'TH' ? 'หมายเหตุทางการแพทย์' : 'Medical Notes'}
+                                </span>
+                                <div style={{ 
+                                    padding: '0.75rem 1rem', background: '#fff7ed', borderRadius: '10px', 
+                                    border: '1px solid #fed7aa', color: '#9a3412', fontSize: '0.9rem',
+                                    fontWeight: 500
+                                }}>
+                                    {vitals.notes}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
 
             {/* Header with Top Dropdown for Plans */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '1rem', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
@@ -484,8 +555,8 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
                         🦷 แผนภูมิฟัน (Dental Chart)
                     </div>
                     <div style={{ display: 'flex', gap: '0.25rem', background: 'rgba(255,255,255,0.2)', padding: '4px', borderRadius: '8px' }}>
-                        <button style={{ background: 'white', color: '#3b82f6', border: 'none', padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>ฟันแท้</button>
-                        <button style={{ background: 'transparent', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>ฟันน้ำนม</button>
+                        <button onClick={() => setToothMode('adult')} style={{ background: toothMode === 'adult' ? 'white' : 'transparent', color: toothMode === 'adult' ? '#3b82f6' : 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: toothMode === 'adult' ? 700 : 600, cursor: 'pointer' }}>ฟันแท้</button>
+                        <button onClick={() => setToothMode('primary')} style={{ background: toothMode === 'primary' ? 'white' : 'transparent', color: toothMode === 'primary' ? '#3b82f6' : 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: toothMode === 'primary' ? 700 : 600, cursor: 'pointer' }}>ฟันน้ำนม</button>
                     </div>
                 </div>
 
@@ -529,7 +600,9 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
                     onToothSelect={handleToothSelect}
                     selectedTeeth={selectedTeeth}
                     toothChart={toothChart}
+                    initialChart={initialChart}
                     treatedTeeth={Array.from(treatedTeeth)}
+                    mode={toothMode}
                 />
             </div>
 
@@ -537,7 +610,7 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
                 {/* Left: Input */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     {/* Treatment Entry */}
-                    {activeTool === 'planning' && (
+                    {(activeTool === 'planning' || ['filled', 'extracted', 'rootCanal', 'crown', 'scaling'].includes(activeTool)) && (
                         <div className="card" style={{ padding: '0' }}>
                             <div style={{ padding: '1rem', borderBottom: '1px solid var(--neutral-100)', fontWeight: 600 }}>
                                 {t('trt_add_title')}
@@ -547,7 +620,7 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
                                     onAddTreatment={handleAddTreatmentToPlan}
                                     selectedTeeth={selectedTeeth}
                                     selectedSurfaces={selectedSurfaces}
-                                    language={language}
+                                    activeTool={activeTool}
                                 />
                             </div>
                         </div>
@@ -581,7 +654,27 @@ const TreatmentPlanTab = ({ patient, language: propsLang, onUpdateToothStatus })
                                 <tbody>
                                     {activePlan.items.map((item, i) => (
                                         <tr key={i} style={{ borderBottom: '1px solid var(--neutral-50)' }}>
-                                            <td style={{ padding: '0.75rem 0', fontWeight: 600, color: '#1e40af' }}>
+                                             <td style={{ 
+                                                 padding: '0.75rem 0', 
+                                                 fontWeight: 600, 
+                                                 color: item.procedureId?.includes('fill_') ? '#3b82f6' : 
+                                                        item.procedureId?.includes('extrac') ? '#ef4444' :
+                                                        item.procedureId?.includes('rct_') ? '#f59e0b' :
+                                                        item.procedureId?.includes('crown_') ? '#8b5cf6' :
+                                                        '#1e40af',
+                                                 display: 'flex', 
+                                                 alignItems: 'center', 
+                                                 gap: '8px' 
+                                             }}>
+                                                 <div style={{ 
+                                                     width: 8, height: 8, borderRadius: '50%', 
+                                                     background: item.procedureId?.includes('fill_') ? '#3b82f6' : 
+                                                        item.procedureId?.includes('extrac') ? '#ef4444' :
+                                                        item.procedureId?.includes('rct_') ? '#f59e0b' :
+                                                        item.procedureId?.includes('crown_') ? '#8b5cf6' :
+                                                        '#1e40af'
+                                                 }}></div>
+
                                                 {item.teeth && item.teeth.length > 0 ? item.teeth.join(', ') : '-'}
                                             </td>
                                             <td style={{ padding: '0.75rem 0' }}>

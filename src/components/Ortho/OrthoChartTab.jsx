@@ -1,106 +1,193 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Save, RotateCcw, Zap, Clipboard, Circle, CheckCircle } from 'lucide-react';
+import { Save, RotateCcw, Zap, Clipboard, CheckCircle } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────
 const UPPER_TEETH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 
 const STATUS_CONFIG = {
-    normal: { color: '#cbd5e1', fill: '#f8fafc', label: 'Normal', labelTH: 'ปกติ', icon: '🦷', bg: '#f1f5f9' },
-    bonded: { color: '#0d9488', fill: '#ccfbf1', label: 'Bonded', labelTH: 'ติดเหล็ก', icon: '🔲', bg: '#ccfbf1' },
-    banded: { color: '#6366f1', fill: '#e0e7ff', label: 'Banded', labelTH: 'ใส่แหวน', icon: '💍', bg: '#e0e7ff' },
-    extracted: { color: '#ef4444', fill: '#fee2e2', label: 'Extracted', labelTH: 'ถอนแล้ว', icon: '❌', bg: '#fee2e2' },
-    impacted: { color: '#f59e0b', fill: '#fef3c7', label: 'Impacted', labelTH: 'ฟันคุด', icon: '⚠️', bg: '#fef3c7' },
+    normal:    { color: '#94a3b8', fill: '#ffffff', accent: '#e2e8f0', label: 'Normal',    labelTH: 'ปกติ',       icon: '🦷', gradient: 'linear-gradient(145deg, #f8fafc, #e2e8f0)' },
+    bonded:    { color: '#0d9488', fill: '#ccfbf1', accent: '#5eead4', label: 'Bonded',    labelTH: 'ติดเหล็ก',   icon: '🔲', gradient: 'linear-gradient(145deg, #f0fdfa, #ccfbf1)' },
+    banded:    { color: '#7c3aed', fill: '#ede9fe', accent: '#a78bfa', label: 'Banded',    labelTH: 'ใส่แหวน',    icon: '💍', gradient: 'linear-gradient(145deg, #f5f3ff, #ede9fe)' },
+    extracted: { color: '#ef4444', fill: '#fee2e2', accent: '#fca5a5', label: 'Extracted', labelTH: 'ถอนแล้ว',   icon: '❌', gradient: 'linear-gradient(145deg, #fef2f2, #fee2e2)' },
+    impacted:  { color: '#f59e0b', fill: '#fef3c7', accent: '#fcd34d', label: 'Impacted',  labelTH: 'ฟันคุด',     icon: '⚠️', gradient: 'linear-gradient(145deg, #fffbeb, #fef3c7)' },
 };
 
 const INITIAL_TEETH = [...UPPER_TEETH, ...LOWER_TEETH].map(num => ({
     id: num, status: 'normal',
 }));
 
-// ── Single Tooth SVG ───────────────────────────────────────────────────
-const ToothSVG = ({ tooth, isUpper, isSelected, onClick }) => {
+// ── Anatomical Tooth SVG Shapes ────────────────────────────────────────
+const getToothShape = (id, isUpper) => {
+    const num = id % 10;
+    // Molars
+    if (num >= 6) return isUpper
+        ? "M8,42 Q4,36 6,16 Q9,2 22,0 L32,6 L42,0 Q55,2 58,16 Q60,36 56,42 Q32,48 8,42Z"
+        : "M8,6 Q4,12 6,32 Q9,46 22,48 L32,42 L42,48 Q55,46 58,32 Q60,12 56,6 Q32,0 8,6Z";
+    // Premolars
+    if (num >= 4) return isUpper
+        ? "M12,40 Q8,32 10,14 Q14,0 32,0 Q50,0 54,14 Q56,32 52,40 Q32,46 12,40Z"
+        : "M12,6 Q8,14 10,32 Q14,46 32,46 Q50,46 54,32 Q56,14 52,6 Q32,0 12,6Z";
+    // Canines
+    if (num === 3) return isUpper
+        ? "M16,40 Q12,28 18,12 Q22,-2 32,-6 Q42,-2 46,12 Q52,28 48,40 Q32,46 16,40Z"
+        : "M16,6 Q12,18 18,34 Q22,48 32,52 Q42,48 46,34 Q52,18 48,6 Q32,0 16,6Z";
+    // Incisors
+    return isUpper
+        ? "M10,38 Q8,28 10,12 Q14,-2 32,-2 Q50,-2 54,12 Q56,28 54,38 Q32,44 10,38Z"
+        : "M10,8 Q8,18 10,34 Q14,48 32,48 Q50,48 54,34 Q56,18 54,8 Q32,2 10,8Z";
+};
+
+const getToothWidth = (id) => {
+    const num = id % 10;
+    if (num >= 6) return 52;
+    if (num >= 4) return 42;
+    if (num === 3) return 38;
+    return 38;
+};
+
+// ── Single Tooth Component ─────────────────────────────────────────────
+const OrthoTooth = ({ tooth, isUpper, isSelected, onClick }) => {
     const cfg = STATUS_CONFIG[tooth.status];
-    const isAnterior = [13, 12, 11, 21, 22, 23, 43, 42, 41, 31, 32, 33].includes(tooth.id);
-    const isMolar = [18, 17, 16, 28, 27, 26, 48, 47, 46, 38, 37, 36].includes(tooth.id);
-    const w = isMolar ? 36 : isAnterior ? 24 : 28;
-    const h = isMolar ? 38 : isAnterior ? 44 : 36;
+    const w = getToothWidth(tooth.id);
+    const isExtracted = tooth.status === 'extracted';
+    const [hover, setHover] = useState(false);
 
     return (
-        <g onClick={onClick} style={{ cursor: 'pointer' }}>
-            {/* Glow effect */}
-            {isSelected && (
-                <rect x={-w / 2 - 4} y={-h / 2 - 4} width={w + 8} height={h + 8} rx={12}
-                    fill="none" stroke="#0d9488" strokeWidth={1} opacity={0.3}
-                    style={{ filter: 'blur(3px)' }}
-                />
-            )}
-
-
-            {/* Crown shape */}
-            <rect
-                x={-w / 2} y={-h / 2} width={w} height={h}
-                rx={isMolar ? 5 : 7}
-                fill={tooth.status !== 'normal' ? cfg.fill : 'white'}
-                stroke={isSelected ? '#0d9488' : tooth.status !== 'normal' ? cfg.color : '#e2e8f0'}
-                strokeWidth={isSelected ? 2 : 1.2}
-            />
-
-            {/* Root lines */}
+        <div
+            onClick={onClick}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: `${w}px`,
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transform: isSelected ? 'scale(1.12)' : hover ? 'scale(1.05)' : 'scale(1)',
+                zIndex: isSelected ? 50 : hover ? 10 : 1,
+                position: 'relative',
+            }}
+        >
+            {/* Tooth number - top for upper */}
             {isUpper && (
-                <>
-                    <line x1={-2} y1={h / 2} x2={-2} y2={h / 2 + 10} stroke="#e2e8f0" strokeWidth={1} strokeLinecap="round" />
-                    {isMolar && <line x1={3} y1={h / 2} x2={3} y2={h / 2 + 8} stroke="#e2e8f0" strokeWidth={1} strokeLinecap="round" />}
-                </>
+                <span style={{
+                    fontSize: '10px', fontWeight: 800,
+                    color: isSelected ? '#0d9488' : tooth.status !== 'normal' ? cfg.color : '#94a3b8',
+                    background: isSelected ? '#f0fdfa' : 'transparent',
+                    padding: '2px 6px', borderRadius: '8px',
+                    marginBottom: '3px', transition: 'all 0.2s',
+                    fontFamily: 'var(--font-display)',
+                }}>{tooth.id}</span>
             )}
+
+            {/* Crown SVG */}
+            <div style={{
+                position: 'relative',
+                padding: isSelected ? '3px' : '2px',
+                borderRadius: '10px',
+                background: isSelected ? 'rgba(13,148,136,0.08)' : 'transparent',
+                transition: 'all 0.3s',
+                filter: isSelected ? 'drop-shadow(0 4px 12px rgba(13,148,136,0.25))' : hover ? 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))' : 'none',
+            }}>
+                <svg width={w - 4} height="46" viewBox="0 -6 64 56" style={{ display: 'block', overflow: 'visible' }}>
+                    <defs>
+                        <linearGradient id={`ortho-grad-${tooth.id}`} x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor={tooth.status !== 'normal' ? cfg.fill : '#ffffff'} />
+                            <stop offset="100%" stopColor={tooth.status !== 'normal' ? cfg.accent : '#f1f5f9'} />
+                        </linearGradient>
+                        <filter id={`ortho-glow-${tooth.id}`}>
+                            <feGaussianBlur stdDeviation="2" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+
+                    {/* Crown shape */}
+                    <path
+                        d={getToothShape(tooth.id, isUpper)}
+                        fill={`url(#ortho-grad-${tooth.id})`}
+                        stroke={isSelected ? '#0d9488' : tooth.status !== 'normal' ? cfg.color : '#d1d5db'}
+                        strokeWidth={isSelected ? '2.5' : '1.5'}
+                        style={{ transition: 'all 0.3s' }}
+                    />
+
+                    {/* Bracket (bonded) */}
+                    {tooth.status === 'bonded' && (
+                        <g>
+                            {/* Bracket base */}
+                            <rect x="22" y="16" width="20" height="14" rx="3"
+                                fill="#0f766e" stroke="#0a5e58" strokeWidth="0.8" />
+                            {/* Bracket slot */}
+                            <rect x="24" y="21" width="16" height="3" rx="1"
+                                fill="#115e59" />
+                            {/* Bracket wings */}
+                            <rect x="19" y="19" width="4" height="8" rx="1.5"
+                                fill="#14b8a6" />
+                            <rect x="41" y="19" width="4" height="8" rx="1.5"
+                                fill="#14b8a6" />
+                            {/* Wire through bracket */}
+                            <line x1="6" y1="22.5" x2="58" y2="22.5"
+                                stroke="#5eead4" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                        </g>
+                    )}
+
+                    {/* Band ring (banded) */}
+                    {tooth.status === 'banded' && (
+                        <g>
+                            <rect x="10" y="14" width={w - 20} height="18" rx="4"
+                                fill="none" stroke="#7c3aed" strokeWidth="2.5" strokeDasharray="4 2" />
+                            <rect x="24" y="18" width="16" height="10" rx="2"
+                                fill="#7c3aed" opacity="0.2" />
+                        </g>
+                    )}
+
+                    {/* X mark (extracted) */}
+                    {isExtracted && (
+                        <g opacity={0.8}>
+                            <line x1="14" y1="8" x2="50" y2="38" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" />
+                            <line x1="50" y1="8" x2="14" y2="38" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" />
+                        </g>
+                    )}
+
+                    {/* Impacted triangle */}
+                    {tooth.status === 'impacted' && (
+                        <g>
+                            <polygon points="24,30 40,30 32,14" fill="#f59e0b" stroke="#d97706" strokeWidth="1" opacity="0.8" />
+                            <text x="32" y="28" textAnchor="middle" fontSize="8" fill="white" fontWeight="bold">!</text>
+                        </g>
+                    )}
+                </svg>
+            </div>
+
+            {/* Tooth number - bottom for lower */}
             {!isUpper && (
-                <>
-                    <line x1={-2} y1={-h / 2} x2={-2} y2={-h / 2 - 10} stroke="#e2e8f0" strokeWidth={1} strokeLinecap="round" />
-                    {isMolar && <line x1={3} y1={-h / 2} x2={3} y2={-h / 2 - 8} stroke="#e2e8f0" strokeWidth={1} strokeLinecap="round" />}
-                </>
+                <span style={{
+                    fontSize: '10px', fontWeight: 800,
+                    color: isSelected ? '#0d9488' : tooth.status !== 'normal' ? cfg.color : '#94a3b8',
+                    background: isSelected ? '#f0fdfa' : 'transparent',
+                    padding: '2px 6px', borderRadius: '8px',
+                    marginTop: '3px', transition: 'all 0.2s',
+                    fontFamily: 'var(--font-display)',
+                }}>{tooth.id}</span>
             )}
 
-            {/* Bracket (bonded) */}
-            {tooth.status === 'bonded' && (
-                <g>
-                    <rect x={-5} y={-3.5} width={10} height={7} rx={1.5}
-                        fill="#0d9488" stroke="#0f766e" strokeWidth={0.5} />
-                    <line x1={-w / 2 + 2} y1={0} x2={w / 2 - 2} y2={0}
-                        stroke="#0f766e" strokeWidth={1.2} />
-                </g>
+            {/* Selection ring animation */}
+            {isSelected && (
+                <div style={{
+                    position: 'absolute',
+                    inset: '-4px',
+                    border: '2px solid rgba(13,148,136,0.3)',
+                    borderRadius: '14px',
+                    animation: 'ortho-pulse 2s ease-in-out infinite',
+                    pointerEvents: 'none',
+                }} />
             )}
-
-            {/* Band ring (banded) */}
-            {tooth.status === 'banded' && (
-                <rect x={-w / 2 + 1.5} y={-4} width={w - 3} height={8} rx={2}
-                    fill="none" stroke="#6366f1" strokeWidth={2} strokeDasharray="3 2" />
-            )}
-
-            {/* X mark (extracted) */}
-            {tooth.status === 'extracted' && (
-                <g opacity={0.7}>
-                    <line x1={-7} y1={-7} x2={7} y2={7} stroke="#ef4444" strokeWidth={2.5} strokeLinecap="round" />
-                    <line x1={7} y1={-7} x2={-7} y2={7} stroke="#ef4444" strokeWidth={2.5} strokeLinecap="round" />
-                </g>
-            )}
-
-            {/* Triangle (impacted) */}
-            {tooth.status === 'impacted' && (
-                <polygon points="-5,4 5,4 0,-5" fill="#f59e0b" stroke="#d97706" strokeWidth={0.8} />
-            )}
-
-            {/* Tooth number */}
-            <text y={isUpper ? -h / 2 - 6 : h / 2 + 12}
-                textAnchor="middle" fontSize="9" fontWeight="600"
-                fill={tooth.status !== 'normal' ? cfg.color : '#94a3b8'}
-                fontFamily="var(--font-sans)"
-            >
-                {tooth.id}
-            </text>
-        </g>
+        </div>
     );
 };
 
-// ── Popover ────────────────────────────────────────────────────────────
+// ── Status Popover ────────────────────────────────────────────────────
 const StatusPopover = ({ pos, toothId, onSelect, onClose, language }) => {
     const ref = useRef(null);
     useEffect(() => {
@@ -111,28 +198,53 @@ const StatusPopover = ({ pos, toothId, onSelect, onClose, language }) => {
 
     return (
         <div ref={ref} style={{
-            position: 'fixed', top: pos.y, left: pos.x, zIndex: 9999,
-            background: 'white', borderRadius: '14px', padding: '6px',
-            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04)',
-            minWidth: '190px', animation: 'popIn 0.18s ease-out',
+            position: 'absolute', top: pos.y, left: pos.x, zIndex: 9999,
+            background: 'rgba(255,255,255,0.97)', borderRadius: '18px', padding: '8px',
+            boxShadow: '0 25px 60px -12px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.04)',
+            backdropFilter: 'blur(20px)',
+            minWidth: '220px', animation: 'ortho-pop-in 0.2s ease-out',
         }}>
-            <div style={{ padding: '8px 12px 6px', fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                {language === 'TH' ? `ซี่ #${toothId}` : `Tooth #${toothId}`}
+            {/* Header */}
+            <div style={{
+                padding: '10px 14px 8px', fontSize: '0.7rem', fontWeight: 800,
+                color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.12em',
+                display: 'flex', alignItems: 'center', gap: '8px',
+                fontFamily: 'var(--font-display)',
+            }}>
+                <span style={{
+                    width: '28px', height: '28px', borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #0d9488, #14b8a6)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '12px', color: 'white', fontWeight: 900,
+                }}>{toothId}</span>
+                {language === 'TH' ? `สถานะซี่ที่ ${toothId}` : `Tooth #${toothId} Status`}
             </div>
+
+            <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, #e2e8f0, transparent)', margin: '2px 12px 6px' }} />
+
+            {/* Status options */}
             {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
                 <button key={key} onClick={() => onSelect(key)} style={{
-                    display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
-                    padding: '9px 12px', border: 'none', background: 'transparent',
-                    borderRadius: '10px', cursor: 'pointer', fontSize: '0.85rem',
-                    fontWeight: 500, color: '#334155', fontFamily: 'var(--font-sans)',
+                    display: 'flex', alignItems: 'center', gap: '12px', width: '100%',
+                    padding: '10px 14px', border: 'none', background: 'transparent',
+                    borderRadius: '12px', cursor: 'pointer', fontSize: '0.87rem',
+                    fontWeight: 600, color: '#334155', fontFamily: 'var(--font-sans)',
                     transition: 'all 0.15s',
                 }}
-                    onMouseEnter={e => { e.currentTarget.style.background = cfg.bg; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={e => { e.currentTarget.style.background = cfg.gradient; e.currentTarget.style.transform = 'translateX(4px)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}
                 >
-                    <span style={{ width: '24px', textAlign: 'center', fontSize: '0.95rem' }}>{cfg.icon}</span>
-                    <span>{language === 'TH' ? cfg.labelTH : cfg.label}</span>
-                    <span style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: cfg.color }} />
+                    <span style={{
+                        width: '32px', height: '32px', borderRadius: '10px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '1rem', background: cfg.fill,
+                        border: `1.5px solid ${cfg.color}30`,
+                    }}>{cfg.icon}</span>
+                    <span style={{ flex: 1 }}>{language === 'TH' ? cfg.labelTH : cfg.label}</span>
+                    <span style={{
+                        width: '10px', height: '10px', borderRadius: '50%', background: cfg.color,
+                        boxShadow: `0 0 8px ${cfg.color}40`,
+                    }} />
                 </button>
             ))}
         </div>
@@ -151,17 +263,30 @@ const OrthoChartTab = ({ patient, language, onUpdate }) => {
     const [notes, setNotes] = useState(patient?.orthoNotes || '');
 
     const phases = [
-        { id: 'Leveling', label: language === 'TH' ? 'เรียงฟัน' : 'Leveling', emoji: '📐' },
-        { id: 'Space Closure', label: language === 'TH' ? 'ปิดช่องว่าง' : 'Space Closure', emoji: '🔗' },
-        { id: 'Finishing', label: language === 'TH' ? 'เก็บรายละเอียด' : 'Finishing', emoji: '✨' },
-        { id: 'Retention', label: language === 'TH' ? 'รีเทนเนอร์' : 'Retention', emoji: '🛡️' },
+        { id: 'Leveling', label: language === 'TH' ? 'เรียงฟัน' : 'Leveling', emoji: '📐', desc: language === 'TH' ? 'จัดเรียงฟันให้ตรง' : 'Aligning teeth' },
+        { id: 'Space Closure', label: language === 'TH' ? 'ปิดช่องว่าง' : 'Space Closure', emoji: '🔗', desc: language === 'TH' ? 'ปิดช่องว่างระหว่างฟัน' : 'Closing gaps' },
+        { id: 'Finishing', label: language === 'TH' ? 'เก็บรายละเอียด' : 'Finishing', emoji: '✨', desc: language === 'TH' ? 'ปรับตำแหน่งสุดท้าย' : 'Final adjustments' },
+        { id: 'Retention', label: language === 'TH' ? 'รีเทนเนอร์' : 'Retention', emoji: '🛡️', desc: language === 'TH' ? 'คงสภาพหลังจัดฟัน' : 'Maintaining position' },
     ];
     const phaseIdx = phases.findIndex(p => p.id === phase);
 
+    const containerRef = useRef(null);
+
     const handleToothClick = (id, e) => {
-        const r = e.currentTarget.getBoundingClientRect ? e.currentTarget.getBoundingClientRect() : e.target.getBoundingClientRect();
+        const r = e.currentTarget.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+        
+        // Calculate relative position within the container
+        let x = r.left - containerRect.left + r.width / 2 - 110;
+        let y = r.bottom - containerRect.top + 10;
+        
+        // Clamping to stay within viewport
+        const minX = -containerRect.left + 10;
+        const maxX = window.innerWidth - containerRect.left - 230;
+        x = Math.max(minX, Math.min(x, maxX));
+
         setSelectedId(id);
-        setPopPos({ x: Math.min(r.left + r.width / 2, window.innerWidth - 210), y: r.top + r.height + 8 });
+        setPopPos({ x, y });
     };
 
     const handleSelect = (status) => {
@@ -183,48 +308,79 @@ const OrthoChartTab = ({ patient, language, onUpdate }) => {
     const bandedC = teeth.filter(t => t.status === 'banded').length;
     const extractC = teeth.filter(t => t.status === 'extracted').length;
     const impactC = teeth.filter(t => t.status === 'impacted').length;
-    const spacing = 44;
-    const svgW = 16 * spacing + 40;
+    const totalActive = bondedC + bandedC;
 
     return (
-        <div className="animate-slide-up">
+        <div className="animate-slide-up" ref={containerRef} style={{ position: 'relative' }}>
 
-            {/* ── Phase Progress ────────────────────────────────── */}
+            {/* ── Phase Progress ─────────────────────────────── */}
             <div style={{
-                background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%)',
-                borderRadius: '16px', padding: '1.5rem 2rem', marginBottom: '1.5rem',
+                background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 40%, #14b8a6 70%, #2dd4bf 100%)',
+                borderRadius: '20px', padding: '2rem 2.5rem', marginBottom: '1.75rem',
                 color: 'white', position: 'relative', overflow: 'hidden',
             }}>
-                {/* Decorative circles */}
-                <div style={{ position: 'absolute', top: '-30px', right: '-20px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
-                <div style={{ position: 'absolute', bottom: '-40px', left: '30%', width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+                {/* Decorative elements */}
+                <div style={{ position: 'absolute', top: '-40px', right: '-30px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+                <div style={{ position: 'absolute', bottom: '-50px', left: '20%', width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
+                <div style={{ position: 'absolute', top: '30%', left: '-20px', width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem', position: 'relative' }}>
-                    <Zap size={18} />
-                    <span style={{ fontWeight: 700, fontSize: '1rem', fontFamily: 'var(--font-display)' }}>
-                        {language === 'TH' ? 'ระยะการรักษา' : 'Treatment Phase'}
-                    </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem', position: 'relative' }}>
+                    <div style={{
+                        width: '36px', height: '36px', borderRadius: '12px',
+                        background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                        <Zap size={18} />
+                    </div>
+                    <div>
+                        <span style={{ fontWeight: 800, fontSize: '1.05rem', fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
+                            {language === 'TH' ? 'ระยะการรักษา' : 'Treatment Phase'}
+                        </span>
+                        <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '2px' }}>
+                            {phases[phaseIdx]?.desc}
+                        </div>
+                    </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '4px', position: 'relative' }}>
+                {/* Phase Steps */}
+                <div style={{ display: 'flex', gap: '6px', position: 'relative' }}>
+                    {/* Connector line behind buttons */}
+                    <div style={{
+                        position: 'absolute', top: '24px', left: '10%', right: '10%',
+                        height: '2px', background: 'rgba(255,255,255,0.15)',
+                    }} />
+                    <div style={{
+                        position: 'absolute', top: '24px', left: '10%',
+                        height: '2px', background: 'rgba(255,255,255,0.6)',
+                        width: `${(phaseIdx / (phases.length - 1)) * 80}%`,
+                        transition: 'width 0.6s ease',
+                    }} />
+
                     {phases.map((p, i) => (
                         <button key={p.id} onClick={() => setPhase(p.id)} style={{
-                            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
-                            padding: '12px 8px', border: 'none', cursor: 'pointer',
-                            borderRadius: '12px', transition: 'all 0.3s', fontFamily: 'var(--font-sans)',
-                            background: i === phaseIdx ? 'rgba(255,255,255,0.25)' : i < phaseIdx ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)',
-                            color: 'white', backdropFilter: 'blur(4px)',
+                            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+                            padding: '12px 6px 10px', border: 'none', cursor: 'pointer',
+                            borderRadius: '14px', transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                            fontFamily: 'var(--font-sans)',
+                            background: i === phaseIdx ? 'rgba(255,255,255,0.22)' : i < phaseIdx ? 'rgba(255,255,255,0.08)' : 'transparent',
+                            color: 'white', backdropFilter: i === phaseIdx ? 'blur(8px)' : 'none',
+                            transform: i === phaseIdx ? 'scale(1.04)' : 'scale(1)',
                         }}>
                             <div style={{
-                                width: '32px', height: '32px', borderRadius: '50%',
+                                width: '36px', height: '36px', borderRadius: '50%',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 background: i <= phaseIdx ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.08)',
-                                fontSize: '0.95rem', transition: 'all 0.3s',
-                                boxShadow: i === phaseIdx ? '0 0 12px rgba(255,255,255,0.3)' : 'none',
+                                fontSize: '1rem', transition: 'all 0.35s',
+                                boxShadow: i === phaseIdx ? '0 0 20px rgba(255,255,255,0.3)' : 'none',
+                                border: i <= phaseIdx ? '2px solid rgba(255,255,255,0.35)' : '2px solid transparent',
                             }}>
-                                {i < phaseIdx ? <CheckCircle size={16} /> : p.emoji}
+                                {i < phaseIdx ? <CheckCircle size={18} /> : p.emoji}
                             </div>
-                            <span style={{ fontSize: '0.75rem', fontWeight: i === phaseIdx ? 700 : 400, opacity: i <= phaseIdx ? 1 : 0.5 }}>
+                            <span style={{
+                                fontSize: '0.72rem', fontWeight: i === phaseIdx ? 800 : 500,
+                                opacity: i <= phaseIdx ? 1 : 0.45,
+                                letterSpacing: i === phaseIdx ? '0.01em' : '0',
+                            }}>
                                 {p.label}
                             </span>
                         </button>
@@ -232,101 +388,167 @@ const OrthoChartTab = ({ patient, language, onUpdate }) => {
                 </div>
 
                 {/* Progress bar */}
-                <div style={{ height: '3px', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', marginTop: '1rem', overflow: 'hidden' }}>
+                <div style={{
+                    height: '4px', background: 'rgba(255,255,255,0.12)', borderRadius: '4px',
+                    marginTop: '1.25rem', overflow: 'hidden',
+                }}>
                     <div style={{
                         height: '100%', borderRadius: '4px',
-                        background: 'rgba(255,255,255,0.7)',
+                        background: 'linear-gradient(90deg, rgba(255,255,255,0.5), rgba(255,255,255,0.9))',
                         width: `${((phaseIdx + 1) / phases.length) * 100}%`,
-                        transition: 'width 0.5s ease',
+                        transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: '0 0 12px rgba(255,255,255,0.3)',
                     }} />
                 </div>
             </div>
 
-            {/* ── Stats Pills ──────────────────────────────────── */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            {/* ── Stats Cards ────────────────────────────────── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '1.75rem' }}>
                 {[
-                    { label: language === 'TH' ? 'ติดเหล็ก' : 'Bonded', n: bondedC, color: '#0d9488', bg: 'linear-gradient(135deg, #ccfbf1, #f0fdfa)' },
-                    { label: language === 'TH' ? 'ใส่แหวน' : 'Banded', n: bandedC, color: '#6366f1', bg: 'linear-gradient(135deg, #e0e7ff, #eef2ff)' },
-                    { label: language === 'TH' ? 'ถอนแล้ว' : 'Extracted', n: extractC, color: '#ef4444', bg: 'linear-gradient(135deg, #fee2e2, #fef2f2)' },
-                    { label: language === 'TH' ? 'ฟันคุด' : 'Impacted', n: impactC, color: '#f59e0b', bg: 'linear-gradient(135deg, #fef3c7, #fefce8)' },
+                    { label: language === 'TH' ? 'ติดเหล็ก' : 'Bonded', n: bondedC, color: '#0d9488', bg: '#f0fdfa', border: '#ccfbf1', icon: '🔲' },
+                    { label: language === 'TH' ? 'ใส่แหวน' : 'Banded', n: bandedC, color: '#7c3aed', bg: '#f5f3ff', border: '#ede9fe', icon: '💍' },
+                    { label: language === 'TH' ? 'ถอนแล้ว' : 'Extracted', n: extractC, color: '#ef4444', bg: '#fef2f2', border: '#fee2e2', icon: '❌' },
+                    { label: language === 'TH' ? 'ฟันคุด' : 'Impacted', n: impactC, color: '#f59e0b', bg: '#fffbeb', border: '#fef3c7', icon: '⚠️' },
                 ].map(s => (
                     <div key={s.label} style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        padding: '8px 16px', borderRadius: '24px',
-                        background: s.bg, border: `1px solid ${s.color}22`,
-                        fontSize: '0.8rem', fontWeight: 600, color: s.color,
-                        boxShadow: `0 2px 8px ${s.color}10`,
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        padding: '14px 16px', borderRadius: '16px',
+                        background: s.bg, border: `1.5px solid ${s.border}`,
+                        transition: 'all 0.2s',
                     }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>{s.n}</span>
-                        {s.label}
+                        <span style={{ fontSize: '1.1rem' }}>{s.icon}</span>
+                        <div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 900, color: s.color, fontFamily: 'var(--font-display)', lineHeight: 1 }}>{s.n}</div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: s.color, opacity: 0.8, marginTop: '2px' }}>{s.label}</div>
+                        </div>
                     </div>
                 ))}
             </div>
 
-            {/* ── SVG Tooth Chart ──────────────────────────────── */}
+            {/* ── Tooth Chart ────────────────────────────────── */}
             <div style={{
-                borderRadius: '20px', padding: '1.75rem 1rem 1rem',
-                marginBottom: '1.5rem', overflow: 'auto',
-                background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 40%, #ffffff 60%, #f8fafc 100%)',
-                border: '1px solid var(--neutral-100)',
-                boxShadow: 'var(--shadow-sm)',
+                borderRadius: '20px', padding: '2rem 1.5rem 1.5rem',
+                marginBottom: '1.75rem', overflow: 'visible', position: 'relative',
+                background: 'linear-gradient(180deg, #fafcff 0%, #ffffff 30%, #ffffff 70%, #f8fafc 100%)',
+                border: '1.5px solid #e8ecf2',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.02)',
             }}>
-                <svg viewBox={`0 0 ${svgW} 240`} width="100%" style={{ maxHeight: '300px' }}>
-                    {/* Midline */}
-                    <line x1={svgW / 2} y1={10} x2={svgW / 2} y2={230}
-                        stroke="#e2e8f0" strokeWidth={1} strokeDasharray="6 4" />
+                {/* Midline */}
+                <div style={{
+                    position: 'absolute', top: '12px', bottom: '12px', left: '50%',
+                    width: '1.5px', background: 'linear-gradient(180deg, #e2e8f0, #cbd5e1, #e2e8f0)',
+                    transform: 'translateX(-50%)',
+                }} />
 
-                    {/* Arch labels with background */}
-                    <rect x={svgW / 2 - 55} y={2} width={110} height={18} rx={9} fill="#f1f5f9" />
-                    <text x={svgW / 2} y={14} textAnchor="middle" fontSize="9" fontWeight="700" fill="#94a3b8"
-                        fontFamily="var(--font-display)" letterSpacing="0.1em">
-                        {language === 'TH' ? '▲ ขากรรไกรบน' : '▲ UPPER ARCH'}
-                    </text>
+                {/* Upper arch label */}
+                <div style={{
+                    textAlign: 'center', marginBottom: '1rem', position: 'relative',
+                }}>
+                    <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '5px 16px', borderRadius: '20px',
+                        background: 'linear-gradient(135deg, #f0fdfa, #e8faf5)',
+                        border: '1px solid #ccfbf1',
+                        fontSize: '0.68rem', fontWeight: 800, color: '#0f766e',
+                        letterSpacing: '0.12em', fontFamily: 'var(--font-display)',
+                    }}>
+                        ▲ {language === 'TH' ? 'ขากรรไกรบน' : 'UPPER ARCH'}
+                    </span>
+                </div>
 
-                    <rect x={svgW / 2 - 55} y={223} width={110} height={18} rx={9} fill="#f1f5f9" />
-                    <text x={svgW / 2} y={235} textAnchor="middle" fontSize="9" fontWeight="700" fill="#94a3b8"
-                        fontFamily="var(--font-display)" letterSpacing="0.1em">
-                        {language === 'TH' ? '▼ ขากรรไกรล่าง' : '▼ LOWER ARCH'}
-                    </text>
-
-                    {/* Wire lines */}
+                {/* Upper teeth row */}
+                <div style={{
+                    display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+                    gap: '2px', marginBottom: '1.5rem', paddingBottom: '1rem',
+                    borderBottom: '2px solid #f1f5f9',
+                    position: 'relative',
+                }}>
+                    {/* Wire visualization */}
                     {upperWire.type && (
-                        <line x1={20} y1={55} x2={svgW - 20} y2={55}
-                            stroke="#0d9488" strokeWidth={1.5} strokeDasharray="5 3" opacity={0.35} />
+                        <div style={{
+                            position: 'absolute', bottom: '28px', left: '8%', right: '8%',
+                            height: '2px',
+                            background: 'linear-gradient(90deg, transparent 0%, #5eead4 10%, #5eead4 90%, transparent 100%)',
+                            borderRadius: '2px',
+                            boxShadow: '0 0 6px rgba(94,234,212,0.3)',
+                        }} />
                     )}
+                    {UPPER_TEETH.map(num => {
+                        const td = teeth.find(t => t.id === num);
+                        return td ? (
+                            <OrthoTooth
+                                key={num}
+                                tooth={td}
+                                isUpper={true}
+                                isSelected={selectedId === num}
+                                onClick={(e) => handleToothClick(num, e)}
+                            />
+                        ) : null;
+                    })}
+                </div>
+
+                {/* Lower teeth row */}
+                <div style={{
+                    display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+                    gap: '2px', marginTop: '0.5rem',
+                    position: 'relative',
+                }}>
+                    {/* Wire visualization */}
                     {lowerWire.type && (
-                        <line x1={20} y1={175} x2={svgW - 20} y2={175}
-                            stroke="#0d9488" strokeWidth={1.5} strokeDasharray="5 3" opacity={0.35} />
+                        <div style={{
+                            position: 'absolute', top: '28px', left: '8%', right: '8%',
+                            height: '2px',
+                            background: 'linear-gradient(90deg, transparent 0%, #5eead4 10%, #5eead4 90%, transparent 100%)',
+                            borderRadius: '2px',
+                            boxShadow: '0 0 6px rgba(94,234,212,0.3)',
+                        }} />
                     )}
-
-                    {/* Upper teeth */}
-                    {UPPER_TEETH.map((num, i) => {
+                    {LOWER_TEETH.map(num => {
                         const td = teeth.find(t => t.id === num);
                         return td ? (
-                            <g key={num} transform={`translate(${20 + i * spacing + spacing / 2}, 55)`}>
-                                <ToothSVG tooth={td} isUpper={true} isSelected={selectedId === num}
-                                    onClick={(e) => handleToothClick(num, e)} />
-                            </g>
+                            <OrthoTooth
+                                key={num}
+                                tooth={td}
+                                isUpper={false}
+                                isSelected={selectedId === num}
+                                onClick={(e) => handleToothClick(num, e)}
+                            />
                         ) : null;
                     })}
+                </div>
 
-                    {/* Lower teeth */}
-                    {LOWER_TEETH.map((num, i) => {
-                        const td = teeth.find(t => t.id === num);
-                        return td ? (
-                            <g key={num} transform={`translate(${20 + i * spacing + spacing / 2}, 175)`}>
-                                <ToothSVG tooth={td} isUpper={false} isSelected={selectedId === num}
-                                    onClick={(e) => handleToothClick(num, e)} />
-                            </g>
-                        ) : null;
-                    })}
-                </svg>
+                {/* Lower arch label */}
+                <div style={{
+                    textAlign: 'center', marginTop: '1rem', position: 'relative',
+                }}>
+                    <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '5px 16px', borderRadius: '20px',
+                        background: 'linear-gradient(135deg, #f1f5f9, #e8ecf4)',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '0.68rem', fontWeight: 800, color: '#64748b',
+                        letterSpacing: '0.12em', fontFamily: 'var(--font-display)',
+                    }}>
+                        ▼ {language === 'TH' ? 'ขากรรไกรล่าง' : 'LOWER ARCH'}
+                    </span>
+                </div>
 
                 {/* Legend */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                <div style={{
+                    display: 'flex', justifyContent: 'center', gap: '1.5rem',
+                    marginTop: '1.25rem', paddingTop: '1rem',
+                    borderTop: '1px solid #f1f5f9', flexWrap: 'wrap',
+                }}>
                     {Object.entries(STATUS_CONFIG).filter(([k]) => k !== 'normal').map(([key, cfg]) => (
-                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: '#94a3b8' }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '3px', background: cfg.color }} />
+                        <div key={key} style={{
+                            display: 'flex', alignItems: 'center', gap: '6px',
+                            fontSize: '0.72rem', color: '#64748b', fontWeight: 500,
+                        }}>
+                            <div style={{
+                                width: '10px', height: '10px', borderRadius: '4px',
+                                background: cfg.color,
+                                boxShadow: `0 1px 4px ${cfg.color}30`,
+                            }} />
                             {language === 'TH' ? cfg.labelTH : cfg.label}
                         </div>
                     ))}
@@ -340,32 +562,37 @@ const OrthoChartTab = ({ patient, language, onUpdate }) => {
                 />
             )}
 
-            {/* ── Wire & Details Cards ─────────────────────────── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+            {/* ── Wire & Details Cards ─────────────────────── */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.75rem' }}>
 
                 {/* Wire Card */}
                 <div style={{
-                    borderRadius: '16px', border: '1px solid var(--neutral-100)',
-                    background: 'white', boxShadow: 'var(--shadow-sm)', overflow: 'hidden',
+                    borderRadius: '18px', border: '1.5px solid #e8ecf2',
+                    background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,0.03)', overflow: 'hidden',
                 }}>
                     <div style={{
-                        padding: '12px 16px',
-                        background: 'linear-gradient(135deg, #f0fdfa, #ccfbf1)',
-                        borderBottom: '1px solid #ccfbf1',
-                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '14px 20px',
+                        background: 'linear-gradient(135deg, #f0fdfa, #e6faf4)',
+                        borderBottom: '1px solid #d1fae5',
+                        display: 'flex', alignItems: 'center', gap: '10px',
                     }}>
-                        <span style={{ fontSize: '1rem' }}>🔩</span>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f766e', fontFamily: 'var(--font-display)' }}>
+                        <span style={{
+                            width: '30px', height: '30px', borderRadius: '10px',
+                            background: 'linear-gradient(135deg, #0d9488, #14b8a6)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '0.9rem',
+                        }}>🔩</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f766e', fontFamily: 'var(--font-display)' }}>
                             {language === 'TH' ? 'ลวดจัดฟัน' : 'Arch Wires'}
                         </span>
                     </div>
-                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                         {[
                             { label: language === 'TH' ? 'ลวดบน' : 'Upper Wire', emoji: '⬆️', val: upperWire, set: setUpperWire },
                             { label: language === 'TH' ? 'ลวดล่าง' : 'Lower Wire', emoji: '⬇️', val: lowerWire, set: setLowerWire },
                         ].map(w => (
                             <div key={w.label}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--neutral-500)', marginBottom: '6px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>
                                     {w.emoji} {w.label}
                                 </label>
                                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -387,9 +614,9 @@ const OrthoChartTab = ({ patient, language, onUpdate }) => {
                                 </div>
                                 {w.val.type && w.val.size && (
                                     <div style={{
-                                        marginTop: '6px', fontSize: '0.72rem', fontWeight: 700,
-                                        color: '#0f766e', background: '#f0fdfa',
-                                        borderRadius: '8px', padding: '4px 10px', display: 'inline-flex',
+                                        marginTop: '8px', fontSize: '0.72rem', fontWeight: 700,
+                                        color: '#0f766e', background: 'linear-gradient(135deg, #f0fdfa, #e6faf4)',
+                                        borderRadius: '10px', padding: '6px 12px', display: 'inline-flex',
                                         alignItems: 'center', gap: '4px', border: '1px solid #ccfbf1',
                                     }}>
                                         ✓ {w.val.type} {w.val.size}
@@ -402,22 +629,28 @@ const OrthoChartTab = ({ patient, language, onUpdate }) => {
 
                 {/* Details Card */}
                 <div style={{
-                    borderRadius: '16px', border: '1px solid var(--neutral-100)',
-                    background: 'white', boxShadow: 'var(--shadow-sm)', overflow: 'hidden',
+                    borderRadius: '18px', border: '1.5px solid #e8ecf2',
+                    background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,0.03)', overflow: 'hidden',
                     display: 'flex', flexDirection: 'column',
                 }}>
                     <div style={{
-                        padding: '12px 16px',
-                        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+                        padding: '14px 20px',
+                        background: 'linear-gradient(135deg, #f8fafc, #eef2f7)',
                         borderBottom: '1px solid #e2e8f0',
-                        display: 'flex', alignItems: 'center', gap: '8px',
+                        display: 'flex', alignItems: 'center', gap: '10px',
                     }}>
-                        <Clipboard size={16} color="#475569" />
-                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', fontFamily: 'var(--font-display)' }}>
+                        <span style={{
+                            width: '30px', height: '30px', borderRadius: '10px',
+                            background: 'linear-gradient(135deg, #475569, #64748b)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                            <Clipboard size={14} color="white" />
+                        </span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#334155', fontFamily: 'var(--font-display)' }}>
                             {language === 'TH' ? 'รายละเอียดเพิ่มเติม' : 'Clinical Details'}
                         </span>
                     </div>
-                    <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         <div>
                             <label style={labelSm}>{language === 'TH' ? 'ยางดึง (Elastics)' : 'Elastics Configuration'}</label>
                             <input type="text" value={elastics} onChange={e => setElastics(e.target.value)}
@@ -429,55 +662,56 @@ const OrthoChartTab = ({ patient, language, onUpdate }) => {
                             <label style={labelSm}>{language === 'TH' ? 'บันทึกอาการ' : 'Clinical Notes'}</label>
                             <textarea value={notes} onChange={e => setNotes(e.target.value)}
                                 placeholder={language === 'TH' ? 'ระบุรายละเอียดเพิ่มเติม...' : 'Add clinical notes...'}
-                                style={{ ...inputStyle, flex: 1, minHeight: '70px', resize: 'vertical' }}
+                                style={{ ...inputStyle, flex: 1, minHeight: '80px', resize: 'vertical' }}
                             />
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ── Action Bar ───────────────────────────────────── */}
+            {/* ── Action Bar ──────────────────────────────────── */}
             <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '16px 20px', borderRadius: '14px',
-                background: 'var(--neutral-50)', border: '1px solid var(--neutral-100)',
+                padding: '18px 24px', borderRadius: '16px',
+                background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                border: '1.5px solid #e8ecf2',
             }}>
-                <button onClick={() => { if (window.confirm(language === 'TH' ? 'ล้างข้อมูลทั้งหมด?' : 'Reset all?')) setTeeth(INITIAL_TEETH); }}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        padding: '10px 18px', border: '1px solid #fecaca',
-                        borderRadius: '10px', cursor: 'pointer', background: '#fff5f5',
-                        color: '#dc2626', fontSize: '0.85rem', fontWeight: 600,
-                        fontFamily: 'var(--font-sans)', transition: 'all 0.2s',
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
+                    {totalActive > 0 && (
+                        <span style={{
+                            fontSize: '0.78rem', fontWeight: 700, color: '#0f766e',
+                            background: '#f0fdfa', padding: '6px 14px', borderRadius: '20px',
+                            border: '1px solid #ccfbf1',
+                        }}>
+                            {language === 'TH' ? `ซี่ที่ Active: ${totalActive}/32` : `Active: ${totalActive}/32`}
+                        </span>
+                    )}
+                    <button onClick={handleSave} style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '12px 30px', border: 'none', borderRadius: '14px',
+                        cursor: 'pointer', fontSize: '0.9rem', fontWeight: 800,
+                        fontFamily: 'var(--font-sans)',
+                        background: 'linear-gradient(135deg, #0d9488, #14b8a6)',
+                        color: 'white', transition: 'all 0.25s',
+                        boxShadow: '0 4px 16px rgba(13,148,136,0.3)',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '#fff5f5'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                >
-                    <RotateCcw size={15} />
-                    {language === 'TH' ? 'ล้างข้อมูล' : 'Reset'}
-                </button>
-
-                <button onClick={handleSave} style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '12px 28px', border: 'none', borderRadius: '12px',
-                    cursor: 'pointer', fontSize: '0.9rem', fontWeight: 700,
-                    fontFamily: 'var(--font-sans)',
-                    background: 'linear-gradient(135deg, #0d9488, #14b8a6)',
-                    color: 'white', transition: 'all 0.25s',
-                    boxShadow: '0 4px 12px rgba(13,148,136,0.3)',
-                }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(13,148,136,0.4)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(13,148,136,0.3)'; }}
-                >
-                    <Save size={16} />
-                    {language === 'TH' ? 'บันทึกข้อมูลจัดฟัน' : 'Save Ortho Chart'}
-                </button>
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(13,148,136,0.4)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(13,148,136,0.3)'; }}
+                    >
+                        <Save size={16} />
+                        {language === 'TH' ? 'บันทึกข้อมูลจัดฟัน' : 'Save Ortho Chart'}
+                    </button>
+                </div>
             </div>
 
             <style>{`
-                @keyframes popIn {
-                    from { opacity: 0; transform: scale(0.9) translateY(-4px); }
+                @keyframes ortho-pop-in {
+                    from { opacity: 0; transform: scale(0.92) translateY(-6px); }
                     to   { opacity: 1; transform: scale(1) translateY(0); }
+                }
+                @keyframes ortho-pulse {
+                    0%, 100% { opacity: 0.3; transform: scale(1); }
+                    50%      { opacity: 0.6; transform: scale(1.02); }
                 }
             `}</style>
         </div>
@@ -486,29 +720,29 @@ const OrthoChartTab = ({ patient, language, onUpdate }) => {
 
 // ── Shared Styles ──────────────────────────────────────────────────────
 const selectStyle = {
-    flex: 1, padding: '9px 12px', borderRadius: '10px',
-    border: '1px solid #e2e8f0', outline: 'none',
+    flex: 1, padding: '10px 14px', borderRadius: '12px',
+    border: '1.5px solid #e2e8f0', outline: 'none',
     fontSize: '0.82rem', fontFamily: 'var(--font-sans)',
-    color: '#334155', background: '#f8fafc',
-    cursor: 'pointer', transition: 'border-color 0.2s',
+    color: '#334155', background: '#fafbfd',
+    cursor: 'pointer', transition: 'all 0.2s',
     appearance: 'none',
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 10px center',
-    paddingRight: '30px',
+    backgroundPosition: 'right 12px center',
+    paddingRight: '32px',
 };
 
 const inputStyle = {
-    width: '100%', padding: '9px 12px', borderRadius: '10px',
-    border: '1px solid #e2e8f0', outline: 'none',
+    width: '100%', padding: '10px 14px', borderRadius: '12px',
+    border: '1.5px solid #e2e8f0', outline: 'none',
     fontSize: '0.82rem', fontFamily: 'var(--font-sans)',
-    color: '#334155', background: '#f8fafc',
+    color: '#334155', background: '#fafbfd',
     transition: 'border-color 0.2s',
 };
 
 const labelSm = {
-    display: 'block', fontSize: '0.75rem', fontWeight: 600,
-    color: '#64748b', marginBottom: '6px',
+    display: 'block', fontSize: '0.75rem', fontWeight: 700,
+    color: '#64748b', marginBottom: '8px',
 };
 
 export default OrthoChartTab;

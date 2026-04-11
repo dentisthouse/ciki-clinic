@@ -50,7 +50,7 @@ const LinePortal = () => {
         if (fallbackVal !== undefined) return fallbackVal;
         return key;
     };
-    const { patients, appointments, addAppointment } = useData();
+    const { patients, appointments, addAppointment, addPatient } = useData();
     const [dbPatients, setDbPatients] = useState([]);
 
     const [isDesktop, setIsDesktop] = useState(false);
@@ -365,36 +365,27 @@ const LinePortal = () => {
         const newUser = {
             name: `${firstName.trim()} ${lastName.trim()}`,
             phone: phoneNum,
-            line_user_id: lineUserId,
-            line_picture_url: linePictureUrl,
-            status: 'Active',
-            points: 0,
-            tier: 'Standard',
-            created_at: new Date().toISOString()
+            lineUserId: lineUserId,
+            linePictureUrl: linePictureUrl,
+            status: 'Active'
         };
 
         try {
-            console.log('🆕 Registering new user:', newUser);
-            const { data, error } = await supabase
-                .from('patients')
-                .insert([newUser])
-                .select()
-                .single();
+            console.log('🆕 Registering new user via DataContext:', newUser);
+            // Use addPatient from DataContext to ensure local sync and HN generation
+            const addResult = await addPatient(newUser);
 
-            if (error) throw error;
+            // The addPatient method doesn't return the patient directly currently, 
+            // but it updates the 'patients' state which we can find.
+            // Wait a bit for state update or use logic to find the new one.
+            const registeredUser = patients.find(p => p.phone === phoneNum) || newUser;
 
-            const user = data;
-            console.log('✅ Created new patient in DB:', user);
+            console.log('✅ Created new patient:', registeredUser);
 
-            // บันทึก session
-            localStorage.setItem('ciki_portal_user', JSON.stringify(user));
-            setCurrentUser(user);
-
-            // Refresh patients list
-            await fetchPatientsFromDB();
-
+            localStorage.setItem('ciki_portal_user', JSON.stringify(registeredUser));
+            setCurrentUser(registeredUser);
             setPage('home');
-            alert(`${pt('welcome')} ${user.name} ${pt('reg_success')}`);
+            alert(`${pt('welcome')} ${registeredUser.name} ${pt('reg_success')}`);
         } catch (error) {
             console.error('❌ Error creating patient:', error);
             alert('เกิดข้อผิดพลาดในการลงทะเบียน กรุณาลองใหม่อีกครั้ง');
@@ -559,7 +550,7 @@ const LinePortal = () => {
                         บ้านหมอฟัน
                     </h1>
                     <p style={{ color: 'var(--lp-text-muted)', fontSize: '0.95rem', fontWeight: 500, letterSpacing: '0.1em', uppercase: 'true', marginBottom: '3rem' }}>
-                        DENTIST'S HOUSE LUXURY CLINIC
+                        DENTIST'S HOUSE CLINIC
                     </p>
 
                     <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
@@ -593,7 +584,7 @@ const LinePortal = () => {
 
                     <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', opacity: 0.6 }}>
                         <div style={{ height: '1px', flex: 1, background: '#e2e8f0' }} />
-                        <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.1em' }}>POWERED BY CIKI</span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.1em' }}>บ้านหมอฟัน</span>
                         <div style={{ height: '1px', flex: 1, background: '#e2e8f0' }} />
                     </div>
                 </div>
@@ -815,10 +806,7 @@ const LinePortal = () => {
                                     className="lp-profile-img-v2"
                                     alt="Profile"
                                 />
-                                <div className="lp-member-badge">
-                                    <Star size={10} fill="currentColor" />
-                                    <span>{pt('member_tier_gold')}</span>
-                                </div>
+
                             </div>
 
                             <div className="lp-profile-info-v2">
@@ -853,39 +841,7 @@ const LinePortal = () => {
                     </div>
                 </div>
 
-                {/* My Dental Journey - Premium UI Section */}
-                <div className="lp-section" style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
-                    <div className="lp-section-header">
-                        <h3 className="lp-section-title">{pt('my_journey')}</h3>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', padding: '0 1.5rem' }}>
-                        <div onClick={() => setPage('ortho')} style={{
-                            background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
-                            borderRadius: '1.5rem', padding: '1.25rem', color: 'white',
-                            boxShadow: '0 10px 20px rgba(13, 148, 136, 0.15)',
-                            cursor: 'pointer', position: 'relative', overflow: 'hidden'
-                        }} className="animate-pop">
-                            <div style={{ position: 'absolute', right: '-15%', top: '-15%', opacity: 0.15 }}>
-                                <Activity size={70} />
-                            </div>
-                            <h4 style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.15rem', position: 'relative' }}>{pt('ortho_progress')}</h4>
-                            <p style={{ fontSize: '0.65rem', opacity: 0.8, position: 'relative' }}>{pt('view_plan_desc')}</p>
-                        </div>
-                        <div onClick={() => setPage('treatment')} style={{
-                            background: 'white',
-                            borderRadius: '1.5rem', padding: '1.25rem', color: 'var(--lp-text-main)',
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.03)',
-                            border: '1.5px solid #f1f5f9',
-                            cursor: 'pointer', position: 'relative', overflow: 'hidden'
-                        }} className="animate-pop">
-                            <div style={{ position: 'absolute', right: '-15%', top: '-15%', opacity: 0.05, color: '#0d9488' }}>
-                                <Stethoscope size={70} />
-                            </div>
-                            <h4 style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.15rem', position: 'relative' }}>{pt('treatment_plan')}</h4>
-                            <p style={{ fontSize: '0.65rem', color: 'var(--lp-text-muted)', position: 'relative' }}>{pt('clinical_records')}</p>
-                        </div>
-                    </div>
-                </div>
+
 
                 {/* Recommended (Carousel Refined) */}
                 <div className="lp-section" style={{ marginTop: '0.5rem' }}>
@@ -1013,7 +969,7 @@ const LinePortal = () => {
                             <select value={bookingService} onChange={e => setBookingService(e.target.value)} className="lp-input-v3">
                                 <option value="">{pt('choose_treatment')}</option>
                                 {getDentalServices(pt).map(service => (
-                                    <option key={service.id} value={service.id}>{service.name} (฿{service.price.toLocaleString()})</option>
+                                    <option key={service.id} value={service.id}>{service.name} ({pt('starting_from')} ฿{service.price.toLocaleString()})</option>
                                 ))}
                             </select>
                         </div>
@@ -1340,7 +1296,7 @@ const LinePortal = () => {
                     {/* Status Tabs */}
                     <div style={{ display: 'flex', background: '#f8fafc', padding: '0.4rem', borderRadius: '1.25rem', marginBottom: '1.5rem', border: '1px solid #f1f5f9' }}>
                         {tabs.map(tab => (
-                            <button key={tab} onChange={() => setActiveTab(tab)} style={{
+                            <button key={tab} onClick={() => setActiveTab(tab)} style={{
                                 flex: 1, padding: '0.75rem', borderRadius: '0.9rem', fontSize: '0.85rem', fontWeight: 800,
                                 border: 'none', background: activeTab === tab ? 'white' : 'transparent',
                                 color: activeTab === tab ? 'var(--lp-primary)' : 'var(--lp-text-muted)',

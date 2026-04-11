@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Plus, MoreHorizontal, Trash2, Edit, Phone, MessageSquare, Calendar, ChevronRight } from 'lucide-react';
+import { 
+    Plus, Search, Calendar, ChevronRight, Phone, MessageSquare, History, Edit, Trash2 
+} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import PatientModal from '../components/Patients/PatientModal';
+import '../styles/patients.css';
 
 const Patients = () => {
     const navigate = useNavigate();
@@ -12,6 +15,8 @@ const Patients = () => {
     const { patients, addPatient, updatePatient, deletePatient } = useData();
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
+
+    const langT = (th, en) => (language === 'TH' ? th : en);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,7 +67,7 @@ const Patients = () => {
     const recallPatients = patients.filter(p => p.status === 'Recall Due' || (p.lastVisit && new Date(p.lastVisit) < new Date(Date.now() - 180 * 24 * 60 * 60 * 1000)));
 
     return (
-        <div className="animate-slide-up" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className="patients-container animate-slide-up">
             <PatientModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -71,274 +76,219 @@ const Patients = () => {
             />
 
             {/* Page Header */}
-            <div className="page-header">
-                <div className="page-title-group">
+            <div className="patients-header">
+                <div className="patients-title-group">
                     <h1>{t('pat_title')}</h1>
                     <p>{t('pat_subtitle')}</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => { setEditingPatient(null); setIsModalOpen(true); }}>
-                    <Plus size={18} style={{ marginRight: '8px' }} />
+                <button 
+                    className="btn btn-primary" 
+                    onClick={() => { setEditingPatient(null); setIsModalOpen(true); }}
+                >
+                    <Plus size={20} strokeWidth={3} />
                     {t('pat_new')}
                 </button>
             </div>
 
-            {/* Content Area */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-
-                {/* Search Bar - Always visible but styled differently based on state */}
-                <div style={{
-                    transition: 'all 0.3s ease',
-                    marginTop: searchTerm ? '0' : '10vh',
-                    marginBottom: '1.5rem',
-                    textAlign: searchTerm ? 'left' : 'center'
-                }}>
-                    {!searchTerm && (
-                        <div style={{ marginBottom: '3rem', color: 'var(--neutral-400)' }}>
-                            <div style={{
-                                width: '100px', height: '100px', background: 'var(--primary-50)',
-                                borderRadius: 'var(--radius-3xl)', display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', margin: '0 auto 1.5rem auto',
-                                boxShadow: 'var(--shadow-glow)'
-                            }}>
-                                <Search size={48} color="var(--primary-500)" />
-                            </div>
-                            <h2 style={{ color: 'var(--neutral-900)', marginBottom: '0.75rem', fontSize: '2rem', fontWeight: 800 }}>
-                                {language === 'TH' ? 'ค้นหาผู้ป่วย' : 'Find a Patient'}
-                            </h2>
-                            <p style={{ fontSize: '1.1rem', color: 'var(--neutral-500)' }}>{language === 'TH' ? 'พิมพ์ชื่อ หรือ รหัสผู้ป่วยเพื่อค้นหา' : 'Enter name or ID to search our patient database'}</p>
-                        </div>
-                    )}
-
-                    <div className="search-wrapper" style={{
-                        maxWidth: searchTerm ? '100%' : '600px',
-                        margin: searchTerm ? '0' : '0 auto',
-                        boxShadow: 'var(--shadow-xl)',
-                        position: 'relative',
-                        borderRadius: 'var(--radius-xl)',
-                        overflow: 'hidden',
-                        transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-                    }}>
-                        <input
-                            type="text"
-                            placeholder={t('pat_search')}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            autoFocus
-                            className="form-input"
-                            style={{
-                                width: '100%',
-                                padding: searchTerm ? '1rem 3.5rem 1rem 1.5rem' : '1.25rem 4rem 1.25rem 2rem',
-                                border: '1px solid var(--neutral-200)',
-                                borderRadius: 'inherit',
-                                fontSize: '1.1rem',
-                                outline: 'none',
-                                background: 'white'
-                            }}
-                        />
-                        <div style={{
-                            position: 'absolute',
-                            right: '1.5rem',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            color: 'var(--primary-500)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            pointerEvents: 'none'
-                        }}>
-                            <Search size={24} strokeWidth={2.5} />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Recall Dashboard - Visible when NOT searching */}
+            {/* Search Section */}
+            <div className={`search-bar-animated ${searchTerm ? 'compact' : ''}`}>
                 {!searchTerm && (
-                    <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-                            {/* Recall Stats Card */}
-                            <div className="card" style={{ padding: '2rem', background: 'var(--gradient-primary)', color: 'white', border: 'none' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div>
-                                        <div style={{ fontSize: '1rem', opacity: 0.9, fontWeight: 700, letterSpacing: '0.05em' }}>{language === 'TH' ? 'คนไข้ที่ต้องนัดตรวจซ้ำ' : 'RECALL NECESSARY'}</div>
-                                        <div style={{ fontSize: '3.5rem', fontWeight: 900, margin: '0.5rem 0' }}>{recallPatients.length}</div>
-                                        <div style={{ fontSize: '0.85rem', opacity: 0.8, fontWeight: 500 }}>{language === 'TH' ? 'คนไข้ในระบบทั้งหมด' : 'Total patients waiting'}</div>
-                                    </div>
-                                    <div style={{ width: '64px', height: '64px', background: 'rgba(255,255,255,0.2)', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-                                        <Calendar size={32} />
-                                    </div>
-                                </div>
-                            </div>
+                    <div className="search-dashboard-full">
+                        <div className="search-icon-hero">
+                            <Search size={48} strokeWidth={2.5} />
                         </div>
-
-                        <div className="card" style={{ padding: '2rem', border: '1px solid var(--neutral-200)', borderRadius: '24px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <h3 style={{ fontWeight: 800, color: 'var(--neutral-900)' }}>{language === 'TH' ? 'รายการ Recall แนะนำประจำวัน' : 'Daily Recommended Recall List'}</h3>
-                                <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }} onClick={() => setSearchTerm('Recall')}>
-                                    {language === 'TH' ? 'ดูทั้งหมด' : 'See All'} <ChevronRight size={14} />
-                                </button>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {recallPatients.slice(0, 5).map(patient => (
-                                    <div key={patient.id} 
-                                        onClick={() => navigate(`/patients/${patient.id}`)}
-                                        style={{ 
-                                            display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                                            padding: '1rem', background: 'var(--neutral-50)', borderRadius: '16px',
-                                            cursor: 'pointer', transition: 'all 0.2s ease'
-                                        }}
-                                        className="hover:bg-primary-50"
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                            <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: patient.avatarColor || 'var(--primary-200)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-                                                {patient.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div style={{ fontWeight: 700, color: 'var(--neutral-900)' }}>{patient.name}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)' }}>
-                                                    {language === 'TH' ? 'มาล่าสุดเมื่อ:' : 'Last visited:'} {patient.lastVisit || (language === 'TH' ? 'ไม่ระบุ' : 'N/A')}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
-                                            <a href={`tel:${patient.phone}`} className="btn btn-secondary" style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px' }}>
-                                                <Phone size={16} />
-                                            </a>
-                                            <button className="btn btn-secondary" style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px' }}>
-                                                <MessageSquare size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                                {recallPatients.length === 0 && (
-                                    <div style={{ textAlign: 'center', color: 'var(--neutral-400)', padding: '2rem' }}>
-                                        {language === 'TH' ? 'ไม่มีรายการนัดตรวจซ้ำในช่วงนี้' : 'No recall tasks available.'}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        <h2>{langT('ค้นหาผู้ป่วย', 'Find a Patient')}</h2>
+                        <p>{langT('พิมพ์ชื่อ หรือ รหัสผู้ป่วยเพื่อค้นหา หรือค้นหาจาก HN เพื่อดึงข้อมูลประวัติการรักษาทั้งหมด', 'Enter name, ID, or HN to retrieve full clinical records and visit history.')}</p>
                     </div>
                 )}
 
-                {/* Patient List - Only visible when searching */}
-                {searchTerm ? (
-                    <>
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-                            {['All', 'Active', 'Recall Due'].map((tab) => {
-                                const labels = {
-                                    'All': t('pat_all'),
-                                    'Active': t('pat_active'),
-                                    'Recall Due': t('pat_recall')
-                                };
-                                return (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setFilter(tab)}
-                                        className="btn"
-                                        style={{
-                                            padding: '0.4rem 1rem',
-                                            background: filter === tab ? 'white' : 'transparent',
-                                            color: filter === tab ? 'var(--neutral-900)' : 'var(--neutral-500)',
-                                            boxShadow: filter === tab ? 'var(--shadow-sm)' : 'none',
-                                            borderColor: 'transparent',
-                                            borderRadius: '20px',
-                                            fontSize: '0.875rem'
-                                        }}
-                                    >
-                                        {labels[tab]}
-                                    </button>
-                                );
-                            })}
+                <div className="search-container-inner" style={{ position: 'relative' }}>
+                    <input
+                        type="text"
+                        placeholder={t('pat_search')}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        autoFocus
+                        className="search-input-premium"
+                    />
+                    <div className="search-hint-icon">
+                        <Search size={searchTerm ? 20 : 26} strokeWidth={2.5} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Dashboard Context (Only when not searching) */}
+            {!searchTerm && (
+                <div className="recall-dashboard-grid animate-fade-in">
+                    {/* Recall Stats Hero */}
+                    <div className="recall-stats-hero">
+                        <div>
+                            <h3>{langT('คนไข้ที่ต้องนัดตรวจซ้ำ', 'RECALL DUE')}</h3>
+                            <div className="recall-count-massive">{recallPatients.length}</div>
+                            <div className="recall-subtitle">{langT('คนไข้ที่ถึงรอบนัดตรวจสุขภาพฟันประจำปี', 'Patients due for annual checkup & prophylaxis')}</div>
+                        </div>
+                        <div className="recall-icon-glass">
+                            <Calendar size={36} strokeWidth={1.5} />
+                        </div>
+                    </div>
+
+                    {/* Recommended List */}
+                    <div className="recall-list-container">
+                        <div className="recall-list-header">
+                            <h3>{langT('รายการ Recall แนะนำประจำวัน', 'Daily Recommendations')}</h3>
+                            <button 
+                                className="icon-btn-ghost-premium" 
+                                onClick={() => setSearchTerm('Recall')}
+                            >
+                                {langT('ดูทั้งหมด', 'View Full List')} <ChevronRight size={18} strokeWidth={3} />
+                            </button>
                         </div>
 
-                        <div className="table-container shadow-sm animate-fade-in" style={{ flex: 1, overflow: 'auto' }}>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>{t('pat_col_patient')}</th>
-                                        <th>{t('pat_col_contact')}</th>
-                                        <th>{t('pat_col_lastvisit')}</th>
-                                        <th>{t('pat_col_status')}</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredPatients.length > 0 ? (
-                                        filteredPatients.map((patient) => (
-                                            <tr
-                                                key={patient.id}
-                                                onClick={() => navigate(`/patients/${patient.id}`)}
-                                                style={{ cursor: 'pointer' }}
-                                                className="hover:bg-neutral-50 transition-colors"
-                                            >
-                                                <td>
-                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        <div style={{
-                                                            width: '40px',
-                                                            height: '40px',
-                                                            borderRadius: '50%',
-                                                            backgroundColor: patient.avatarColor || 'var(--primary-100)',
-                                                            color: 'white',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            fontWeight: 600,
-                                                            marginRight: '1rem',
-                                                            overflow: 'hidden'
-                                                        }}>
-                                                            {patient.line_picture_url ? (
-                                                                <img 
-                                                                    src={patient.line_picture_url} 
-                                                                    alt={patient.name} 
-                                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                                />
-                                                            ) : (
-                                                                patient.name.charAt(0)
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <div style={{ fontWeight: 600, color: 'var(--neutral-900)' }}>{patient.name}</div>
-                                                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)' }}>{patient.hn && patient.hn.length < 20 ? `HN: ${patient.hn}` : (language === 'TH' ? 'ยังไม่ได้ออก HN' : 'No HN')}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {recallPatients.slice(0, 4).map(patient => (
+                                <div key={patient.id} 
+                                    onClick={() => navigate(`/patients/${patient.id}`)}
+                                    className="patient-row-card"
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <div className="patient-avatar-main" style={{ background: patient.avatarColor || 'var(--primary-200)', color: 'white' }}>
+                                            {patient.line_picture_url ? (
+                                                <img src={patient.line_picture_url} alt={patient.name} />
+                                            ) : (
+                                                patient.name.charAt(0)
+                                            )}
+                                        </div>
+                                        <div className="patient-basic-info">
+                                            <h5>{patient.name}</h5>
+                                            <div className="patient-visit-meta">
+                                                {langT('มาล่าสุด:', 'Last visit:')} {patient.lastVisit || langT('ยังไม่เคยระบุ', 'N/A')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="contact-action-group" onClick={e => e.stopPropagation()}>
+                                        <a href={`tel:${patient.phone}`} className="action-pill-square" title="Call">
+                                            <Phone size={16} />
+                                        </a>
+                                        <button className="action-pill-square" title="Message">
+                                            <MessageSquare size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {recallPatients.length === 0 && (
+                                <div style={{ textAlign: 'center', color: 'var(--neutral-400)', padding: '3rem' }}>
+                                    <History size={48} style={{ opacity: 0.1, marginBottom: '1rem' }} />
+                                    <p style={{ fontWeight: 800 }}>{langT('ไม่มีรายการแจ้งเตือนในวันนี้', 'Your recall list is clear')}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Patient List - Only visible when searching */}
+            {searchTerm ? (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div className="tab-navigation-premium" style={{ marginBottom: '1.5rem', border: 'none' }}>
+                        {['All', 'Active', 'Recall Due'].map((tab) => {
+                            const labels = {
+                                'All': t('pat_all'),
+                                'Active': t('pat_active'),
+                                'Recall Due': t('pat_recall')
+                            };
+                            return (
+                                <button
+                                    key={tab}
+                                    onClick={() => setFilter(tab)}
+                                    className={`tab-btn-premium ${filter === tab ? 'active' : ''}`}
+                                >
+                                    {labels[tab]}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="patient-table-wrapper animate-fade-in" style={{ flex: 1, overflow: 'auto' }}>
+                        <table className="patient-table">
+                            <thead>
+                                <tr>
+                                    <th>{t('pat_col_patient')}</th>
+                                    <th>{t('pat_col_contact')}</th>
+                                    <th>{t('pat_col_lastvisit')}</th>
+                                    <th>{t('pat_col_status')}</th>
+                                    <th style={{ textAlign: 'right' }}>{langT('จัดการ', 'Manage')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredPatients.length > 0 ? (
+                                    filteredPatients.map((patient) => (
+                                        <tr
+                                            key={patient.id}
+                                            onClick={() => navigate(`/patients/${patient.id}`)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <div className="patient-avatar-main" style={{ backgroundColor: patient.avatarColor || 'var(--primary-100)', color: 'white', marginRight: '1rem' }}>
+                                                        {patient.line_picture_url ? (
+                                                            <img src={patient.line_picture_url} alt={patient.name} />
+                                                        ) : (
+                                                            patient.name.charAt(0)
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontWeight: 800, color: 'var(--neutral-800)' }}>{patient.name}</div>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 600 }}>
+                                                            {patient.hn && patient.hn.length < 20 ? `HN: ${patient.hn}` : langT('ยังไม่ได้ออก HN', 'No HN Assigned')}
                                                         </div>
                                                     </div>
-                                                </td>
-                                                <td>
-                                                    <div style={{ fontSize: '0.875rem' }}>{patient.phone}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)' }}>{patient.email}</div>
-                                                </td>
-                                                <td>{patient.lastVisit || (t('pat_col_lastvisit') === 'มาล่าสุด' ? 'ไม่เคย' : 'Never')}</td>
-                                                <td>
-                                                    <span className={`badge ${patient.status === 'Active' ? 'badge-success' :
-                                                        patient.status === 'Recall Due' ? 'badge-warning' : 'badge-info'
-                                                        }`}>
-                                                        {patient.status === 'Active' ? t('pat_active') :
-                                                            patient.status === 'Recall Due' ? t('pat_recall') : patient.status}
-                                                    </span>
-                                                </td>
-                                                <td style={{ textAlign: 'right' }}>
-                                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                                                        <button className="btn btn-secondary" style={{ padding: '0.4rem', borderRadius: '50%' }} onClick={(e) => handleEditPatient(e, patient)}>
-                                                            <Edit size={16} />
-                                                        </button>
-                                                        <button className="btn btn-secondary" style={{ padding: '0.4rem', borderRadius: '50%', color: 'var(--danger)' }} onClick={(e) => handleDeletePatient(e, patient.id)}>
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--neutral-400)' }}>
-                                                {language === 'TH' ? 'ไม่พบข้อมูล' : 'No patients found'}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--neutral-700)' }}>{patient.phone}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 500 }}>{patient.email}</div>
+                                            </td>
+                                            <td>
+                                                <div style={{ fontWeight: 600, color: 'var(--neutral-600)' }}>
+                                                    {patient.lastVisit || langT('ยังไม่เคยระบุ', 'Never')}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span className={`badge-status ${
+                                                    patient.status === 'Active' ? 'badge-active' :
+                                                    patient.status === 'Recall Due' ? 'badge-recall' : 'badge-info'
+                                                }`}>
+                                                    {patient.status === 'Active' ? t('pat_active') :
+                                                        patient.status === 'Recall Due' ? t('pat_recall') : patient.status}
+                                                </span>
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
+                                                    <button className="action-pill-square" onClick={(e) => handleEditPatient(e, patient)}>
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    <button className="action-pill-square" style={{ color: 'var(--danger-600)' }} onClick={(e) => handleDeletePatient(e, patient.id)}>
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </>
-                ) : null}
-            </div>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="5" style={{ textAlign: 'center', padding: '6rem 0' }}>
+                                            <div style={{ opacity: 0.2, marginBottom: '1rem' }}>
+                                                <Search size={48} style={{ margin: '0 auto' }} />
+                                            </div>
+                                            <p style={{ fontWeight: 800, color: 'var(--neutral-400)' }}>{langT('ไม่พบข้อมูลผู้ป่วยที่คุณค้นหา', 'No patients found matching your search term')}</p>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 };

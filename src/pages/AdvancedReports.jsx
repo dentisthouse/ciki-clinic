@@ -32,10 +32,11 @@ import { th, enUS } from 'date-fns/locale';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import '../styles/reports.css';
 
 const AdvancedReports = () => {
     const { language } = useLanguage();
-    const { appointments, patients, billingRecords, expenses, inventory } = useData();
+    const { appointments, patients, invoices, expenses, inventory } = useData();
     const { isAdmin } = useAuth();
     
     const [activeTab, setActiveTab] = useState('builder'); // builder, templates, scheduled, history
@@ -165,7 +166,7 @@ const AdvancedReports = () => {
         treatment_count: { TH: 'จำนวนการรักษา', EN: 'Treatment Count' },
         satisfaction: { TH: 'ความพึงพอใจ', EN: 'Satisfaction Score' },
         show_rate: { TH: 'อัตราการมานัด', EN: 'Show Rate' },
-        average_transaction: { TH: 'มูลค่าธุรกรรมเฉลี่ยว', EN: 'Average Transaction' }
+        average_transaction: { TH: 'มูลค่าธุรกรรมเฉลี่ย', EN: 'Average Transaction' }
     };
 
     const dataSources = {
@@ -190,32 +191,61 @@ const AdvancedReports = () => {
         setIsGenerating(true);
         
         try {
-            // จำลองการสร้างรายงาน
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Simulate generation latency for UX feels
+            await new Promise(resolve => setTimeout(resolve, 1500));
             
-            const mockData = {
+            // --- Real Data Engine ---
+            const totalRevenue = (invoices || []).reduce((sum, i) => sum + (i.amount || 0), 0);
+            const totalExpenses = (expenses || []).reduce((sum, e) => sum + (e.amount || 0), 0);
+            const totalPatients = (patients || []).length;
+            const newPatients = (patients || []).filter(p => {
+                const regDate = new Date(p.createdAt || Date.now());
+                return regDate.getMonth() === new Date().getMonth();
+            }).length;
+            const totalAppts = (appointments || []).length;
+            
+            // Map timeline (last 7 days for detail view)
+            const details = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dStr = d.toISOString().split('T')[0];
+                const dayBills = (invoices || []).filter(inv => (inv.date || '').includes(dStr));
+                const dayAppts = (appointments || []).filter(apt => (apt.date || '').includes(dStr));
+                details.push({
+                    date: dStr,
+                    revenue: dayBills.reduce((s, b) => s + (b.amount || 0), 0),
+                    patients: new Set(dayAppts.map(a => a.patientId)).size,
+                    appointments: dayAppts.length
+                });
+            }
+
+            // Treatment distribution
+            const treatmentTypes = {};
+            (appointments || []).forEach(apt => {
+                const type = apt.procedure || apt.treatment || 'Other';
+                treatmentTypes[type] = (treatmentTypes[type] || 0) + 1;
+            });
+
+            const realData = {
                 summary: {
-                    totalRevenue: 1250000,
-                    totalExpenses: 450000,
-                    netProfit: 800000,
-                    totalPatients: 1240,
-                    newPatients: 85,
-                    totalAppointments: 2100,
-                    averageTransaction: 595
+                    totalRevenue,
+                    totalExpenses,
+                    netProfit: totalRevenue - totalExpenses,
+                    totalPatients,
+                    newPatients,
+                    totalAppointments: totalAppts,
+                    averageTransaction: totalAppts > 0 ? totalRevenue / totalAppts : 0
                 },
-                details: [
-                    { date: '2024-03-01', revenue: 45000, patients: 15, appointments: 25 },
-                    { date: '2024-03-02', revenue: 52000, patients: 18, appointments: 28 },
-                    { date: '2024-03-03', revenue: 48000, patients: 16, appointments: 26 }
-                ],
+                details,
                 charts: {
-                    revenueTrend: [45000, 52000, 48000, 55000, 51000],
-                    patientDemographics: { new: 85, returning: 1155 },
-                    treatmentTypes: { cleaning: 45, filling: 30, extraction: 15, other: 10 }
+                    revenueTrend: details.map(d => d.revenue),
+                    patientDemographics: { new: newPatients, returning: totalPatients - newPatients },
+                    treatmentTypes
                 }
             };
             
-            setReportData(mockData);
+            setReportData(realData);
             
             // เพิ่มลงประวัติ
             const newHistory = {
@@ -289,15 +319,25 @@ const AdvancedReports = () => {
     };
 
     const MetricSelector = () => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <label style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                {language === 'TH' ? 'เลือกตัวชี้วัด' : 'Select Metrics'}
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+        <div className="config-section">
+            <label>{language === 'TH' ? 'ตัวชี้วัด' : 'Report Metrics'}</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
                 {Object.entries(availableMetrics).map(([key, label]) => (
-                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', border: '1px solid var(--neutral-200)', borderRadius: '6px', cursor: 'pointer' }}>
+                    <label key={key} style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.65rem', 
+                        padding: '0.85rem', 
+                        border: '1px solid var(--neutral-100)', 
+                        borderRadius: '12px', 
+                        cursor: 'pointer',
+                        background: reportConfig.metrics.includes(key) ? '#f5f3ff' : 'var(--neutral-50)',
+                        border: reportConfig.metrics.includes(key) ? '1px solid #7c3aed' : '1px solid var(--neutral-100)',
+                        transition: 'all 0.2s ease'
+                    }}>
                         <input
                             type="checkbox"
+                            style={{ accentColor: '#7c3aed' }}
                             checked={reportConfig.metrics.includes(key)}
                             onChange={(e) => {
                                 if (e.target.checked) {
@@ -307,7 +347,9 @@ const AdvancedReports = () => {
                                 }
                             }}
                         />
-                        <span style={{ fontSize: '0.875rem' }}>{label[language]}</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 850, color: reportConfig.metrics.includes(key) ? '#7c3aed' : 'var(--neutral-600)' }}>
+                            {label[language]}
+                        </span>
                     </label>
                 ))}
             </div>
@@ -318,78 +360,74 @@ const AdvancedReports = () => {
         if (!reportData) return null;
         
         return (
-            <div style={{ marginTop: '2rem' }}>
+            <div className="report-content-area animate-fade-in">
                 {/* Summary Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                    <div style={{ padding: '1.5rem', background: 'var(--neutral-50)', borderRadius: '8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary-600)' }}>
+                <div className="report-stat-grid">
+                    <div className="report-stat-card">
+                        <div className="stat-value" style={{ color: '#4f46e5' }}>
                             ฿{reportData.summary.totalRevenue.toLocaleString()}
                         </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
-                            {language === 'TH' ? 'รายได้รวม' : 'Total Revenue'}
+                        <div className="stat-label">
+                            {language === 'TH' ? 'รายได้รวม' : 'Gross Revenue'}
                         </div>
                     </div>
-                    <div style={{ padding: '1.5rem', background: 'var(--neutral-50)', borderRadius: '8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981' }}>
+                    <div className="report-stat-card">
+                        <div className="stat-value" style={{ color: '#059669' }}>
                             ฿{reportData.summary.netProfit.toLocaleString()}
                         </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
-                            {language === 'TH' ? 'กำไรสุทธิ' : 'Net Profit'}
+                        <div className="stat-label">
+                            {language === 'TH' ? 'กำไรสุทธิ' : 'Net Operating Income'}
                         </div>
                     </div>
-                    <div style={{ padding: '1.5rem', background: 'var(--neutral-50)', borderRadius: '8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3b82f6' }}>
+                    <div className="report-stat-card">
+                        <div className="stat-value" style={{ color: '#3b82f6' }}>
                             {reportData.summary.totalPatients.toLocaleString()}
                         </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
-                            {language === 'TH' ? 'ผู้ป่วยทั้งหมด' : 'Total Patients'}
+                        <div className="stat-label">
+                            {language === 'TH' ? 'ผู้ป่วยทั้งหมด' : 'Global Patient Base'}
                         </div>
                     </div>
-                    <div style={{ padding: '1.5rem', background: 'var(--neutral-50)', borderRadius: '8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f59e0b' }}>
+                    <div className="report-stat-card">
+                        <div className="stat-value" style={{ color: '#d97706' }}>
                             {reportData.summary.newPatients}
                         </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
-                            {language === 'TH' ? 'ผู้ป่วยใหม่' : 'New Patients'}
+                        <div className="stat-label">
+                            {language === 'TH' ? 'ผู้ป่วยใหม่' : 'New Acquisitions'}
                         </div>
                     </div>
                 </div>
 
                 {/* Data Table */}
-                <div style={{ background: 'white', border: '1px solid var(--neutral-200)', borderRadius: '8px', overflow: 'hidden' }}>
-                    <div style={{ padding: '1rem', background: 'var(--neutral-50)', borderBottom: '1px solid var(--neutral-200)' }}>
-                        <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Database size={16} />
-                            {language === 'TH' ? 'ข้อมูลละเอียด' : 'Detailed Data'}
+                <div className="report-preview-glass" style={{ padding: 0, overflow: 'hidden' }}>
+                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--neutral-50)', background: 'var(--neutral-50)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <Database size={20} color="#4f46e5" />
+                            {language === 'TH' ? 'ข้อมูลรายละเอียดเชิงลึก' : 'Granular Performance Data'}
                         </h4>
+                        <button onClick={() => exportReport('pdf')} className="btn-billing secondary" style={{ fontSize: '0.8rem', padding: '6px 14px' }}>
+                            <Download size={14} />
+                            Export PDF
+                        </button>
                     </div>
                     <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table className="report-premium-table">
                             <thead>
-                                <tr style={{ background: 'var(--neutral-50)' }}>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'วันที่' : 'Date'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'รายได้' : 'Revenue'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'ผู้ป่วย' : 'Patients'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'นัดหมาย' : 'Appointments'}
-                                    </th>
+                                <tr>
+                                    <th>{language === 'TH' ? 'วันที่' : 'Metric Date'}</th>
+                                    <th style={{ textAlign: 'right' }}>{language === 'TH' ? 'รายได้' : 'Revenue'}</th>
+                                    <th style={{ textAlign: 'right' }}>{language === 'TH' ? 'ผู้ป่วย' : 'Patients'}</th>
+                                    <th style={{ textAlign: 'right' }}>{language === 'TH' ? 'นัดหมาย' : 'Cases'}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {reportData.details.map((row, index) => (
-                                    <tr key={index} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
-                                        <td style={{ padding: '1rem' }}>{row.date}</td>
-                                        <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>
+                                    <tr key={index}>
+                                        <td style={{ fontWeight: 800 }}>{row.date}</td>
+                                        <td style={{ textAlign: 'right', fontWeight: 950, color: 'var(--neutral-900)' }}>
                                             ฿{row.revenue.toLocaleString()}
                                         </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right' }}>{row.patients}</td>
-                                        <td style={{ padding: '1rem', textAlign: 'right' }}>{row.appointments}</td>
+                                        <td style={{ textAlign: 'right', fontWeight: 800 }}>{row.patients}</td>
+                                        <td style={{ textAlign: 'right', fontWeight: 800 }}>{row.appointments}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -402,360 +440,271 @@ const AdvancedReports = () => {
 
     if (!isAdmin) {
         return (
-            <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center' }}>
-                <FileText size={48} color="var(--neutral-400)" />
-                <h2 style={{ marginTop: '1rem' }}>
-                    {language === 'TH' ? 'เข้าถึงไม่ได้' : 'Access Denied'}
-                </h2>
-                <p style={{ color: 'var(--neutral-600)' }}>
-                    {language === 'TH' ? 'หน้านี้สำหรับ Owner/Admin เท่านั้น' : 'This page is for Owner/Admin only'}
-                </p>
+            <div className="report-status-screen animate-fade-in">
+                <div className="status-icon-box">
+                    <FileText size={48} />
+                </div>
+                <h2>{language === 'TH' ? 'เข้าถึงไม่ได้' : 'Access Denied'}</h2>
+                <p>{language === 'TH' ? 'หน้านี้สำหรับ Owner/Admin เท่านั้น' : 'This page is for Owner/Admin only'}</p>
+                <button className="report-primary-btn" onClick={() => window.history.back()}>
+                    {language === 'TH' ? 'กลับไปหน้าหลัก' : 'Return to Dashboard'}
+                </button>
             </div>
         );
     }
 
     return (
-        <div className="advanced-reports" style={{ padding: '2rem' }}>
+        <div className="reports-modern-container">
             {/* Header */}
-            <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <BarChart3 size={32} color="var(--primary-600)" />
-                        {language === 'TH' ? 'รายงานขั้นสูง' : 'Advanced Reports'}
-                    </h1>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <RefreshCw size={18} />
-                            {language === 'TH' ? 'รีเฟรช' : 'Refresh'}
-                        </button>
+            <header className="report-hub-header animate-slide-down">
+                <div className="report-info-cluster">
+                    <div className="report-icon-cube">
+                        <BarChart3 size={24} />
+                    </div>
+                    <div>
+                        <h1>{language === 'TH' ? 'รายงานขั้นสูง' : 'Advanced Reports'}</h1>
+                        <p className="report-subtitle">
+                            {language === 'TH' ? 'วิเคราะห์ข้อมูลเชิงลึกและประสิทธิภาพของคลินิก' : 'Analyze insights and institutional performance metrics'}
+                        </p>
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--neutral-200)' }}>
-                    {[
-                        { id: 'builder', label: { TH: 'สร้างรายงาน', EN: 'Report Builder' } },
-                        { id: 'templates', label: { TH: 'เทมเพลต', EN: 'Templates' } },
-                        { id: 'scheduled', label: { TH: 'ตั้งเวลา', EN: 'Scheduled' } },
-                        { id: 'history', label: { TH: 'ประวัติ', EN: 'History' } }
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            style={{
-                                padding: '0.75rem 1.5rem',
-                                border: 'none',
-                                background: activeTab === tab.id ? 'var(--primary-50)' : 'transparent',
-                                color: activeTab === tab.id ? 'var(--primary-700)' : 'var(--neutral-600)',
-                                borderBottom: activeTab === tab.id ? '2px solid var(--primary-600)' : '2px solid transparent',
-                                fontWeight: 600,
-                                cursor: 'pointer'
-                            }}
-                        >
-                            {tab.label[language]}
-                        </button>
-                    ))}
+                <div className="report-action-group">
+                    <button className="report-secondary-btn">
+                        <RefreshCw size={18} />
+                        <span>{language === 'TH' ? 'รีเฟรช' : 'Refresh'}</span>
+                    </button>
                 </div>
-            </div>
+            </header>
+
+            {/* Tabs */}
+            <nav className="report-tab-rail">
+                {[
+                    { id: 'builder', label: { TH: 'สร้างรายงาน', EN: 'Report Builder' } },
+                    { id: 'templates', label: { TH: 'เทมเพลต', EN: 'Templates' } },
+                    { id: 'scheduled', label: { TH: 'ตั้งเวลา', EN: 'Scheduled' } },
+                    { id: 'history', label: { TH: 'ประวัติ', EN: 'History' } }
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        className={`report-tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                        onClick={() => setActiveTab(tab.id)}
+                    >
+                        {tab.label[language]}
+                    </button>
+                ))}
+            </nav>
 
             {/* Report Builder Tab */}
             {activeTab === 'builder' && (
-                <div className="glass-panel" style={{ padding: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Plus size={20} color="var(--primary-600)" />
-                        {language === 'TH' ? 'สร้างรายงานแบบกำหนดเอง' : 'Custom Report Builder'}
-                    </h3>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                        {/* Configuration */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div>
-                                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>
-                                    {language === 'TH' ? 'ชื่อรายงาน' : 'Report Name'}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={reportConfig.name}
-                                    onChange={(e) => setReportConfig(prev => ({ ...prev, name: e.target.value }))}
-                                    placeholder={language === 'TH' ? 'ระบุชื่อรายงาน...' : 'Enter report name...'}
-                                    style={{ 
-                                        width: '100%', 
-                                        padding: '0.75rem', 
-                                        borderRadius: '8px', 
-                                        border: '1px solid var(--neutral-200)'
-                                    }}
-                                />
-                            </div>
-                            
-                            <div>
-                                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>
-                                    {language === 'TH' ? 'รายละเอียด' : 'Description'}
-                                </label>
-                                <textarea
-                                    value={reportConfig.description}
-                                    onChange={(e) => setReportConfig(prev => ({ ...prev, description: e.target.value }))}
-                                    placeholder={language === 'TH' ? 'รายละเอียดรายงาน...' : 'Enter report description...'}
-                                    rows={3}
-                                    style={{ 
-                                        width: '100%', 
-                                        padding: '0.75rem', 
-                                        borderRadius: '8px', 
-                                        border: '1px solid var(--neutral-200)',
-                                        resize: 'vertical'
-                                    }}
-                                />
-                            </div>
-                            
-                            <div>
-                                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>
-                                    {language === 'TH' ? 'แหล่งข้อมูล' : 'Data Source'}
-                                </label>
-                                <select
-                                    value={reportConfig.dataSource}
-                                    onChange={(e) => setReportConfig(prev => ({ ...prev, dataSource: e.target.value }))}
-                                    style={{ 
-                                        width: '100%', 
-                                        padding: '0.75rem', 
-                                        borderRadius: '8px', 
-                                        border: '1px solid var(--neutral-200)',
-                                        background: 'white'
-                                    }}
-                                >
-                                    {Object.entries(dataSources).map(([key, label]) => (
-                                        <option key={key} value={key}>
-                                            {label[language]}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>
-                                    {language === 'TH' ? 'ช่วงเวลา' : 'Date Range'}
-                                </label>
-                                <select
-                                    value={reportConfig.dateRange}
-                                    onChange={(e) => setReportConfig(prev => ({ ...prev, dateRange: e.target.value }))}
-                                    style={{ 
-                                        width: '100%', 
-                                        padding: '0.75rem', 
-                                        borderRadius: '8px', 
-                                        border: '1px solid var(--neutral-200)',
-                                        background: 'white'
-                                    }}
-                                >
-                                    <option value="today">{language === 'TH' ? 'วันนี้' : 'Today'}</option>
-                                    <option value="week">{language === 'TH' ? 'สัปดาห์นี้' : 'This Week'}</option>
-                                    <option value="month">{language === 'TH' ? 'เดือนนี้' : 'This Month'}</option>
-                                    <option value="quarter">{language === 'TH' ? 'ไตรมาสนี้' : 'This Quarter'}</option>
-                                    <option value="year">{language === 'TH' ? 'ปีนี้' : 'This Year'}</option>
-                                    <option value="custom">{language === 'TH' ? 'กำหนดเอง' : 'Custom Range'}</option>
-                                </select>
-                            </div>
+                <div className="report-builder-grid animate-fade-in">
+                    {/* Configuration */}
+                    <div className="report-config-card">
+                        <div className="config-section">
+                            <label>{language === 'TH' ? 'ชื่อรายงาน' : 'Model Identifier'}</label>
+                            <input
+                                type="text"
+                                className="config-input"
+                                value={reportConfig.name}
+                                onChange={(e) => setReportConfig(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder={language === 'TH' ? 'โปรดระบุชื่อรุ่นรายงาน...' : 'Enter target model name...'}
+                            />
                         </div>
                         
-                        <div>
-                            <MetricSelector />
-                            
-                            <div style={{ marginTop: '1.5rem' }}>
-                                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>
-                                    {language === 'TH' ? 'รูปแบบกราฟ' : 'Chart Types'}
-                                </label>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    {['table', 'bar', 'pie', 'line'].map(chart => (
-                                        <label key={chart} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', border: '1px solid var(--neutral-200)', borderRadius: '6px', cursor: 'pointer' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={reportConfig.charts.includes(chart)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setReportConfig(prev => ({ ...prev, charts: [...prev.charts, chart] }));
-                                                    } else {
-                                                        setReportConfig(prev => ({ ...prev, charts: prev.charts.filter(c => c !== chart) }));
-                                                    }
-                                                }}
-                                            />
-                                            <span style={{ fontSize: '0.875rem', textTransform: 'capitalize' }}>{chart}</span>
-                                        </label>
-                                    ))}
+                        <div className="config-section">
+                            <label>{language === 'TH' ? 'รายละเอียดวัตถุประสงค์' : 'Business Logic Target'}</label>
+                            <textarea
+                                className="config-textarea"
+                                value={reportConfig.description}
+                                onChange={(e) => setReportConfig(prev => ({ ...prev, description: e.target.value }))}
+                                placeholder={language === 'TH' ? 'ระบุขอบเขตการคำนวณ...' : 'Define analysis objective...'}
+                                rows={3}
+                            />
+                        </div>
+                        
+                        <div className="config-section">
+                            <label>{language === 'TH' ? 'คลังข้อมูลหลัก' : 'Primary Dataset'}</label>
+                            <select
+                                className="config-select"
+                                value={reportConfig.dataSource}
+                                onChange={(e) => setReportConfig(prev => ({ ...prev, dataSource: e.target.value }))}
+                            >
+                                {Object.entries(dataSources).map(([key, label]) => (
+                                    <option key={key} value={key}>{label[language]}</option>
+                                ))}
+                            </select>
+                        </div>
+                        
+                        <div className="config-section">
+                            <label>{language === 'TH' ? 'ขอบเขตเวลาวิเคราะห์' : 'Temporal Horizon'}</label>
+                            <select
+                                className="config-select"
+                                value={reportConfig.dateRange}
+                                onChange={(e) => setReportConfig(prev => ({ ...prev, dateRange: e.target.value }))}
+                            >
+                                <option value="today">{language === 'TH' ? 'วันนี้' : 'Today'}</option>
+                                <option value="week">{language === 'TH' ? 'สัปดาห์ปัจจุบัน' : 'Current Week'}</option>
+                                <option value="month">{language === 'TH' ? 'เดือนปัจจุบัน' : 'Current Month'}</option>
+                                <option value="quarter">{language === 'TH' ? 'ไตรมาสปัจจุบัน' : 'Fiscal Quarter'}</option>
+                                <option value="year">{language === 'TH' ? 'ปีงบประมาณ' : 'Fiscal Year'}</option>
+                                <option value="custom">{language === 'TH' ? 'ช่วงเวลากำหนดเอง' : 'Custom Interval'}</option>
+                            </select>
+                        </div>
+
+                        <MetricSelector />
+
+                        <div className="config-section">
+                            <label>{language === 'TH' ? 'รูปแบบการนำเสนอ' : 'Visualization Type'}</label>
+                            <div className="vis-type-grid">
+                                {['table', 'bar', 'pie', 'line'].map(chart => (
+                                    <label key={chart} className={`vis-type-pill ${reportConfig.charts.includes(chart) ? 'active' : ''}`}>
+                                        <input
+                                            type="checkbox"
+                                            hidden
+                                            checked={reportConfig.charts.includes(chart)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setReportConfig(prev => ({ ...prev, charts: [...prev.charts, chart] }));
+                                                } else {
+                                                    setReportConfig(prev => ({ ...prev, charts: prev.charts.filter(c => c !== chart) }));
+                                                }
+                                            }}
+                                        />
+                                        <span>{chart.toUpperCase()}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="builder-actions">
+                            <button onClick={saveReportTemplate} className="report-secondary-btn">
+                                <Save size={18} />
+                                {language === 'TH' ? 'บันทึก' : 'Save'}
+                            </button>
+                            <button 
+                                onClick={generateReport} 
+                                disabled={isGenerating || !reportConfig.name || reportConfig.metrics.length === 0} 
+                                className="report-primary-btn"
+                            >
+                                {isGenerating ? (
+                                    <div className="report-spinner" />
+                                ) : (
+                                    <>
+                                        <Activity size={18} />
+                                        {language === 'TH' ? 'ประมวลผล' : 'Execute Analysis'}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="report-preview-canvas">
+                        {reportData ? <ReportPreview /> : (
+                            <div className="report-empty-preview">
+                                <div className="empty-preview-icon">
+                                    <TrendingUp size={40} />
                                 </div>
+                                <h3>{language === 'TH' ? 'พร้อมสำหรับการวิเคราะห์' : 'Ready for Analysis'}</h3>
+                                <p>
+                                    {language === 'TH' ? 'กำหนดพารามิเตอร์ด้านซ้ายเพื่อสร้างรายงานเชิงลึก' : 'Configure analysis parameters in the studio to generate intelligence reports.'}
+                                </p>
                             </div>
-                        </div>
+                        )}
                     </div>
-                    
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--neutral-200)' }}>
-                        <button 
-                            onClick={saveReportTemplate}
-                            className="btn btn-secondary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                        >
-                            <Save size={18} />
-                            {language === 'TH' ? 'บันทึกเป็นเทมเพลต' : 'Save as Template'}
-                        </button>
-                        
-                        <button 
-                            onClick={generateReport}
-                            disabled={isGenerating || !reportConfig.name || reportConfig.metrics.length === 0}
-                            className="btn btn-primary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                        >
-                            {isGenerating ? (
-                                <>
-                                    <div className="spinner" style={{ width: '18px', height: '18px' }} />
-                                    {language === 'TH' ? 'กำลังสร้าง...' : 'Generating...'}
-                                </>
-                            ) : (
-                                <>
-                                    <Target size={18} />
-                                    {language === 'TH' ? 'สร้างรายงาน' : 'Generate Report'}
-                                </>
-                            )}
-                        </button>
-                    </div>
-                    
-                    {/* Report Preview */}
-                    {reportData && <ReportPreview />}
                 </div>
             )}
 
             {/* Templates Tab */}
             {activeTab === 'templates' && (
-                <div className="glass-panel" style={{ padding: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <FileText size={20} color="var(--primary-600)" />
-                        {language === 'TH' ? 'เทมเพลตรายงาน' : 'Report Templates'}
-                    </h3>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
-                        {reportTemplates.map(template => (
-                            <div key={template.id} style={{
-                                padding: '1.5rem',
-                                border: '1px solid var(--neutral-200)',
-                                borderRadius: '12px',
-                                background: 'white',
-                                position: 'relative'
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                                    <div>
-                                        <h4 style={{ margin: 0, fontSize: '1.1rem' }}>{template.name[language]}</h4>
-                                        <p style={{ margin: '0.5rem 0', fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
-                                            {template.description[language]}
-                                        </p>
-                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                            <span style={{
-                                                padding: '0.25rem 0.75rem',
-                                                borderRadius: '20px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600,
-                                                background: '#f3f4f6',
-                                                color: '#6b7280'
-                                            }}>
-                                                {template.type}
-                                            </span>
-                                            <span style={{
-                                                padding: '0.25rem 0.75rem',
-                                                borderRadius: '20px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600,
-                                                background: template.active ? '#dcfce7' : '#fee2e2',
-                                                color: template.active ? '#16a34a' : '#dc2626'
-                                            }}>
-                                                {template.active ? (language === 'TH' ? 'ใช้งาน' : 'Active') : (language === 'TH' ? 'ไม่ใช้งาน' : 'Inactive')}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button className="btn btn-secondary" style={{ padding: '0.5rem' }}>
-                                            <Eye size={16} />
-                                        </button>
-                                        <button className="btn btn-secondary" style={{ padding: '0.5rem' }}>
-                                            <Edit3 size={16} />
-                                        </button>
-                                        <button 
-                                            onClick={() => deleteReportTemplate(template.id)}
-                                            className="btn btn-secondary"
-                                            style={{ padding: '0.5rem' }}
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
+                <div className="templates-grid animate-fade-in">
+                    {reportTemplates.map(template => (
+                        <div key={template.id} className="template-card">
+                            <div className="template-icon-row">
+                                <div className="template-type-icon">
+                                    {template.type === 'financial' ? <DollarSign size={24} /> : 
+                                     template.type === 'patient' ? <Users size={24} /> : 
+                                     template.type === 'performance' ? <Activity size={24} /> : 
+                                     <PieChart size={24} />}
                                 </div>
-                                
-                                <div style={{ fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
-                                    <div style={{ marginBottom: '0.25rem' }}>
-                                        {language === 'TH' ? 'แหล่งข้อมูล:' : 'Data Source:'} {dataSources[template.dataSource]?.[language]}
-                                    </div>
-                                    <div style={{ marginBottom: '0.25rem' }}>
-                                        {language === 'TH' ? 'ความถี่:' : 'Frequency:'} {template.frequency}
-                                    </div>
-                                    <div>
-                                        {language === 'TH' ? 'ตัวชี้วัด:' : 'Metrics:'} {template.metrics.map(m => availableMetrics[m]?.[language]).join(', ')}
-                                    </div>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button className="btn-adj" style={{ padding: '8px' }}>
+                                        <Eye size={16} />
+                                    </button>
+                                    <button onClick={() => deleteReportTemplate(template.id)} className="btn-adj" style={{ padding: '8px', color: '#dc2626', background: '#fef2f2' }}>
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+                            
+                            <div className="template-content">
+                                <h4>{template.name[language]}</h4>
+                                <p className="template-desc">{template.description[language]}</p>
+                                
+                                <div style={{ borderTop: '1px dashed var(--neutral-100)', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                        {template.metrics.slice(0, 3).map(m => (
+                                            <span key={m} style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--neutral-400)', background: 'var(--neutral-50)', padding: '4px 10px', borderRadius: '10px', textTransform: 'uppercase' }}>
+                                                {availableMetrics[m]?.[language]}
+                                            </span>
+                                        ))}
+                                        {template.metrics.length > 3 && <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--neutral-400)' }}>+{template.metrics.length - 3}</span>}
+                                    </div>
+                                    <button className="btn-billing primary" style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', border: 'none', background: '#f5f3ff', color: '#7c3aed' }}>
+                                        {language === 'TH' ? 'เตรียมใช้งาน' : 'Deploy Model'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 
             {/* Scheduled Reports Tab */}
             {activeTab === 'scheduled' && (
-                <div className="glass-panel" style={{ padding: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Clock size={20} color="var(--primary-600)" />
-                        {language === 'TH' ? 'รายงานตั้งเวลา' : 'Scheduled Reports'}
+                <div className="report-preview-glass animate-fade-in" style={{ padding: '2rem' }}>
+                    <h3 style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', fontWeight: 950, color: 'var(--neutral-900)' }}>
+                        <Clock size={24} color="#4f46e5" />
+                        {language === 'TH' ? 'กำหนดการส่งรายงานอัตโนมัติ' : 'Automated Sequence Control'}
                     </h3>
                     
                     <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table className="report-premium-table">
                             <thead>
-                                <tr style={{ background: 'var(--neutral-50)' }}>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'ชื่อรายงาน' : 'Report Name'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'ตั้งเวลา' : 'Schedule'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'รันครั้ง' : 'Next Run'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'ผู้รับ' : 'Recipients'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'สถานะ' : 'Status'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'จัดการ' : 'Actions'}
-                                    </th>
+                                <tr>
+                                    <th>{language === 'TH' ? 'ชื่อรายงาน' : 'Sequence Name'}</th>
+                                    <th>{language === 'TH' ? 'กำหนดการ' : 'Frequency'}</th>
+                                    <th>{language === 'TH' ? 'รอบถัดไป' : 'Next Execution'}</th>
+                                    <th>{language === 'TH' ? 'ผู้รับปลายทาง' : 'Recipients'}</th>
+                                    <th style={{ textAlign: 'center' }}>{language === 'TH' ? 'สถานะ' : 'State'}</th>
+                                    <th style={{ textAlign: 'center' }}>{language === 'TH' ? 'จัดการ' : 'Command'}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {scheduledReports.map(report => (
-                                    <tr key={report.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
-                                        <td style={{ padding: '1rem' }}>{report.name}</td>
-                                        <td style={{ padding: '1rem' }}>{report.schedule}</td>
-                                        <td style={{ padding: '1rem' }}>{report.nextRun}</td>
-                                        <td style={{ padding: '1rem' }}>{report.recipients.join(', ')}</td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                    <tr key={report.id}>
+                                        <td style={{ fontWeight: 900, color: 'var(--neutral-900)' }}>{report.name}</td>
+                                        <td style={{ fontWeight: 700 }}>{report.schedule}</td>
+                                        <td style={{ fontWeight: 800 }}>{report.nextRun}</td>
+                                        <td style={{ fontSize: '0.85rem' }}>{report.recipients.join(', ')}</td>
+                                        <td style={{ textAlign: 'center' }}>
                                             <span style={{
-                                                padding: '0.25rem 0.75rem',
-                                                borderRadius: '20px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600,
-                                                background: report.active ? '#dcfce7' : '#fee2e2',
-                                                color: report.active ? '#16a34a' : '#dc2626'
+                                                padding: '6px 12px',
+                                                borderRadius: '30px',
+                                                fontSize: '0.7rem',
+                                                fontWeight: 900,
+                                                background: report.active ? '#ecfdf5' : '#fef2f2',
+                                                color: report.active ? '#059669' : '#dc2626',
+                                                border: `1px solid ${report.active ? '#059669' : '#dc2626'}30`
                                             }}>
-                                                {report.active ? (language === 'TH' ? 'ใช้งาน' : 'Active') : (language === 'TH' ? 'หยุด' : 'Paused')}
+                                                {report.active ? 'ACTIVE' : 'IDLE'}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                                                <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem' }}>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center' }}>
+                                                <button className="btn-adj" style={{ padding: '6px' }}>
                                                     <Edit3 size={14} />
                                                 </button>
-                                                <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem' }}>
+                                                <button className="btn-adj" style={{ padding: '6px', color: '#dc2626', background: '#fef2f2' }}>
                                                     <Trash2 size={14} />
                                                 </button>
                                             </div>
@@ -770,89 +719,58 @@ const AdvancedReports = () => {
 
             {/* History Tab */}
             {activeTab === 'history' && (
-                <div className="glass-panel" style={{ padding: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Activity size={20} color="var(--primary-600)" />
-                        {language === 'TH' ? 'ประวัติรายงาน' : 'Report History'}
+                <div className="report-preview-glass animate-fade-in" style={{ padding: '2rem' }}>
+                    <h3 style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', fontWeight: 950, color: 'var(--neutral-900)' }}>
+                        <Activity size={24} color="#4f46e5" />
+                        {language === 'TH' ? 'คลังรายงานที่สร้างแล้ว' : 'Institutional Report Archive'}
                     </h3>
                     
                     <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table className="report-premium-table">
                             <thead>
-                                <tr style={{ background: 'var(--neutral-50)' }}>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'ชื่อรายงาน' : 'Report Name'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'สร้างเมื่อ' : 'Generated'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'สร้างโดย' : 'Generated By'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'รูปแบบ' : 'Format'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'ขนาด' : 'Size'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'สถานะ' : 'Status'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'จัดการ' : 'Actions'}
-                                    </th>
+                                <tr>
+                                    <th>{language === 'TH' ? 'รายงาน' : 'Model Identifier'}</th>
+                                    <th>{language === 'TH' ? 'ความถี่/สร้างเมื่อ' : 'Source / Generated'}</th>
+                                    <th>{language === 'TH' ? 'รูปแบบ/ขนาด' : 'Protocol / Payload'}</th>
+                                    <th style={{ textAlign: 'center' }}>{language === 'TH' ? 'สถานะ' : 'State'}</th>
+                                    <th style={{ textAlign: 'center' }}>{language === 'TH' ? 'จัดการ' : 'Command'}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {reportHistory.map(report => (
-                                    <tr key={report.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
-                                        <td style={{ padding: '1rem' }}>
-                                            <div>
-                                                <div style={{ fontWeight: 600 }}>{report.name}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--neutral-600)' }}>
-                                                    {report.type}
-                                                </div>
-                                            </div>
+                                    <tr key={report.id}>
+                                        <td>
+                                            <div style={{ fontWeight: 900, color: 'var(--neutral-900)' }}>{report.name}</div>
+                                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-400)' }}>{report.generatedBy}</div>
                                         </td>
-                                        <td style={{ padding: '1rem' }}>{report.generatedAt}</td>
-                                        <td style={{ padding: '1rem' }}>{report.generatedBy}</td>
-                                        <td style={{ padding: '1rem' }}>
+                                        <td>
+                                            <div style={{ fontWeight: 700 }}>{report.type}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)' }}>{report.generatedAt}</div>
+                                        </td>
+                                        <td>
+                                            <div style={{ fontWeight: 800 }}>{report.format.toUpperCase()}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)' }}>{report.size}</div>
+                                        </td>
+                                        <td style={{ textAlign: 'center' }}>
                                             <span style={{
-                                                padding: '0.25rem 0.75rem',
-                                                borderRadius: '20px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600,
-                                                background: '#f3f4f6',
-                                                color: '#6b7280',
-                                                textTransform: 'uppercase'
+                                                padding: '6px 12px',
+                                                borderRadius: '30px',
+                                                fontSize: '0.7rem',
+                                                fontWeight: 900,
+                                                background: report.status === 'completed' ? '#ecfdf5' : '#fef2f2',
+                                                color: report.status === 'completed' ? '#059669' : '#dc2626',
+                                                border: `1px solid ${report.status === 'completed' ? '#059669' : '#dc2626'}30`
                                             }}>
-                                                {report.format}
+                                                {report.status.toUpperCase()}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right' }}>{report.size}</td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            <span style={{
-                                                padding: '0.25rem 0.75rem',
-                                                borderRadius: '20px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600,
-                                                background: report.status === 'completed' ? '#dcfce7' : '#fee2e2',
-                                                color: report.status === 'completed' ? '#16a34a' : '#dc2626'
-                                            }}>
-                                                {report.status === 'completed' ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
-                                                {report.status === 'completed' ? (language === 'TH' ? 'สำเร็จ' : 'Completed') : (language === 'TH' ? 'ล้มเหลว' : 'Failed')}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                                                <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem' }}>
-                                                    <Eye size={14} />
-                                                </button>
-                                                <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem' }}>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center' }}>
+                                                <button className="btn-adj" style={{ padding: '6px' }}>
                                                     <Download size={14} />
                                                 </button>
-                                                <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem' }}>
-                                                    <Mail size={14} />
+                                                <button className="btn-adj" style={{ padding: '6px', color: '#dc2626', background: '#fef2f2' }}>
+                                                    <Trash2 size={14} />
                                                 </button>
                                             </div>
                                         </td>

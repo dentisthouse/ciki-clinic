@@ -21,7 +21,6 @@ import LinePortal from './pages/LinePortal';
 import Attendance from './pages/Attendance';
 import Staff from './pages/Staff';
 import Expenses from './pages/Expenses';
-import CustomerRelationship from './pages/CustomerRelationship';
 import DrugLabelSystem from './pages/DrugLabelSystem';
 import MedicalCertificateSystem from './pages/MedicalCertificateSystem';
 import BusinessAnalytics from './pages/BusinessAnalytics';
@@ -29,8 +28,6 @@ import CouponManagement from './pages/CouponManagement';
 import EClaimSystem from './pages/EClaimSystem';
 import OnlinePaymentSystem from './pages/OnlinePaymentSystem';
 import ReportsHub from './pages/ReportsHub';
-import OwnerDashboard from './pages/OwnerDashboard';
-import FinancialManagement from './pages/FinancialManagement';
 import ClinicSettings from './pages/ClinicSettings';
 import StaffManagement from './pages/StaffManagement';
 import SecurityAudit from './pages/SecurityAudit';
@@ -43,6 +40,7 @@ import QueueDisplay from './pages/QueueDisplay';
 import FloorManagement from './pages/FloorManagement';
 import DailyReport from './pages/DailyReport';
 import ManagementHub from './pages/ManagementHub';
+
 
 import { AuthProvider } from './context/AuthContext';
 import AuthGuard from './components/System/AuthGuard';
@@ -96,7 +94,6 @@ function App() {
                         <Route path="floor" element={<FloorManagement />} />
                         <Route path="daily-report" element={<DailyReport />} />
                         <Route path="expenses" element={<Expenses />} />
-                        <Route path="crm" element={<CustomerRelationship />} />
                         <Route path="drug-labels" element={<DrugLabelSystem />} />
                         <Route path="medical-certificates" element={<MedicalCertificateSystem />} />
                         <Route path="business-analytics" element={<BusinessAnalytics />} />
@@ -104,15 +101,17 @@ function App() {
                         <Route path="e-claim" element={<EClaimSystem />} />
                         <Route path="online-payments" element={<OnlinePaymentSystem />} />
                         <Route path="reports" element={<ReportsHub />} />
-                        <Route path="owner-dashboard" element={<OwnerDashboard />} />
-                        <Route path="financial" element={<FinancialManagement />} />
-                        <Route path="settings" element={<ClinicSettings />} />
-                        <Route path="staff-management" element={<StaffManagement />} />
-                        <Route path="security" element={<SecurityAudit />} />
-                        <Route path="roles" element={<RoleSettings />} />
-                        <Route path="notifications" element={<NotificationSettings />} />
-                        <Route path="treatment-plan" element={<TreatmentPlan />} />
                         <Route path="management" element={<ManagementHub />} />
+                        <Route path="management/:section" element={<ManagementHub />} />
+                        
+                        {/* Redirect old settings paths to unified management hub */}
+                        <Route path="settings" element={<Navigate to="/management/staff" replace />} />
+                        <Route path="staff-management" element={<Navigate to="/management/staff" replace />} />
+                        <Route path="security" element={<Navigate to="/management/security" replace />} />
+                        <Route path="roles" element={<Navigate to="/management/staff" replace />} />
+                        
+                        <Route path="treatment-plan" element={<TreatmentPlan />} />
+
 
                         <Route path="help" element={<HelpCenter />} />
                         <Route path="*" element={<Navigate to="/" replace />} />

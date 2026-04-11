@@ -23,7 +23,7 @@ import { useData } from '../../context/DataContext';
 
 const TreatmentPlanner = ({ patientId, onSavePlan }) => {
     const { language } = useLanguage();
-    const { patients, treatments } = useData();
+    const { patients, appointments, treatments } = useData();
     
     const [selectedPatient, setSelectedPatient] = useState(null);
     const [treatmentPlan, setTreatmentPlan] = useState([]);
@@ -31,6 +31,20 @@ const TreatmentPlanner = ({ patientId, onSavePlan }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [totalCost, setTotalCost] = useState(0);
     const [totalDuration, setTotalDuration] = useState(0);
+    
+    // Get latest vitals for the selected patient
+    const latestVitalsApt = React.useMemo(() => {
+        if (!patientId || !appointments) return null;
+        return (appointments || [])
+            .filter(a => (a.patientId === patientId || a.patient_id === patientId) && a.vitals)
+            .sort((a, b) => {
+                const dateA = new Date(`${a.date || a.appointmentDate}T${a.time || a.appointmentTime || '00:00'}`);
+                const dateB = new Date(`${b.date || b.appointmentDate}T${b.time || b.appointmentTime || '00:00'}`);
+                return dateB - dateA;
+            })[0];
+    }, [appointments, patientId]);
+    
+    const vitals = latestVitalsApt?.vitals;
 
     // ข้อมูลการรักษาที่มีอยู่
     const treatmentTemplates = [
@@ -281,6 +295,98 @@ const TreatmentPlanner = ({ patientId, onSavePlan }) => {
 
     return (
         <div className="treatment-planner" style={{ padding: '2rem' }}>
+            {/* Latest Vitals Display - Integrated for Patient Safety */}
+            {vitals && (
+                <div className="animate-fade-in" style={{ 
+                    background: 'white', 
+                    borderRadius: '20px', 
+                    border: '1px solid #e2e8f0', 
+                    overflow: 'hidden',
+                    marginBottom: '2rem',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02)'
+                }}>
+                    <div style={{ 
+                        padding: '1rem 1.5rem', 
+                        background: 'linear-gradient(90deg, #f8fafc 0%, #ffffff 100%)', 
+                        borderBottom: '1px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, color: '#1e293b', fontSize: '0.95rem' }}>
+                            <div style={{ 
+                                width: '32px', height: '32px', borderRadius: '10px', background: '#f0f9ff', 
+                                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                            }}>
+                                <Activity size={18} color="#0ea5e9" />
+                            </div>
+                            {language === 'TH' ? 'ข้อมูลก่อนรับบริการ (เพื่อความปลอดภัยในการรักษา)' : 'Pre-service Vitals (Safety Check)'}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#64748b', background: '#f1f5f9', padding: '4px 12px', borderRadius: '20px' }}>
+                            <Calendar size={12} />
+                            {latestVitalsApt.date} • <Clock size={12} style={{ marginLeft: '4px' }} /> {latestVitalsApt.time}
+                        </div>
+                    </div>
+                    <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1.5rem' }}>
+                        {vitals.weight && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'น้ำหนัก (กก.)' : 'Weight (kg)'}</span>
+                                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b' }}>{vitals.weight}</span>
+                            </div>
+                        )}
+                        {vitals.height && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'ส่วนสูง (ซม.)' : 'Height (cm)'}</span>
+                                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b' }}>{vitals.height}</span>
+                            </div>
+                        )}
+                        {(vitals.bp_high || vitals.bp_low) && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'ความดันเลือด' : 'Blood Pressure'}</span>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: (parseInt(vitals.bp_high) > 140 || parseInt(vitals.bp_low) > 90) ? '#ef4444' : '#1e293b' }}>
+                                        {vitals.bp_high || '-'}/{vitals.bp_low || '-'}
+                                    </span>
+                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 500 }}>mmHg</span>
+                                </div>
+                            </div>
+                        )}
+                        {vitals.temperature && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'อุณหภูมิ' : 'Temp'}</span>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: parseFloat(vitals.temperature) > 37.5 ? '#ef4444' : '#1e293b' }}>{vitals.temperature}</span>
+                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 500 }}>°C</span>
+                                </div>
+                            </div>
+                        )}
+                        {vitals.pulse && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{language === 'TH' ? 'ชีพจร' : 'Pulse'}</span>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: (parseInt(vitals.pulse) > 100 || parseInt(vitals.pulse) < 60) ? '#f59e0b' : '#1e293b' }}>{vitals.pulse}</span>
+                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 500 }}>bpm</span>
+                                </div>
+                            </div>
+                        )}
+                        {vitals.notes && (
+                            <div style={{ gridColumn: '1 / -1', borderTop: '1px dashed #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                    <FileText size={14} /> {language === 'TH' ? 'หมายเหตุทางการแพทย์' : 'Medical Notes'}
+                                </span>
+                                <div style={{ 
+                                    padding: '0.75rem 1rem', background: '#fff7ed', borderRadius: '10px', 
+                                    border: '1px solid #fed7aa', color: '#9a3412', fontSize: '0.9rem',
+                                    fontWeight: 500
+                                }}>
+                                    {vitals.notes}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>

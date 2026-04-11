@@ -1,15 +1,31 @@
 import React, { useState } from 'react';
-import { Package, Truck, CheckCircle, Plus, Clock, ChevronRight, X } from 'lucide-react';
+import { Package, Truck, CheckCircle, Plus, Clock, ChevronRight, X, Trash2, Search } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
+import SearchablePatientSelect from '../components/Common/SearchablePatientSelect';
+import '../styles/labs.css';
 
 const LabTracking = () => {
     const { t, language } = useLanguage();
-    const { labOrders, patients, updateLabOrder, addLabOrder } = useData(); 
+    const langT = (th, en) => (language === 'TH' ? th : en);
+    const { labOrders, patients, updateLabOrder, addLabOrder, deleteLabOrder, seedLabOrders } = useData(); 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const [newOrder, setNewOrder] = useState({ patientId: '', lab: '', appliance: '', work: '', due: '' });
 
     const orders = labOrders || [];
+
+    const filteredOrders = orders.filter(order => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            order.patientName?.toLowerCase().includes(searchLower) ||
+            order.lab?.toLowerCase().includes(searchLower) ||
+            order.clinicName?.toLowerCase().includes(searchLower) ||
+            order.work?.toLowerCase().includes(searchLower) ||
+            order.items?.toLowerCase().includes(searchLower) ||
+            order.appliance?.toLowerCase().includes(searchLower)
+        );
+    });
 
     const getStatusText = (status) => {
         if (language === 'TH') {
@@ -46,86 +62,111 @@ const LabTracking = () => {
     };
 
     return (
-        <div className="animate-slide-up" style={{ padding: '2rem' }}>
-            <div className="glass-panel" style={{ 
-                padding: '1.5rem 2rem', 
-                marginBottom: '1.5rem', 
-                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                border: '1px solid var(--neutral-200)',
-                borderRadius: '24px'
-            }}>
-                <div>
-                    <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--neutral-900)', margin: 0, letterSpacing: '-0.02em' }}>
+        <div className="labs-container animate-slide-up">
+            {/* Page Header */}
+            <div className="labs-header">
+                <div className="labs-title-group">
+                    <h1>
+                        <div className="labs-icon-box">
+                            <Truck size={24} />
+                        </div>
                         {t('lab_title')}
                     </h1>
-                    <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem', margin: '0.25rem 0 0', fontWeight: 500 }}>
-                        {t('lab_subtitle')}
-                    </p>
+                    <p>{t('lab_subtitle')}</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setIsModalOpen(true)} style={{ padding: '0.75rem 1.5rem', borderRadius: '14px', fontWeight: 800, fontSize: '0.875rem' }}>
-                    <Plus size={18} style={{ marginRight: '8px' }} /> {t('btn_new_lab_order')}
-                </button>
+                <div className="labs-actions">
+                    <div className="search-bar-modern">
+                        <Search size={18} className="search-icon" />
+                        <input 
+                            type="text" 
+                            placeholder={langT('ค้นหาด้วยชื่อคนไข้, งาน, หรือแล็บ...', 'Search by name, work, or lab...')}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <button 
+                        className="btn btn-primary" 
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        <Plus size={20} strokeWidth={3} /> {t('btn_new_lab_order')}
+                    </button>
+                </div>
             </div>
 
-            {orders.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '6rem 2rem', background: 'var(--neutral-50)', borderRadius: '32px', border: '2px dashed var(--neutral-200)', marginTop: '2rem' }}>
-                    <div style={{ width: '80px', height: '80px', background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)' }}>
-                        <Package size={32} color="var(--neutral-300)" />
+            {filteredOrders.length === 0 && (
+                <div className="labs-empty-state">
+                    <div className="labs-empty-icon-circle">
+                        <Package size={40} />
                     </div>
-                    <h3 style={{ color: 'var(--neutral-900)', fontWeight: 800, margin: '0 0 0.5rem' }}>{language === 'TH' ? 'ยังไม่มีรายการสั่งแล็บ' : 'No Lab Orders Yet'}</h3>
-                    <p style={{ color: 'var(--neutral-400)', maxWidth: '300px', margin: '0 auto' }}>{language === 'TH' ? 'เริ่มสร้างรายการสั่งงานแล็บใหม่ได้ด้วยปุ่มด้านบน' : 'Start tracking by creating your first lab order.'}</p>
+                    <h3>{searchTerm ? langT('ไม่พบข้อมูลที่ค้นหา', 'No results found') : langT('ยังไม่มีรายการสั่งแล็บ', 'No Lab Orders Yet')}</h3>
+                    <p style={{ maxWidth: '350px', color: 'var(--neutral-400)', marginBottom: '1.5rem' }}>
+                        {searchTerm ? langT('ลองค้นหาด้วยคำอื่นดูอีกครั้ง', 'Try searching with a different term.') : langT('ประวัติการสั่งแล็บจะปรากฏที่นี่ คุณสามารถเริ่มสร้างได้จากปุ่มด้านบน', 'Your lab order history will appear here. Start tracking by creating your first order.')}
+                    </p>
+                    {!searchTerm && (
+                        <button className="btn-billing secondary" onClick={() => seedLabOrders()}>
+                            {langT('โหลดข้อมูลตัวอย่างสำหรับทดสอบ', 'Load Sample Data')}
+                        </button>
+                    )}
                 </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                {orders.map(order => {
+            {/* Lab Orders Grid */}
+            <div className="labs-orders-grid">
+                {filteredOrders.map(order => {
                     const statusStyle = getStatusColor(order.status);
                     const StatusIcon = statusStyle.icon;
                     return (
-                        <div key={order.id} className="card" style={{ padding: '1.5rem', borderTop: `4px solid ${statusStyle.text}`, background: 'white', borderRadius: '24px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                                <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--neutral-900)' }}>
-                                    {order.appliance && <span style={{ color: 'var(--primary-600)', marginRight: '8px' }}>[{order.appliance}]</span>}
-                                    {order.work}
-                                </span>
-                                <span style={{
-                                    padding: '6px 10px', borderRadius: '10px',
-                                    background: statusStyle.bg, color: statusStyle.text,
-                                    fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px'
-                                }}>
+                        <div key={order.id} className="lab-case-card" style={{ borderTop: `4px solid ${statusStyle.text}` }}>
+                            <div className="case-card-header">
+                                <div className="case-info-main">
+                                    {order.appliance && <span className="case-appliance-tag">{order.appliance}</span>}
+                                    <h3 className="case-work-title">{order.work || order.items}</h3>
+                                </div>
+                                <span className={`lab-status-pill lab-status-${order.status.toLowerCase()}`}>
                                     <StatusIcon size={14} /> {getStatusText(order.status)}
                                 </span>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: 'var(--neutral-400)', fontWeight: 700 }}>{t('sch_col_patient')}:</span>
-                                    <span style={{ fontWeight: 800, color: 'var(--neutral-900)' }}>{order.patientName}</span>
+                            <div className="case-details-list">
+                                <div className="case-detail-row">
+                                    <span className="case-detail-label">{t('sch_col_patient')}</span>
+                                    <span className="case-detail-value">{order.patientName}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: 'var(--neutral-400)', fontWeight: 700 }}>{t('lab_col_lab')}:</span>
-                                    <span style={{ fontWeight: 700, color: 'var(--neutral-700)' }}>{order.lab}</span>
+                                <div className="case-detail-row">
+                                    <span className="case-detail-label">{t('lab_col_lab')}</span>
+                                    <span className="case-detail-value">{order.lab || order.clinicName}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: 'var(--neutral-400)', fontWeight: 700 }}>{t('lab_col_due')}:</span>
-                                    <span style={{ color: '#d97706', fontWeight: 800 }}>{order.due}</span>
+                                <div className="case-detail-row">
+                                    <span className="case-detail-label">{t('lab_col_due')}</span>
+                                    <span className="case-detail-value due">{order.due || order.dueDate}</span>
                                 </div>
                             </div>
 
-                            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--neutral-100)', display: 'flex', justifyContent: 'flex-end' }}>
-                                {order.status === 'Sent' && (
-                                    <button className="btn btn-secondary" style={{ borderRadius: '10px', fontWeight: 700, fontSize: '0.85rem' }} onClick={() => updateLabOrder(order.id, { status: 'Received' })}>
-                                        {language === 'TH' ? 'ทำเครื่องหมายว่าได้รับงานแล้ว' : 'Mark Received'}
-                                    </button>
-                                )}
-                                {order.status === 'Received' && (
-                                    <button className="btn btn-primary" style={{ borderRadius: '10px', fontWeight: 800, fontSize: '0.85rem' }} onClick={() => updateLabOrder(order.id, { status: 'Delivered' })}>
-                                        {language === 'TH' ? 'ทำเครื่องหมายว่าถึงคลินิกแล้ว' : 'Mark Delivered'}
-                                    </button>
-                                )}
+                            <div className="case-card-footer">
+                                <button 
+                                    className="btn-delete-case"
+                                    onClick={() => {
+                                        if (confirm(langT('ต้องการลบรายการนี้ใช่หรือไม่?', 'Are you sure you want to delete this order?'))) {
+                                            deleteLabOrder(order.id);
+                                        }
+                                    }}
+                                    title={langT('ลบรายการ', 'Delete Order')}
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                                
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {order.status === 'Sent' && (
+                                        <button className="case-primary-action received" onClick={() => updateLabOrder(order.id, { status: 'Received' })}>
+                                            {langT('ได้รับงานแล้ว', 'Mark Received')}
+                                        </button>
+                                    )}
+                                    {order.status === 'Received' && (
+                                        <button className="case-primary-action delivered" onClick={() => updateLabOrder(order.id, { status: 'Delivered' })}>
+                                            {langT('นัดติดงานให้คนไข้', 'Schedule Patient')}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     );
@@ -154,14 +195,12 @@ const LabTracking = () => {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                                 <div className="form-group">
                                     <label className="form-label">{t('sch_col_patient')}</label>
-                                    <select
-                                        className="form-select"
+                                    <SearchablePatientSelect
+                                        patients={patients}
                                         value={newOrder.patientId}
-                                        onChange={e => setNewOrder({ ...newOrder, patientId: e.target.value })}
-                                    >
-                                        <option value="">{t('apt_select_patient')}</option>
-                                        {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </select>
+                                        onChange={pId => setNewOrder({ ...newOrder, patientId: pId })}
+                                        placeholder={t('apt_select_patient')}
+                                    />
                                 </div>
                                 
                                 <div className="form-group">
@@ -215,10 +254,11 @@ const LabTracking = () => {
 
                         {/* Modal Footer */}
                         <div className="modal-footer">
-                            <button className="btn btn-secondary" onClick={() => setIsModalOpen(false)} style={{ padding: '0.85rem 2rem', borderRadius: '16px', fontWeight: 600 }}>
+                            <button className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
                                 {t('btn_cancel')}
                             </button>
-                            <button className="btn btn-primary" onClick={handleCreate} style={{ padding: '0.85rem 2.5rem', borderRadius: '16px', fontWeight: 800, boxShadow: '0 10px 15px -3px rgba(13, 148, 136, 0.3)' }}>
+                            <button className="btn btn-primary" onClick={handleCreate}>
+                                <Plus size={20} strokeWidth={3} />
                                 {t('lab_form_save')}
                             </button>
                         </div>

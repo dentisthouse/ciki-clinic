@@ -236,6 +236,7 @@ const HistoryTab = ({ patient, treatmentHistory }) => {
                             onToothSelect={(id) => setSelectedTooth(selectedTooth === id ? null : id)}
                             selectedTeeth={selectedTooth ? [selectedTooth] : []}
                             toothChart={patient.toothChart || {}}
+                            initialChart={patient.toothChart || {}}
                             treatedTeeth={Array.from(treatedTeeth)}
                         />
                     </div>
@@ -249,27 +250,6 @@ const HistoryTab = ({ patient, treatmentHistory }) => {
             </div>
 
             <div className="card" style={{ padding: '1.5rem', maxHeight: '600px', overflowY: 'auto' }}>
-                {/* Doctor's Quick Alerts */}
-                <div style={{ 
-                    display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', padding: '1rem', 
-                    background: 'var(--primary-50)', borderRadius: '16px', border: '1.5px solid var(--primary-100)' 
-                }}>
-                    <button 
-                        onClick={() => addAlert({ type: 'Info', message: language === 'TH' ? 'คนไข้เข้าห้องตรวจ' : 'Calling next patient', room: 'Operator Room' })}
-                        className="btn btn-secondary" style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem', background: 'white', color: 'var(--primary-700)', border: '1px solid var(--primary-200)' }}>
-                        👤 {language === 'TH' ? 'เรียกคนไข้' : 'Next Pat.'}
-                    </button>
-                    <button 
-                        onClick={() => addAlert({ type: 'Urgent', message: language === 'TH' ? 'ต้องการผู้ช่วยด่วน!' : 'Need Assistance!', room: 'Operator Room' })}
-                        className="btn btn-secondary" style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
-                        📢 {language === 'TH' ? 'ขอผู้ช่วย' : 'Assistant'}
-                    </button>
-                    <button 
-                        onClick={() => addAlert({ type: 'Payment', message: language === 'TH' ? 'เสร็จสิ้น/พร้อมชำระเงิน' : 'Payment Ready', room: 'Operator Room' })}
-                        className="btn btn-secondary" style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
-                        💰 {language === 'TH' ? 'ชำระเงิน' : 'Payment'}
-                    </button>
-                </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h3 style={{ margin: 0 }}>

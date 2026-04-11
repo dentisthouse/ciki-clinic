@@ -1,70 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     CreditCard, Wallet, QrCode, Smartphone, Building2, DollarSign,
     CheckCircle, Clock, XCircle, ArrowUpRight, TrendingUp, Shield,
     Search, Filter, Download, Eye, RefreshCw, Zap, Copy, ExternalLink,
-    Users, Calendar, BarChart3, Hash, AlertTriangle
+    Users, Calendar, BarChart3, Hash, AlertTriangle, X
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useData } from '../context/DataContext';
 
 const OnlinePaymentSystem = () => {
     const { language } = useLanguage();
+    const { invoices, addInvoice, patients, staff } = useData();
     const [activeTab, setActiveTab] = useState('overview');
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [selectedMethod, setSelectedMethod] = useState(null);
-
-    // Mock transaction data
-    const [transactions, setTransactions] = useState([
-        { id: 1, txnId: 'TXN-2569-0001', patientName: 'นายสมชาย ใจดี', amount: 3500, method: 'qr_promptpay', status: 'completed', date: '2026-04-08 09:15', treatment: 'ขูดหินปูน + ตรวจ', ref: 'PP20260408091500001' },
-        { id: 2, txnId: 'TXN-2569-0002', patientName: 'นางสาวมาลี สวยงาม', amount: 12000, method: 'credit_card', status: 'completed', date: '2026-04-08 10:30', treatment: 'ครอบฟัน', ref: 'CC20260408103000002' },
-        { id: 3, txnId: 'TXN-2569-0003', patientName: 'เด็กชายธนกร เก่งมาก', amount: 1500, method: 'bank_transfer', status: 'pending', date: '2026-04-08 11:45', treatment: 'อุดฟัน', ref: 'BT20260408114500003' },
-        { id: 4, txnId: 'TXN-2569-0004', patientName: 'นางสุดา รักดี', amount: 5000, method: 'installment', status: 'completed', date: '2026-04-07 14:20', treatment: 'รักษารากฟัน', ref: 'INS20260407142000004' },
-        { id: 5, txnId: 'TXN-2569-0005', patientName: 'นายวิชัย มั่นคง', amount: 800, method: 'cash', status: 'completed', date: '2026-04-07 16:00', treatment: 'ถอนฟัน', ref: 'CASH20260407160000005' },
-    ]);
+    
+    // Sort invoices by date
+    const transactions = useMemo(() => {
+        return [...invoices].sort((a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date));
+    }, [invoices]);
 
     const [newPayment, setNewPayment] = useState({
-        patientName: '', amount: '', treatment: '', method: '', installmentMonths: 3,
+        patientId: '', patientName: '', amount: '', treatment: '', method: 'qr_promptpay', installmentMonths: 3,
     });
 
     // Payment methods
     const paymentMethods = [
-        { id: 'qr_promptpay', name: 'QR PromptPay', icon: '🔲', color: '#0d9488', desc: 'สแกน QR Code จ่ายผ่าน PromptPay' },
-        { id: 'credit_card', name: 'บัตรเครดิต/เดบิต', icon: '💳', color: '#6366f1', desc: 'Visa, Mastercard, JCB' },
-        { id: 'bank_transfer', name: 'โอนเงินธนาคาร', icon: '🏦', color: '#3b82f6', desc: 'โอนเงินออนไลน์ทุกธนาคาร' },
-        { id: 'installment', name: 'ผ่อนชำระ', icon: '📅', color: '#f59e0b', desc: 'ผ่อน 0% สูงสุด 10 เดือน' },
+        { id: 'qr_promptpay', name: language === 'TH' ? 'QR พร้อมเพย์' : 'QR PromptPay', icon: '🔲', color: '#0d9488', desc: 'Scan QR Code via PromptPay' },
+        { id: 'credit_card', name: language === 'TH' ? 'บัตรเครดิต/เดบิต' : 'Credit/Debit Card', icon: '💳', color: '#6366f1', desc: 'Visa, Mastercard, JCB' },
+        { id: 'bank_transfer', name: language === 'TH' ? 'โอนเงินธนาคาร' : 'Bank Transfer', icon: '🏦', color: '#3b82f6', desc: 'Direct bank transfer' },
+        { id: 'installment', name: language === 'TH' ? 'ผ่อนชำระ' : 'Installment', icon: '📅', color: '#f59e0b', desc: '0% Interest up to 10 months' },
         { id: 'e_wallet', name: 'E-Wallet', icon: '📱', color: '#ec4899', desc: 'TrueMoney, Rabbit LINE Pay' },
-        { id: 'cash', name: 'เงินสด', icon: '💵', color: '#22c55e', desc: 'ชำระเงินสดที่คลินิก' },
+        { id: 'cash', name: language === 'TH' ? 'เงินสด' : 'Cash', icon: '💵', color: '#22c55e', desc: 'Pay with cash at clinic' },
     ];
 
     const statusConfig = {
-        completed: { label: 'สำเร็จ', color: '#22c55e', bg: '#f0fdf4' },
-        pending: { label: 'รอยืนยัน', color: '#f59e0b', bg: '#fffbeb' },
-        failed: { label: 'ล้มเหลว', color: '#ef4444', bg: '#fef2f2' },
-        refunded: { label: 'คืนเงิน', color: '#8b5cf6', bg: '#f5f3ff' },
+        Paid: { label: language === 'TH' ? 'สำเร็จ' : 'Success', color: '#22c55e', bg: '#f0fdf4' },
+        Pending: { label: language === 'TH' ? 'รอยืนยัน' : 'Pending', color: '#f59e0b', bg: '#fffbeb' },
+        Failed: { label: language === 'TH' ? 'ล้มเหลว' : 'Failed', color: '#ef4444', bg: '#fef2f2' },
+        Refunded: { label: language === 'TH' ? 'คืนเงิน' : 'Refunded', color: '#8b5cf6', bg: '#f5f3ff' },
     };
 
     // Stats
-    const todayRevenue = transactions.filter(t => t.date.startsWith('2026-04-08') && t.status === 'completed').reduce((s, t) => s + t.amount, 0);
-    const totalCompleted = transactions.filter(t => t.status === 'completed').length;
-    const totalPending = transactions.filter(t => t.status === 'pending').length;
-    const totalRevenue = transactions.filter(t => t.status === 'completed').reduce((s, t) => s + t.amount, 0);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayRevenue = transactions.filter(t => t.date === todayStr && t.status === 'Paid').reduce((s, t) => s + (t.total || t.amount), 0);
+    const totalRevenue = transactions.filter(t => t.status === 'Paid').reduce((s, t) => s + (t.total || t.amount), 0);
+    const totalPending = transactions.filter(t => t.status === 'Pending').length;
 
     const processPayment = () => {
-        const txn = {
-            id: Date.now(),
-            txnId: `TXN-2569-${String(transactions.length + 1).padStart(4, '0')}`,
+        if (!newPayment.patientName || !newPayment.amount) {
+            alert(language === 'TH' ? 'กรุณากรอกข้อมูลให้ครบถ้วน' : 'Please fill in all fields');
+            return;
+        }
+
+        const invoiceData = {
+            patientId: newPayment.patientId || `WALKIN-${Date.now()}`,
             patientName: newPayment.patientName,
             amount: Number(newPayment.amount),
-            method: newPayment.method,
-            status: newPayment.method === 'cash' ? 'completed' : 'pending',
-            date: new Date().toLocaleString('sv-SE').replace(' ', ' '),
-            treatment: newPayment.treatment,
-            ref: `${newPayment.method.toUpperCase().replace('_', '')}${Date.now()}`,
+            total: Number(newPayment.amount),
+            status: newPayment.method === 'cash' ? 'Paid' : 'Pending',
+            paymentMethod: newPayment.method,
+            date: todayStr,
+            timestamp: new Date().toISOString(),
+            items: [{ procedure: newPayment.treatment || (language === 'TH' ? 'ชำระเงินทั่วไป' : 'General Payment'), price: Number(newPayment.amount) }],
+            recorder: 'System Admin'
         };
-        setTransactions(prev => [txn, ...prev]);
+
+        addInvoice(invoiceData);
         setShowPaymentModal(false);
-        setNewPayment({ patientName: '', amount: '', treatment: '', method: '', installmentMonths: 3 });
-        alert(`รับชำระเงินเรียบร้อย: ${txn.txnId}`);
+        setNewPayment({ patientId: '', patientName: '', amount: '', treatment: '', method: 'qr_promptpay', installmentMonths: 3 });
+        alert(language === 'TH' ? 'บันทึกการรับชำระเงินเรียบร้อย' : 'Payment recorded successfully');
     };
 
     return (
@@ -76,10 +80,10 @@ const OnlinePaymentSystem = () => {
                         <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #22c55e, #10b981)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 8px 16px rgba(34, 197, 94, 0.2)' }}>
                             <CreditCard size={22} />
                         </div>
-                        {language === 'TH' ? 'ระบบรับชำระเงินออนไลน์' : 'Online Payment System'}
+                        {language === 'TH' ? 'ศูนย์จัดการธุรกรรมการเงิน' : 'Financial Transaction Hub'}
                     </h1>
                     <p style={{ color: 'var(--neutral-500)', fontSize: '0.9rem' }}>
-                        {language === 'TH' ? 'รองรับช่องทางชำระเงินออนไลน์ที่หลากหลาย PromptPay, บัตรเครดิต, E-Wallet' : 'Multi-channel online payments: PromptPay, Credit Card, E-Wallet'}
+                        {language === 'TH' ? 'ภาพรวมรายรับและประวัติการชำระเงินทั้งหมดของคลินิก' : 'Overview of all clinic revenue and payment history'}
                     </p>
                 </div>
                 <button onClick={() => setShowPaymentModal(true)} style={{
@@ -88,186 +92,136 @@ const OnlinePaymentSystem = () => {
                     fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
                     boxShadow: '0 8px 16px rgba(34, 197, 94, 0.25)', fontSize: '0.9rem'
                 }}>
-                    <Zap size={18} /> รับชำระเงิน
+                    <Zap size={18} /> {language === 'TH' ? 'รับชำระเงินด่วน' : 'Quick Payment'}
                 </button>
             </div>
 
-            {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-                {[
-                    { label: 'รายได้วันนี้', value: `฿${todayRevenue.toLocaleString()}`, icon: DollarSign, color: '#22c55e', bg: '#f0fdf4' },
-                    { label: 'รายการสำเร็จ', value: totalCompleted, icon: CheckCircle, color: '#3b82f6', bg: '#eff6ff' },
-                    { label: 'รอยืนยัน', value: totalPending, icon: Clock, color: '#f59e0b', bg: '#fffbeb' },
-                    { label: 'ยอดรวมทั้งหมด', value: `฿${totalRevenue.toLocaleString()}`, icon: TrendingUp, color: '#6366f1', bg: '#f5f3ff' },
-                ].map((stat, i) => (
-                    <div key={i} className="card" style={{ padding: '1.25rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <div style={{ width: 44, height: 44, borderRadius: '14px', background: stat.bg, color: stat.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <stat.icon size={20} />
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1.3rem', fontWeight: 900 }}>{stat.value}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', fontWeight: 600 }}>{stat.label}</div>
-                        </div>
+            {/* Stats Bar */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
+                <div className="card" style={{ padding: '1.5rem', background: 'white' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--neutral-500)', fontWeight: 700 }}>{language === 'TH' ? 'รายได้วันนี้' : 'Today Revenue'}</span>
+                        <div style={{ padding: '6px', background: '#ecfdf5', color: '#10b981', borderRadius: '8px' }}><TrendingUp size={16} /></div>
                     </div>
-                ))}
-            </div>
-
-            {/* Payment Methods Overview */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1rem' }}>💳 ช่องทางชำระเงินที่รองรับ</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.75rem' }}>
-                    {paymentMethods.map(method => {
-                        const count = transactions.filter(t => t.method === method.id).length;
-                        return (
-                            <div key={method.id} className="card" style={{
-                                padding: '1rem', textAlign: 'center', position: 'relative', overflow: 'hidden', cursor: 'pointer'
-                            }}>
-                                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{method.icon}</div>
-                                <div style={{ fontSize: '0.8rem', fontWeight: 800, marginBottom: '0.15rem' }}>{method.name}</div>
-                                <div style={{ fontSize: '0.65rem', color: 'var(--neutral-500)' }}>{count} รายการ</div>
-                                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', background: method.color }} />
-                            </div>
-                        );
-                    })}
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900 }}>฿{todayRevenue.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px', fontWeight: 600 }}>Active Transactions</div>
+                </div>
+                <div className="card" style={{ padding: '1.5rem', background: 'white' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--neutral-500)', fontWeight: 700 }}>{language === 'TH' ? 'รายได้รวม' : 'Total Revenue'}</span>
+                        <div style={{ padding: '6px', background: '#eff6ff', color: '#3b82f6', borderRadius: '8px' }}><BarChart3 size={16} /></div>
+                    </div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900 }}>฿{totalRevenue.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#3b82f6', marginTop: '4px', fontWeight: 600 }}>Accumulated Total</div>
+                </div>
+                <div className="card" style={{ padding: '1.5rem', background: 'white' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--neutral-500)', fontWeight: 700 }}>{language === 'TH' ? 'รายการรอยืนยัน' : 'Pending'}</span>
+                        <div style={{ padding: '6px', background: '#fffbeb', color: '#f59e0b', borderRadius: '8px' }}><Clock size={16} /></div>
+                    </div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900 }}>{totalPending}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '4px', fontWeight: 600 }}>Waiting for clearance</div>
+                </div>
+                <div className="card" style={{ padding: '1.5rem', background: 'white' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--neutral-500)', fontWeight: 700 }}>{language === 'TH' ? 'ธุรกรรมทั้งหมด' : 'Total Txn'}</span>
+                        <div style={{ padding: '6px', background: '#f5f3ff', color: '#8b5cf6', borderRadius: '8px' }}><Hash size={16} /></div>
+                    </div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900 }}>{transactions.length}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#8b5cf6', marginTop: '4px', fontWeight: 600 }}>Historical records</div>
                 </div>
             </div>
 
-            {/* Transaction History */}
-            <div className="card" style={{ overflow: 'hidden' }}>
-                <div style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--neutral-100)' }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>📋 ประวัติการชำระเงิน</h3>
-                    <button style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--neutral-200)', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 700 }}>
-                        <Download size={14} /> Export
-                    </button>
-                </div>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: 'var(--neutral-50)' }}>
-                            {['รหัสรายการ', 'ผู้ป่วย', 'บริการ', 'ช่องทาง', 'จำนวน', 'วันที่', 'สถานะ'].map(h => (
-                                <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800, color: 'var(--neutral-500)' }}>{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {transactions.map(txn => {
-                            const sc = statusConfig[txn.status];
-                            const method = paymentMethods.find(m => m.id === txn.method);
-                            return (
-                                <tr key={txn.id} style={{ borderBottom: '1px solid var(--neutral-50)' }}>
-                                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700, fontSize: '0.8rem', fontFamily: 'monospace', color: 'var(--primary-600)' }}>{txn.txnId}</td>
-                                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700, fontSize: '0.85rem' }}>{txn.patientName}</td>
-                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.8rem', color: 'var(--neutral-600)' }}>{txn.treatment}</td>
-                                    <td style={{ padding: '0.75rem 1rem' }}>
-                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', fontWeight: 600 }}>
-                                            {method?.icon} {method?.name}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '0.75rem 1rem', fontWeight: 900, fontSize: '0.9rem' }}>฿{txn.amount.toLocaleString()}</td>
-                                    <td style={{ padding: '0.75rem 1rem', fontSize: '0.8rem', color: 'var(--neutral-500)' }}>{txn.date}</td>
-                                    <td style={{ padding: '0.75rem 1rem' }}>
-                                        <span style={{ padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: sc.bg, color: sc.color }}>
-                                            {sc.label}
-                                        </span>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Payment Modal */}
-            {showPaymentModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                    <div style={{ background: 'white', borderRadius: '24px', padding: '2rem', width: '90%', maxWidth: '550px', maxHeight: '90vh', overflow: 'auto' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 900 }}>💳 รับชำระเงิน</h2>
-                            <button onClick={() => setShowPaymentModal(false)} style={{ border: 'none', background: 'var(--neutral-50)', borderRadius: '10px', padding: '0.5rem', cursor: 'pointer' }}>
-                                <XCircle size={20} color="var(--neutral-500)" />
-                            </button>
+            {/* Transactions List */}
+            <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--neutral-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ margin: 0, fontWeight: 900 }}>{language === 'TH' ? 'รายการธุรกรรมล่าสุด' : 'Recent Transactions'}</h3>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ position: 'relative' }}>
+                            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-400)' }} />
+                            <input type="text" placeholder={language === 'TH' ? 'ค้นหาธุรกรรม...' : 'Search...'} style={{ padding: '0.5rem 1rem 0.5rem 2.5rem', borderRadius: '10px', border: '1px solid var(--neutral-200)', fontSize: '0.85rem' }} />
                         </div>
+                        <button className="btn btn-secondary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                            <Filter size={16} /> {language === 'TH' ? 'กรอง' : 'Filter'}
+                        </button>
+                    </div>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead style={{ background: '#f8fafc' }}>
+                            <tr>
+                                <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 700 }}>TXN ID</th>
+                                <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 700 }}>PATIENT</th>
+                                <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 700 }}>AMOUNT</th>
+                                <th style={{ padding: '1rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 700 }}>METHOD</th>
+                                <th style={{ padding: '1rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 700 }}>STATUS</th>
+                                <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 700 }}>DATE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {transactions.map((t, idx) => {
+                                const status = statusConfig[t.status] || statusConfig.Pending;
+                                return (
+                                    <tr key={idx} style={{ borderBottom: '1px solid var(--neutral-50)' }}>
+                                        <td style={{ padding: '1rem', fontSize: '0.85rem', fontWeight: 600 }}>#{t.id ? t.id.slice(-8) : 'N/A'}</td>
+                                        <td style={{ padding: '1rem' }}>
+                                            <div style={{ fontWeight: 800, fontSize: '0.9rem' }}>{t.patientName}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)' }}>{t.items?.[0]?.procedure || t.treatment || '-'}</div>
+                                        </td>
+                                        <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 900, fontSize: '1rem' }}>฿{(t.total || t.amount || 0).toLocaleString()}</td>
+                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--neutral-500)', background: 'var(--neutral-100)', padding: '4px 10px', borderRadius: '8px' }}>
+                                                {t.paymentMethod}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '4px 12px', borderRadius: '20px', background: status.bg, color: status.color }}>
+                                                {status.label}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '1rem', fontSize: '0.8rem', color: 'var(--neutral-500)' }}>{t.date}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                    {transactions.length === 0 && (
+                        <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--neutral-300)' }}>
+                            <AlertTriangle size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+                            <p>{language === 'TH' ? 'ไม่พบประวัติการทำรายการ' : 'No transactions found'}</p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            {/* Quick Payment Modal */}
+            {showPaymentModal && (
+                <div className="modal-overlay">
+                    <div className="modal-container" style={{ maxWidth: '500px' }}>
+                        <div className="modal-header">
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0 }}>{language === 'TH' ? 'รับชำระเงินด่วน' : 'Quick Payment'}</h2>
+                            <button onClick={() => setShowPaymentModal(false)} className="modal-close"><X size={24} /></button>
+                        </div>
+                        <div className="modal-body" style={{ padding: '2rem' }}>
+                            <div style={{ display: 'grid', gap: '1.25rem' }}>
                                 <div>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.3rem', display: 'block' }}>ชื่อผู้ป่วย</label>
-                                    <input type="text" value={newPayment.patientName} onChange={e => setNewPayment(p => ({ ...p, patientName: e.target.value }))}
-                                        placeholder="ชื่อ-สกุล"
-                                        style={{ width: '100%', padding: '0.75rem', border: '1.5px solid var(--neutral-200)', borderRadius: '10px', fontSize: '0.9rem' }} />
+                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem' }}>{language === 'TH' ? 'ชื่อคนไข้ (Walk-in)' : 'Patient Name (Walk-in)'}</label>
+                                    <input type="text" className="form-input" value={newPayment.patientName} onChange={e => setNewPayment({...newPayment, patientName: e.target.value})} style={{ width: '100%' }} />
                                 </div>
                                 <div>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.3rem', display: 'block' }}>จำนวนเงิน (บาท)</label>
-                                    <input type="number" value={newPayment.amount} onChange={e => setNewPayment(p => ({ ...p, amount: e.target.value }))}
-                                        placeholder="0.00"
-                                        style={{ width: '100%', padding: '0.75rem', border: '1.5px solid var(--neutral-200)', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 800 }} />
+                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem' }}>{language === 'TH' ? 'จำนวนเงิน (฿)' : 'Amount (฿)'}</label>
+                                    <input type="number" className="form-input" value={newPayment.amount} onChange={e => setNewPayment({...newPayment, amount: e.target.value})} style={{ width: '100%' }} />
                                 </div>
-                            </div>
-
-                            <div>
-                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.3rem', display: 'block' }}>บริการ/การรักษา</label>
-                                <input type="text" value={newPayment.treatment} onChange={e => setNewPayment(p => ({ ...p, treatment: e.target.value }))}
-                                    placeholder="เช่น ขูดหินปูน, อุดฟัน..."
-                                    style={{ width: '100%', padding: '0.75rem', border: '1.5px solid var(--neutral-200)', borderRadius: '10px', fontSize: '0.9rem' }} />
-                            </div>
-
-                            <div>
-                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.5rem', display: 'block' }}>ช่องทางชำระเงิน</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-                                    {paymentMethods.map(method => (
-                                        <button key={method.id} onClick={() => setNewPayment(p => ({ ...p, method: method.id }))} style={{
-                                            padding: '0.75rem', borderRadius: '12px', border: '1.5px solid',
-                                            borderColor: newPayment.method === method.id ? method.color : 'var(--neutral-200)',
-                                            background: newPayment.method === method.id ? `${method.color}10` : 'white',
-                                            cursor: 'pointer', textAlign: 'center'
-                                        }}>
-                                            <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{method.icon}</div>
-                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: newPayment.method === method.id ? method.color : 'var(--neutral-600)' }}>{method.name}</div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {newPayment.method === 'installment' && (
                                 <div>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.3rem', display: 'block' }}>จำนวนงวด (0%)</label>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        {[3, 6, 10].map(m => (
-                                            <button key={m} onClick={() => setNewPayment(p => ({ ...p, installmentMonths: m }))} style={{
-                                                flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1.5px solid',
-                                                borderColor: newPayment.installmentMonths === m ? '#f59e0b' : 'var(--neutral-200)',
-                                                background: newPayment.installmentMonths === m ? '#fffbeb' : 'white',
-                                                fontWeight: 800, cursor: 'pointer',
-                                                color: newPayment.installmentMonths === m ? '#d97706' : 'var(--neutral-600)'
-                                            }}>{m} เดือน</button>
-                                        ))}
-                                    </div>
-                                    {newPayment.amount && (
-                                        <div style={{ marginTop: '0.5rem', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, color: '#d97706' }}>
-                                            เดือนละ ฿{(Number(newPayment.amount) / newPayment.installmentMonths).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                        </div>
-                                    )}
+                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem' }}>{language === 'TH' ? 'ช่องทางชำระเงิน' : 'Method'}</label>
+                                    <select className="form-input" value={newPayment.method} onChange={e => setNewPayment({...newPayment, method: e.target.value})} style={{ width: '100%' }}>
+                                        {paymentMethods.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                    </select>
                                 </div>
-                            )}
-
-                            {newPayment.method === 'qr_promptpay' && newPayment.amount && (
-                                <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--neutral-50)', borderRadius: '12px' }}>
-                                    <div style={{ width: 150, height: 150, background: 'white', margin: '0 auto', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--neutral-200)' }}>
-                                        <QrCode size={100} color="var(--neutral-800)" />
-                                    </div>
-                                    <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--neutral-500)' }}>สแกนจ่ายผ่าน PromptPay</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary-600)', marginTop: '0.25rem' }}>฿{Number(newPayment.amount).toLocaleString()}</div>
-                                </div>
-                            )}
-
-                            <button onClick={processPayment} disabled={!newPayment.patientName || !newPayment.amount || !newPayment.method} style={{
-                                width: '100%', padding: '0.9rem', borderRadius: '12px', border: 'none', cursor: 'pointer',
-                                background: 'linear-gradient(135deg, #22c55e, #10b981)', color: 'white',
-                                fontWeight: 800, fontSize: '1rem',
-                                boxShadow: '0 8px 16px rgba(34, 197, 94, 0.25)',
-                                opacity: (!newPayment.patientName || !newPayment.amount || !newPayment.method) ? 0.5 : 1
-                            }}>
-                                ✅ ยืนยันรับชำระ
-                            </button>
+                                <button onClick={processPayment} className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', padding: '1rem', borderRadius: '16px', fontWeight: 900 }}>
+                                    {language === 'TH' ? 'ยืนยันรับชำระเงิน' : 'Confirm Payment'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
-import { Calendar as CalendarIcon, ChevronRight, Plus, List, ChevronLeft, User, Volume2, RefreshCw, Clock, CheckCircle, Edit3, Clipboard, Stethoscope, PhoneOff, LogIn } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Calendar as CalendarIcon, ChevronRight, Plus, List, ChevronLeft, User, Volume2, RefreshCw, Clock, CheckCircle, Edit3, Clipboard, Stethoscope, PhoneOff, LogIn, X } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { th, enUS } from 'date-fns/locale';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -8,13 +9,14 @@ import { useAuth } from '../context/AuthContext';
 import AppointmentModal from '../components/Scheduling/AppointmentModal';
 import WalkInModal from '../components/Scheduling/WalkInModal';
 import InitialVitalsModal from '../components/Scheduling/InitialVitalsModal';
+import '../styles/schedule.css';
 
 const Schedule = () => {
     const { t, language } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
     const { user, staff, permissions } = useAuth();
-    const { patients, appointments, addAppointment, updateAppointment, updateQueueStatus, syncData } = useData();
+    const { patients, appointments, addAppointment, updateAppointment, updateQueueStatus, syncData, broadcastAnnouncement } = useData();
     
     // Mapping for hardcoded doctors to filter match names
     const DOCTOR_MAP = {
@@ -35,7 +37,7 @@ const Schedule = () => {
 
         try {
             // เรียกใช้ Backend API (ปกติจะรันที่ port 3001 ตาม server/index.js)
-            const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+            const serverUrl = import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.hostname}:3001`;
             
             const response = await fetch(`${serverUrl}/api/line/appointment`, {
                 method: 'POST',
@@ -64,7 +66,7 @@ const Schedule = () => {
             }
         } catch (error) {
             console.error("Error sending LINE notification:", error);
-            alert(language === 'TH' ? 'ไม่สารมารถส่ง LINE ได้ กรุณาตรวจสอบว่า Backend Server กำลังทำงานอยู่' : 'Could not send LINE message. Please check if the Backend Server is running.');
+            alert(language === 'TH' ? 'ไม่สามารถส่ง LINE ได้ กรุณาตรวจสอบว่า Backend Server กำลังทำงานอยู่' : 'Could not send LINE message. Please check if the Backend Server is running.');
         }
     };
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -75,6 +77,9 @@ const Schedule = () => {
     const [isVitalsModalOpen, setIsVitalsModalOpen] = useState(false);
     const [selectedAptForVitals, setSelectedAptForVitals] = useState(null);
     const [selectedRoom, setSelectedRoom] = useState('Room 1'); // For queue calling
+    const [activeQueueTab, setActiveQueueTab] = useState('today'); // today, inprogress, completed
+    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [statusUpdatingApt, setStatusUpdatingApt] = useState(null);
 
     // Filter appointments for dentists on load
     useEffect(() => {
@@ -108,44 +113,78 @@ const Schedule = () => {
     };
 
     // Handle calling queue with voice announcement
-    const handleCallQueue = (apt) => {
+    const handleCallQueue = useCallback((apt, room = selectedRoom) => {
         // Update queue status to In Progress with room
-        updateQueueStatus(apt.id, 'In Progress', selectedRoom);
+        updateQueueStatus(apt.id, 'In Progress', room);
         
-        // Create voice announcement text
-        const roomText = selectedRoom === 'Room 1' ? 'ห้องตรวจหนึ่ง' : 
-                        selectedRoom === 'Room 2' ? 'ห้องตรวจสอง' : 
-                        selectedRoom === 'Room 3' ? 'ห้องตรวจสาม' : selectedRoom;
-        
-        const announcement = `ขอเชิญคุณ ${apt.patientName || apt.patient} หมายเลขคิว ${apt.queueNumber} กรุณาเข้ารับบริการที่ ${roomText}`;
-        
-        // Use Text-to-Speech API
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(announcement);
-            utterance.lang = 'th-TH';
-            utterance.rate = 0.9;
-            utterance.pitch = 1;
-            window.speechSynthesis.speak(utterance);
-        }
-        
-        // Store announcement in localStorage for Queue Display page
-        const announcementData = {
+        // Global broadcast for QueueDisplay and voice
+        broadcastAnnouncement('queue', {
             patientName: apt.patientName || apt.patient,
             queueNumber: apt.queueNumber,
-            room: selectedRoom,
-            timestamp: new Date().toISOString(),
-            announcement: announcement
-        };
-        localStorage.setItem('lastQueueCall', JSON.stringify(announcementData));
-        
-        // Show confirmation
-        alert(language === 'TH' ? 
-            `เรียกคิว ${apt.queueNumber} - ${apt.patientName || apt.patient} ไปที่ ${selectedRoom}` : 
-            `Called queue ${apt.queueNumber} - ${apt.patientName || apt.patient} to ${selectedRoom}`);
-    };
+            room: room
+        });
+
+        // Show a brief notification (optional since we have voice, but good for feedback)
+        // addLog({ action: 'call_queue', module: 'appointments', details: `เรียกคิว: ${apt.patientName} (${apt.queueNumber}) ไปที่ ${room}`, severity: 'low' });
+    }, [selectedRoom, updateQueueStatus, broadcastAnnouncement]);
 
     const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
     const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+
+    const APPOINTMENT_STATUSES = [
+        { id: 'Cancelled', label: 'ยกเลิกนัดไปแล้ว', color: '#ef4444', bgColor: '#fef2f2', borderColor: '#fee2e2' },
+        { id: 'Confirmed', label: 'ยืนยันการนัดหมาย', color: '#10b981', bgColor: '#f0fdf4', borderColor: '#dcfce7' },
+        { id: 'Postponed_NewDate', label: 'เลื่อนนัด มีวันนัดใหม่แล้ว', color: '#9a3412', bgColor: '#fff7ed', borderColor: '#ffedd5' },
+        { id: 'Postponed_NoDate', label: 'เลื่อนนัด ยังไม่ระบุวันนัด', color: '#f59e0b', bgColor: '#fffbeb', borderColor: '#fef3c7' },
+        { id: 'CannotContact', label: 'โทรไม่ติด/ติดต่อไม่ได้', color: '#1e293b', bgColor: '#f8fafc', borderColor: '#e2e8f0' },
+        { id: 'NoAnswer', label: 'ไม่รับสาย', color: '#8b5cf6', bgColor: '#f5f3ff', borderColor: '#ede9fe' },
+        { id: 'Pending', label: 'ไม่ระบุสถานะ', color: '#94a3b8', bgColor: '#f8fafc', borderColor: '#e2e8f0' },
+    ];
+
+    const getStatusInfo = (status) => {
+        return APPOINTMENT_STATUSES.find(s => s.id === status) || APPOINTMENT_STATUSES[APPOINTMENT_STATUSES.length - 1];
+    };
+
+    const StatusModal = () => {
+        if (!isStatusModalOpen || !statusUpdatingApt) return null;
+
+        return (
+            <div className="modal-overlay" style={{ zIndex: 2000 }}>
+                <div className="modal-container-mini">
+                    <div className="modal-header">
+                        <div className="header-info">
+                            <h3>{language === 'TH' ? 'เปลี่ยนสถานะข้อมูลนัดหมาย' : 'Change Appointment Status'}</h3>
+                            <p className="header-desc">{statusUpdatingApt.patientName || statusUpdatingApt.patient}</p>
+                        </div>
+                        <button onClick={() => setIsStatusModalOpen(false)} className="modal-close">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="modal-body-p0">
+                        <div className="status-grid-modal" style={{ padding: '1.5rem' }}>
+                            {APPOINTMENT_STATUSES.map((status) => (
+                                <button
+                                    key={status.id}
+                                    onClick={() => {
+                                        updateAppointment(statusUpdatingApt.id, { status: status.id });
+                                        setIsStatusModalOpen(false);
+                                    }}
+                                    className={`status-check-pill ${statusUpdatingApt.status === status.id ? 'selected' : ''}`}
+                                    style={{
+                                        borderColor: statusUpdatingApt.status === status.id ? 'transparent' : (status.borderColor || '#e2e8f0'),
+                                        color: statusUpdatingApt.status === status.id ? 'white' : status.color
+                                    }}
+                                >
+                                    <div className="status-dot-active" />
+                                    <span className="status-label-modal">{status.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     const renderCalendar = () => {
         const monthStart = startOfMonth(currentDate);
@@ -159,29 +198,29 @@ const Schedule = () => {
 
         return (
             <div className="animate-fade-in">
-                <div className="card shadow-sm" style={{ padding: 0, overflow: 'hidden' }}>
+                <div className="calendar-view-card">
                     {/* Calendar Controls */}
-                    <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--neutral-100)' }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                    <div className="calendar-header">
+                        <h2>
                             {format(currentDate, 'MMMM yyyy', { locale: language === 'TH' ? th : enUS })}
                         </h2>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div className="header-actions">
                             <button className="btn btn-secondary" onClick={prevMonth}><ChevronLeft size={20} /></button>
                             <button className="btn btn-secondary" onClick={nextMonth}><ChevronRight size={20} /></button>
                         </div>
                     </div>
 
                     {/* Week Header */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--neutral-50)', borderBottom: '1px solid var(--neutral-100)' }}>
+                    <div className="week-header-grid">
                         {(language === 'TH' ? weekDaysTH : weekDays).map(day => (
-                            <div key={day} style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, color: 'var(--neutral-500)', fontSize: '0.875rem' }}>
+                            <div key={day} className="week-day-label">
                                 {day}
                             </div>
                         ))}
                     </div>
 
                     {/* Days Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                    <div className="days-grid">
                         {calendarDays.map((day, idx) => {
                             const isToday = isSameDay(day, new Date());
                             const isCurrentMonth = isSameMonth(day, monthStart);
@@ -200,53 +239,25 @@ const Schedule = () => {
                                         setCurrentDate(day);
                                         setViewMode('list');
                                     }}
-                                    className="calendar-day-hover"
-                                    style={{
-                                        minHeight: '120px',
-                                        padding: '0.75rem',
-                                        borderBottom: '1px solid var(--neutral-100)',
-                                        borderRight: '1px solid var(--neutral-100)',
-                                        backgroundColor: isCurrentMonth ? 'white' : 'var(--neutral-50)',
-                                        position: 'relative',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
+                                    className={`day-cell ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'is-today' : ''}`}
                                 >
-                                    <div style={{
-                                        textAlign: 'right',
-                                        marginBottom: '0.5rem',
-                                        fontWeight: isToday ? 700 : 400,
-                                        color: isToday ? 'var(--primary-600)' : isCurrentMonth ? 'var(--neutral-900)' : 'var(--neutral-400)'
-                                    }}>
-                                        <span style={{
-                                            display: 'inline-block',
-                                            width: '28px',
-                                            height: '28px',
-                                            lineHeight: '28px',
-                                            textAlign: 'center',
-                                            backgroundColor: isToday ? 'var(--primary-100)' : 'transparent',
-                                            borderRadius: '50%'
-                                        }}>
+                                    <div className="day-number-wrapper">
+                                        <span className="day-number-pill">
                                             {format(day, 'd')}
                                         </span>
                                     </div>
 
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                        {dayAppointments.map((apt, i) => (
-                                            <div key={i} style={{
-                                                fontSize: '0.7rem',
-                                                padding: '2px 4px',
-                                                borderRadius: '4px',
-                                                backgroundColor: 'var(--primary-50)',
-                                                color: 'var(--primary-700)',
-                                                borderLeft: '2px solid var(--primary-500)',
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis'
-                                            }}>
+                                    <div className="day-apts-container">
+                                        {dayAppointments.slice(0, 3).map((apt, i) => (
+                                            <div key={i} className="apt-event-pill">
                                                 {apt.time} {(apt.patientName || apt.patient || '').split(' ')[0]}
                                             </div>
                                         ))}
+                                        {dayAppointments.length > 3 && (
+                                            <div className="apt-more-count">
+                                                +{dayAppointments.length - 3} more
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -259,6 +270,7 @@ const Schedule = () => {
 
     return (
         <div className="animate-slide-up">
+            <StatusModal />
             <AppointmentModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -286,57 +298,36 @@ const Schedule = () => {
             />
 
             {/* Page Header */}
-            <div className="glass-panel-premium animate-fade-in" style={{ 
-                padding: '2.5rem', marginBottom: '2.5rem', 
-                borderRadius: 'var(--radius-xl)', border: '1px solid var(--neutral-100)',
-                background: 'linear-gradient(135deg, white 0%, var(--primary-50) 100%)'
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                    <div>
-                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--neutral-900)', letterSpacing: '-0.04em' }}>
-                            <div style={{ padding: '0.75rem', background: 'var(--primary-600)', borderRadius: '16px', color: 'white', boxShadow: 'var(--shadow-md)' }}>
-                                <CalendarIcon size={32} />
-                            </div>
-                            {t('sch_title')}
-                        </h1>
-                        <p style={{ color: 'var(--neutral-500)', fontWeight: 600, marginTop: '0.5rem', fontSize: '1.1rem', marginLeft: '4.5rem' }}>
-                            {t('sch_subtitle')}
-                        </p>
+            <div className="schedule-header-premium animate-fade-in">
+                <div className="header-top-row">
+                    <div className="title-section">
+                        <div className="title-icon-box">
+                            <CalendarIcon size={32} />
+                        </div>
+                        <div>
+                            <h1>{t('sch_title')}</h1>
+                            <p className="subtitle-premium">{t('sch_subtitle')}</p>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button className="btn btn-secondary" style={{ 
-                            padding: '0.75rem', borderRadius: '12px', background: 'white', border: '1.5px solid var(--neutral-200)' 
-                        }} onClick={() => syncData()} title="Sync">
+                    <div className="header-actions">
+                        <button className="btn btn-secondary shadow-sm" onClick={() => syncData()} title="Sync">
                             <RefreshCw size={20} color="var(--primary-600)" />
                         </button>
-                        <button className={`btn ${viewMode === 'calendar' ? 'btn-primary' : 'btn-secondary'}`} style={{
-                            padding: '0.75rem 1.25rem', borderRadius: '12px', fontWeight: 700,
-                            display: 'flex', alignItems: 'center', gap: '0.65rem'
-                        }} onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}>
+                        <button className={`btn ${viewMode === 'calendar' ? 'btn-primary' : 'btn-secondary'} shadow-sm`}
+                                onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}>
                             {viewMode === 'list' ? <CalendarIcon size={20} /> : <List size={20} />}
                             {viewMode === 'list' ? t('sch_view_calendar') : t('sch_view_list')}
                         </button>
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="header-bottom-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="filter-section">
                         <select 
                             value={doctorFilter}
                             onChange={(e) => setDoctorFilter(e.target.value)}
                             disabled={staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor'}
-                            style={{ 
-                                padding: '0.8rem 1.5rem', 
-                                borderRadius: '14px', 
-                                border: '1.5px solid var(--neutral-200)',
-                                background: (staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor') ? 'var(--neutral-50)' : 'white',
-                                fontWeight: 800,
-                                color: 'var(--neutral-800)',
-                                outline: 'none',
-                                cursor: 'pointer',
-                                fontSize: '0.95rem',
-                                boxShadow: 'var(--shadow-sm)'
-                            }}
+                            className="status-select-premium"
                         >
                             {(() => {
                                 const role = staff?.role?.toLowerCase();
@@ -359,22 +350,15 @@ const Schedule = () => {
                         </select>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div className="action-buttons-group" style={{ display: 'flex', gap: '0.75rem' }}>
                         {(staff?.role?.toLowerCase() !== 'dentist' && staff?.role?.toLowerCase() !== 'doctor') && (
-                            <button className="btn btn-accent" style={{ 
-                                padding: '0.8rem 1.5rem', borderRadius: '14px', fontWeight: 800,
-                                display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--accent-100)', color: 'var(--accent-700)', border: 'none'
-                            }} onClick={() => setIsWalkInModalOpen(true)}>
+                            <button className="btn btn-accent-light" onClick={() => setIsWalkInModalOpen(true)}>
                                 <User size={20} />
                                 {t('sch_walk_in')}
                             </button>
                         )}
                         {(staff?.role?.toLowerCase() !== 'dentist' && staff?.role?.toLowerCase() !== 'doctor') && (
-                            <button className="btn btn-primary" style={{ 
-                                padding: '0.8rem 1.75rem', borderRadius: '14px', fontWeight: 900,
-                                display: 'flex', alignItems: 'center', gap: '0.5rem', border: 'none',
-                                background: 'var(--gradient-primary)', boxShadow: 'var(--shadow-md)'
-                            }} onClick={() => setIsModalOpen(true)}>
+                            <button className="btn btn-primary btn-with-shadow" onClick={() => setIsModalOpen(true)}>
                                 <Plus size={22} />
                                 {t('sch_new_apt')}
                             </button>
@@ -385,46 +369,81 @@ const Schedule = () => {
 
             {viewMode === 'calendar' ? renderCalendar() : (
                 <>
-                    {/* Stats Header */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                        <div className="card glass-panel-premium animate-slide-up delay-100" style={{ 
-                            display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.5rem',
-                            background: 'var(--glass-premium-bg)', border: '1px solid var(--primary-100)', borderRadius: 'var(--radius-xl)'
-                        }}>
-                            <div className="floating-icon" style={{ 
-                                padding: '1rem', background: 'var(--primary-50)', color: 'var(--primary-600)', 
-                                borderRadius: '18px', boxShadow: 'var(--shadow-sm)' 
-                            }}>
+                    {/* Stats Grid */}
+                    <div className="schedule-stats-grid">
+                        <div className="stat-card-premium animate-slide-up delay-100">
+                            <div className="floating-icon primary">
                                 <CalendarIcon size={28} />
                             </div>
-                            <div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--neutral-500)', fontWeight: 700, marginBottom: '0.25rem' }}>{t('dash_appointments')}</div>
-                                <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--neutral-900)', letterSpacing: '-0.02em' }}>
+                            <div className="stat-content">
+                                <div className="stat-label">{t('dash_appointments')}</div>
+                                <div className="stat-value">
                                     {(() => {
                                         const userIsClinical = staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor';
                                         const effectiveFilter = userIsClinical ? (DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name) : doctorFilter;
                                         return appointments.filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), currentDate)).length;
-                                    })()} <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--neutral-400)' }}>{t('sch_today_count_label')}</span>
+                                    })()} <span>{t('sch_today_count_label')}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Schedule Table */}
-                    <div className="table-container shadow-sm">
-                        <div className="table-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ fontSize: '1.125rem' }}>
+                    {/* Schedule Queue Section */}
+                    <div className="schedule-table-card">
+                        <div className="queue-tabs-container">
+                            {(() => {
+                                const userIsClinical = staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor';
+                                const effectiveFilter = userIsClinical ? (DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name) : doctorFilter;
+                                
+                                const todaysAll = appointments.filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), currentDate));
+                                
+                                const countToday = todaysAll.filter(a => a.status !== 'Completed' && a.status !== 'Cancelled' && a.queueStatus !== 'In Progress').length;
+                                const countInProgress = todaysAll.filter(a => a.queueStatus === 'In Progress' && a.status !== 'Completed').length;
+                                const countCompleted = todaysAll.filter(a => a.status === 'Completed').length;
+
+                                return (
+                                    <>
+                                        <button 
+                                            onClick={() => setActiveQueueTab('today')}
+                                            className={`queue-tab-btn today ${activeQueueTab === 'today' ? 'active' : ''}`}
+                                        >
+                                            <CalendarIcon size={18} /> 
+                                            {language === 'TH' ? 'นัดหมายวันนี้' : 'Today'}
+                                            <span className="tab-badge">{countToday}</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setActiveQueueTab('inprogress')}
+                                            className={`queue-tab-btn inprogress ${activeQueueTab === 'inprogress' ? 'active' : ''}`}
+                                        >
+                                            <Stethoscope size={18} /> 
+                                            {language === 'TH' ? 'กำลังรับบริการ' : 'In Progress'}
+                                            <span className="tab-badge">{countInProgress}</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setActiveQueueTab('completed')}
+                                            className={`queue-tab-btn completed ${activeQueueTab === 'completed' ? 'active' : ''}`}
+                                        >
+                                            <CheckCircle size={18} /> 
+                                            {language === 'TH' ? 'เสร็จแล้ว' : 'Completed'}
+                                            <span className="tab-badge">{countCompleted}</span>
+                                        </button>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                        <div className="table-subheader">
+                            <h3>
                                 {t('sch_today_agenda')} - {format(currentDate, 'dd MMMM yyyy', { locale: language === 'TH' ? th : enUS })}
                             </h3>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', display: 'flex', gap: '1rem' }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb' }}></div>
+                            <div className="source-badges">
+                                <div className="source-pill-line">
+                                    <div className="status-dot-active" />
                                     {language === 'TH' ? 'จองผ่าน LINE' : 'LINE Booking'}
-                                </span>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#94a3b8' }}></div>
+                                </div>
+                                <div className="source-pill-staff">
+                                    <User size={14} />
                                     {language === 'TH' ? 'ลงนัดโดยพนักงาน' : 'Staff Booking'}
-                                </span>
+                                </div>
                             </div>
                         </div>
                         <table>
@@ -446,44 +465,31 @@ const Schedule = () => {
                                     
                                     return appointments
                                         .filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), currentDate))
+                                        .filter(apt => {
+                                            if (activeQueueTab === 'today') {
+                                                return apt.status !== 'Completed' && apt.status !== 'Cancelled' && apt.queueStatus !== 'In Progress';
+                                            } else if (activeQueueTab === 'inprogress') {
+                                                return apt.queueStatus === 'In Progress' && apt.status !== 'Completed';
+                                            } else if (activeQueueTab === 'completed') {
+                                                return apt.status === 'Completed';
+                                            }
+                                            return true;
+                                        })
                                         .sort((a, b) => a.time.localeCompare(b.time));
                                 })().map((apt, index) => (
                                         <tr key={index} className="hover:bg-neutral-50 transition-colors">
                                             <td style={{ fontWeight: 600, color: 'var(--primary-600)' }}>{apt.time}</td>
                                             <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <div className="source-cell">
                                                     {apt.type === 'LINE Booking' ? (
-                                                        <div style={{ 
-                                                            display: 'flex', 
-                                                            alignItems: 'center', 
-                                                            gap: '0.35rem', 
-                                                            padding: '0.25rem 0.75rem', 
-                                                            background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', 
-                                                            color: 'white',
-                                                            borderRadius: '20px',
-                                                            fontSize: '0.7rem',
-                                                            fontWeight: 800,
-                                                            boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
-                                                            border: '1px solid rgba(255,255,255,0.1)'
-                                                        }}>
-                                                            <div style={{ fontSize: '0.9rem' }}>📱</div>
-                                                            {language === 'TH' ? 'จองผ่าน LINE' : 'LINE Booking'}
+                                                        <div className="source-pill-line mini">
+                                                            <span>📱</span>
+                                                            {language === 'TH' ? 'จองผ่าน LINE' : 'LINE'}
                                                         </div>
                                                     ) : (
-                                                        <div style={{ 
-                                                            display: 'flex', 
-                                                            alignItems: 'center', 
-                                                            gap: '0.35rem', 
-                                                            padding: '0.25rem 0.75rem', 
-                                                            background: '#f8fafc', 
-                                                            color: '#64748b',
-                                                            borderRadius: '20px',
-                                                            fontSize: '0.7rem',
-                                                            fontWeight: 700,
-                                                            border: '1px solid #e2e8f0'
-                                                        }}>
+                                                        <div className="source-pill-staff mini">
                                                             <User size={12} />
-                                                            {language === 'TH' ? 'ลงนัด (Staff)' : 'Staff'}
+                                                            {language === 'TH' ? 'Staff' : 'Staff'}
                                                         </div>
                                                     )}
                                                 </div>
@@ -525,35 +531,21 @@ const Schedule = () => {
                                                 </div>
                                             </td>
                                             <td>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+                                                <div className="status-action-cell">
                                                     {apt.checkInTime ? (
-                                                        <>
-                                                            <div style={{ 
-                                                                display: 'flex', alignItems: 'center', gap: '0.4rem', 
-                                                                background: '#f0fdf4', color: '#166534', 
-                                                                padding: '0.3rem 0.75rem', borderRadius: '14px',
-                                                                fontSize: '0.85rem', fontWeight: 700, border: '1px solid #dcfce7'
-                                                            }}>
+                                                        <div className="arrived-status">
+                                                            <div className="arrival-badge">
                                                                 <CheckCircle size={14} /> {new Date(apt.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                             </div>
-                                                            <div style={{ 
-                                                                fontSize: '0.75rem', padding: '0.2rem 0.6rem', border: 'none',
-                                                                borderRadius: '6px', background: '#dcfce7', color: '#166534',
-                                                                fontWeight: 700
-                                                            }}>
-                                                                {language === 'TH' ? 'มาตามเวลานัด' : 'On Time'}
-                                                            </div>
-                                                            <button style={{
-                                                                padding: '0.4rem 1rem', background: 'transparent', border: '1.5px solid #22c55e',
-                                                                color: '#22c55e', borderRadius: '24px', fontSize: '0.8rem', fontWeight: 800,
-                                                                cursor: 'pointer'
-                                                            }}>
+                                                            <span className="on-time-label">{language === 'TH' ? 'มาตามเวลานัด' : 'On Time'}</span>
+                                                            <button className="confirm-apt-btn">
                                                                 {language === 'TH' ? 'ยืนยันการนัดหมาย' : 'Confirm Appt'}
                                                             </button>
-                                                        </>
+                                                        </div>
                                                     ) : (
-                                                        <>
+                                                        <div className="un-arrived-status">
                                                             <button 
+                                                                className="record-arrival-btn"
                                                                 onClick={() => {
                                                                     updateAppointment(apt.id, {
                                                                         status: 'Waiting',
@@ -561,33 +553,26 @@ const Schedule = () => {
                                                                         checkInTime: new Date().toISOString()
                                                                     });
                                                                 }}
-                                                                style={{
-                                                                    display: 'flex', alignItems: 'center', gap: '0.4rem',
-                                                                    padding: '0.4rem 0.75rem', background: 'white', border: '1.5px dashed #94a3b8',
-                                                                    borderRadius: '24px', color: '#64748b', fontSize: '0.8rem', fontWeight: 600,
-                                                                    cursor: 'pointer'
-                                                                }}
                                                             >
                                                                 <Clock size={14} /> {language === 'TH' ? 'บันทึกมาถึง' : 'Record Arrival'}
                                                             </button>
-                                                            {apt.status === 'Cancelled' ? (
-                                                                <div style={{ 
-                                                                    fontSize: '0.75rem', padding: '0.15rem 0.6rem',
-                                                                    borderRadius: '12px', background: '#fef2f2', color: '#ef4444',
-                                                                    border: '1px solid #fee2e2', fontWeight: 700
-                                                                }}>
-                                                                    {language === 'TH' ? 'ยกเลิก' : 'Cancelled'}
-                                                                </div>
-                                                            ) : (
-                                                                <div style={{ 
-                                                                    fontSize: '0.75rem', padding: '0.15rem 0.6rem',
-                                                                    borderRadius: '12px', background: '#f5f3ff', color: '#8b5cf6',
-                                                                    border: '1px solid #ede9fe', fontWeight: 700
-                                                                }}>
-                                                                    {language === 'TH' ? 'รอระบุ' : 'Pending'}
-                                                                </div>
-                                                            )}
-                                                        </>
+                                                            <button 
+                                                                className="status-pill-trigger"
+                                                                onClick={() => {
+                                                                    setStatusUpdatingApt(apt);
+                                                                    setIsStatusModalOpen(true);
+                                                                }}
+                                                                style={{ 
+                                                                    background: getStatusInfo(apt.status).bgColor, 
+                                                                    color: getStatusInfo(apt.status).color,
+                                                                    border: `1px solid ${getStatusInfo(apt.status).borderColor}`
+                                                                }}
+                                                            >
+                                                                {language === 'TH' 
+                                                                    ? (apt.status === 'Pending' || !apt.status ? 'รอระบุ' : getStatusInfo(apt.status).label) 
+                                                                    : (apt.status || 'Pending')}
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </td>
@@ -595,17 +580,6 @@ const Schedule = () => {
                                                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'center' }}>
                                                     {/* Control Buttons Group */}
                                                     <div style={{ display: 'flex', gap: '10px' }}>
-                                                        <button 
-                                                            className="btn-icon" 
-                                                            style={{ 
-                                                                background: '#fff7ed', color: '#f59e0b', border: '1px solid #ffedd5', 
-                                                                borderRadius: '10px', width: '40px', height: '40px',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                            }}
-                                                            title={language === 'TH' ? 'แก้ไข' : 'Edit'}
-                                                        >
-                                                            <Edit3 size={18} />
-                                                        </button>
                                                         <button 
                                                             className="btn-icon"
                                                             onClick={() => {
@@ -624,29 +598,58 @@ const Schedule = () => {
                                                     </div>
 
                                                     {/* Enter exam room button */}
-                                                    <button
-                                                        onClick={() => handleCallQueue(apt)}
-                                                        style={{
-                                                            background: 'var(--gradient-primary)',
-                                                            color: 'white',
-                                                            border: 'none',
-                                                            padding: '0.6rem 1.25rem',
-                                                            borderRadius: '12px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.5rem',
-                                                            fontWeight: 800,
-                                                            fontSize: '0.95rem',
-                                                            boxShadow: '0 4px 12px rgba(13, 148, 136, 0.2)',
-                                                            cursor: 'pointer',
-                                                            minWidth: '140px'
-                                                        }}
-                                                    >
-                                                        <div style={{ padding: '0.2rem', background: 'rgba(255,255,255,0.2)', borderRadius: '6px' }}>
-                                                            <LogIn size={16} />
-                                                        </div>
-                                                        {language === 'TH' ? 'เข้าห้องตรวจ' : 'Enter Exam'}
-                                                    </button>
+                                                    {activeQueueTab !== 'inprogress' && activeQueueTab !== 'completed' && (
+                                                        <button
+                                                            onClick={() => handleCallQueue(apt)}
+                                                            style={{
+                                                                background: 'var(--gradient-primary)',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                padding: '0.6rem 1.25rem',
+                                                                borderRadius: '12px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.5rem',
+                                                                fontWeight: 800,
+                                                                fontSize: '0.95rem',
+                                                                boxShadow: '0 4px 12px rgba(13, 148, 136, 0.2)',
+                                                                cursor: 'pointer',
+                                                                minWidth: '140px'
+                                                            }}
+                                                        >
+                                                            <div style={{ padding: '0.2rem', background: 'rgba(255,255,255,0.2)', borderRadius: '6px' }}>
+                                                                <LogIn size={16} />
+                                                            </div>
+                                                            {language === 'TH' ? 'เข้าห้องตรวจ' : 'Enter Exam'}
+                                                        </button>
+                                                    )}
+                                                    {activeQueueTab === 'inprogress' && (
+                                                        <button
+                                                            onClick={() => {
+                                                                navigate(`/patients/${apt.patientId || apt.patient_id || ''}`);
+                                                            }}
+                                                            style={{
+                                                                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                padding: '0.6rem 1.25rem',
+                                                                borderRadius: '12px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.5rem',
+                                                                fontWeight: 800,
+                                                                fontSize: '0.95rem',
+                                                                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)',
+                                                                cursor: 'pointer',
+                                                                minWidth: '140px'
+                                                            }}
+                                                        >
+                                                            <div style={{ padding: '0.2rem', background: 'rgba(255,255,255,0.2)', borderRadius: '6px' }}>
+                                                                <Stethoscope size={16} />
+                                                            </div>
+                                                            {language === 'TH' ? 'ห้องตรวจ' : 'Treatment'}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

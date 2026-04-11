@@ -13,7 +13,8 @@ db.version(1).stores({
     sso_claims: 'id, patient_id, date, status',
     staff: 'id, name, role',
     attendance_records: 'id, staff_id, date, clock_in',
-    sync_metadata: 'table, lastSyncTime'
+    sync_metadata: 'table, lastSyncTime',
+    logs: 'id, timestamp, user, action, module'
 });
 
 // Helper functions for common database access

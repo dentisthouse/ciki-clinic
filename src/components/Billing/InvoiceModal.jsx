@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Trash2, ShoppingBag, Package } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 
 const InvoiceModal = ({ isOpen, onClose, onSave, initialPatientId = '', initialItems = [] }) => {
     const { t, language } = useLanguage();
     const { patients, inventory, updateInventory } = useData();
+    const { staff } = useAuth();
     const [showInventory, setShowInventory] = useState(false);
 
     // Default today
@@ -67,7 +69,8 @@ const InvoiceModal = ({ isOpen, onClose, onSave, initialPatientId = '', initialI
             total,
             paidBySSO: ssoTotal,
             paidByPatient: patientTotal,
-            status: 'Pending'
+            status: 'Pending',
+            recorder: staff?.full_name || staff?.name || 'Clinic Staff'
         });
 
         // Deduct Inventory Stock

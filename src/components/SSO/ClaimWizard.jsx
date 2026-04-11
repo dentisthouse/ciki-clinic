@@ -54,10 +54,10 @@ const ClaimWizard = ({ patient, onComplete, onCancel }) => {
     return (
         <div className="card glass-panel-premium animate-slide-up" style={{ maxWidth: '850px', margin: '0 auto', padding: '0', background: 'white', overflow: 'hidden' }}>
             {/* Header */}
-            <div style={{ padding: '2rem 2.5rem', background: 'var(--neutral-50)', borderBottom: '1px solid var(--neutral-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="billing-header-compact" style={{ padding: '2rem 2.5rem', background: 'var(--neutral-50)', borderBottom: '1px solid var(--neutral-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--neutral-900)', margin: 0 }}>{t('sso_btn_create_claim')}</h2>
-                    <p style={{ color: 'var(--neutral-500)', fontSize: '0.875rem', fontWeight: 600, marginTop: '0.25rem' }}>{patient.name} • {patient.rights}</p>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--neutral-900)' }}>{t('sso_btn_create_claim')}</h2>
+                    <p style={{ color: 'var(--neutral-500)', fontSize: '0.875rem', fontWeight: 600, marginTop: '0.2rem' }}>{patient.name} • {patient.rights}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                     {[1, 2, 3].map((s) => (
@@ -177,11 +177,11 @@ const ClaimWizard = ({ patient, onComplete, onCancel }) => {
                 </div>
 
                 {/* Actions */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3rem', borderTop: '1px solid var(--neutral-100)', paddingTop: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3rem', borderTop: '1px solid var(--neutral-100)', paddingTop: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                     <button 
                         className="btn btn-secondary" 
                         onClick={step === 1 ? onCancel : () => setStep(step - 1)}
-                        style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', fontWeight: 700 }}
+                        style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', fontWeight: 700, flex: 1, minWidth: '120px' }}
                     >
                         {step === 1 ? t('btn_cancel') : (language === 'TH' ? 'ย้อนกลับ' : 'Back')}
                     </button>
@@ -192,7 +192,7 @@ const ClaimWizard = ({ patient, onComplete, onCancel }) => {
                             if (step < 3) setStep(step + 1);
                             else handleSubmit();
                         }}
-                        style={{ padding: '0.75rem 2rem', borderRadius: '12px', fontWeight: 800, minWidth: '140px' }}
+                        style={{ padding: '0.75rem 2rem', borderRadius: '12px', fontWeight: 800, minWidth: '140px', flex: 1 }}
                     >
                         {step === 3 ? t('sso_step_4') : (language === 'TH' ? 'ถัดไป' : 'Next')}
                     </button>

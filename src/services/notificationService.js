@@ -3,7 +3,7 @@
 // สำหรับ CIKI Dental Clinic
 // ==========================================
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.hostname}:3001`;
 const API_BASE_URL = `${SERVER_URL}/api`;
 
 // สร้าง OTP แบบสุ่ม 6 หลัก
@@ -319,7 +319,7 @@ export const sendAppointmentReminder = async (phone, appointmentDetails) => {
  */
 export const checkBackendStatus = async () => {
     try {
-        const response = await fetch('http://localhost:3001/', {
+        const response = await fetch(`${SERVER_URL}/`, {
             method: 'GET'
         });
         return response.ok;

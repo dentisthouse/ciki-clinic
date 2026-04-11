@@ -33,19 +33,19 @@ const ClinicSettings = () => {
     const { language } = useLanguage();
     const { isAdmin } = useAuth();
     
-    const [activeTab, setActiveTab] = useState('general'); // general, branches, services, pricing, hours, payments, system
+    const [activeTab, setActiveTab] = useState('general'); // general, branches, hours, payments, system
     const [selectedBranch, setSelectedBranch] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null);
 
-    const { settings, updateSettings } = useData();
+    const { settings, updateSettings, clearAllData } = useData();
 
     // ข้อมูลคลินิกหลัก
     const [clinicInfo, setClinicInfo] = useState({
         name: { TH: 'คลินิกทันตกรรม CIKI', EN: 'CIKI Dental Clinic' },
         logo: '/logo.png',
         description: { 
-            TH: 'คลินิกทันตกรรมที่ทันสมัยครบครบบริการคุณภาพระด้วยทีมทันตแพทย์ผู้เชี่ยวชาญ',
+            TH: 'คลินิกทันตกรรมที่ทันสมัยพร้อมบริการคุณภาพโดยทีมทันตแพทย์ผู้เชี่ยวชาญ',
             EN: 'Modern dental clinic providing comprehensive dental care with experienced dental team'
         },
         contact: {
@@ -79,66 +79,6 @@ const ClinicSettings = () => {
             status: 'active',
             openingDate: '2020-01-15',
             coordinates: { lat: 13.7563, lng: 100.5018 }
-        },
-        {
-            id: 'branch1',
-            name: { TH: 'สาขา สุขุมวงค์', EN: 'Sukhumvit Branch' },
-            address: '456 ถนนสุขุมวงค์ กรุงเทพฯ',
-            phone: '02-987-6543',
-            email: 'sukhumvit@ciki.com',
-            manager: 'หมอต้อง',
-            status: 'active',
-            openingDate: '2022-06-01',
-            coordinates: { lat: 13.7468, lng: 100.5350 }
-        }
-    ]);
-
-    // ข้อมูลบริการ
-    const [services, setServices] = useState([
-        {
-            id: 'checkup',
-            name: { TH: 'ตรวจสอบสุขภาพช่องปาก', EN: 'Oral Examination' },
-            category: 'general',
-            price: 500,
-            duration: 30,
-            description: { TH: 'ตรวจสอบสุขภาพช่องปากโดยทั่วไป', EN: 'General oral health examination' },
-            active: true
-        },
-        {
-            id: 'cleaning',
-            name: { TH: 'ขูดหินปูน', EN: 'Dental Cleaning' },
-            category: 'preventive',
-            price: 800,
-            duration: 45,
-            description: { TH: 'ทำความสะอาดและขูดหินปูน', EN: 'Professional teeth cleaning and scaling' },
-            active: true
-        },
-        {
-            id: 'filling',
-            name: { TH: 'อุดฟัน', EN: 'Tooth Filling' },
-            category: 'restorative',
-            price: 1500,
-            duration: 60,
-            description: { TH: 'อุดฟันผุด้วยวัสดุสีเดียวกับฟัน', EN: 'Tooth-colored filling for cavities' },
-            active: true
-        },
-        {
-            id: 'whitening',
-            name: { TH: 'ฟันขาว', EN: 'Teeth Whitening' },
-            category: 'cosmetic',
-            price: 5000,
-            duration: 90,
-            description: { TH: 'ทำฟันขาวในคลินิก', EN: 'In-office professional teeth whitening' },
-            active: true
-        },
-        {
-            id: 'implant',
-            name: { TH: 'อิมแพลนต์', EN: 'Dental Implant' },
-            category: 'implant',
-            price: 35000,
-            duration: 120,
-            description: { TH: 'ปลูกฟันเทียม', EN: 'Artificial tooth implant placement' },
-            active: true
         }
     ]);
 
@@ -205,9 +145,17 @@ const ClinicSettings = () => {
 
     const loadClinicSettings = () => {
         if (!settings) return;
-        if (settings.clinicInfo) setClinicInfo(prev => ({ ...prev, ...settings.clinicInfo }));
+        if (settings.clinicInfo) {
+            setClinicInfo(prev => ({
+                ...prev,
+                ...settings.clinicInfo,
+                name: { ...(prev.name || {}), ...(settings.clinicInfo.name || {}) },
+                description: { ...(prev.description || {}), ...(settings.clinicInfo.description || {}) },
+                address: { ...(prev.address || {}), ...(settings.clinicInfo.address || {}) },
+                contact: { ...(prev.contact || {}), ...(settings.clinicInfo.contact || {}) }
+            }));
+        }
         if (settings.branches && settings.branches.length > 0) setBranches(settings.branches);
-        if (settings.services && settings.services.length > 0) setServices(settings.services);
         if (settings.workingHours && Object.keys(settings.workingHours.weekdays || {}).length > 0) setWorkingHours(settings.workingHours);
         if (settings.paymentMethods && settings.paymentMethods.length > 0) setPaymentMethods(settings.paymentMethods);
     };
@@ -219,9 +167,9 @@ const ClinicSettings = () => {
             await new Promise(resolve => setTimeout(resolve, 600));
             
             updateSettings({
+                ...settings,
                 clinicInfo,
                 branches,
-                services,
                 workingHours,
                 paymentMethods
             });
@@ -269,40 +217,6 @@ const ClinicSettings = () => {
         }
     };
 
-    const addService = () => {
-        const newService = {
-            id: `service${Date.now()}`,
-            name: { TH: 'บริการใหม่', EN: 'New Service' },
-            category: 'general',
-            price: 0,
-            duration: 30,
-            description: { TH: 'รายละเอียดบริการใหม่', EN: 'New service description' },
-            active: false
-        };
-        
-        setServices([...services, newService]);
-    };
-
-    const updateService = (id, updates) => {
-        setServices(services.map(service => 
-            service.id === id ? { ...service, ...updates } : service
-        ));
-    };
-
-    const deleteService = (id) => {
-        if (confirm(language === 'TH' ? 'ยืนยันการลบบริการ?' : 'Confirm service deletion?')) {
-            setServices(services.filter(service => service.id !== id));
-        }
-    };
-
-    const serviceCategories = {
-        general: { TH: 'ทั่วไป', EN: 'General' },
-        preventive: { TH: 'ป้องกัน', EN: 'Preventive' },
-        restorative: { TH: 'ฟื้นฟู', EN: 'Restorative' },
-        cosmetic: { TH: 'ความงาม', EN: 'Cosmetic' },
-        implant: { TH: 'อิมแพลนต์', EN: 'Implant' },
-        orthodontic: { TH: 'จัดฟัน', EN: 'Orthodontic' }
-    };
 
     if (!isAdmin) {
         return (
@@ -337,8 +251,6 @@ const ClinicSettings = () => {
                     {[
                         { id: 'general', icon: Building, label: { TH: 'ข้อมูลทั่วไป', EN: 'General' } },
                         { id: 'branches', icon: MapPin, label: { TH: 'สาขา', EN: 'Branches' } },
-                        { id: 'services', icon: Stethoscope, label: { TH: 'บริการ', EN: 'Services' } },
-                        { id: 'pricing', icon: CreditCard, label: { TH: 'ราคาบริการ', EN: 'Pricing' } },
                         { id: 'hours', icon: Clock, label: { TH: 'เวลาทำการ', EN: 'Working Hours' } },
                         { id: 'payments', icon: CreditCard, label: { TH: 'การชำระเงิน', EN: 'Payments' } },
                         { id: 'system', icon: Settings, label: { TH: 'ระบบ', EN: 'System' } }
@@ -356,7 +268,7 @@ const ClinicSettings = () => {
                             }}
                         >
                             <tab.icon size={18} color={activeTab === tab.id ? 'var(--primary-600)' : '#94a3b8'} />
-                            <span style={{ flex: 1 }}>{tab.label[language]}</span>
+                            <span style={{ flex: 1 }}>{tab.label?.[language] || tab.label?.['EN'] || ''}</span>
                         </button>
                     ))}
                 </div>
@@ -446,10 +358,10 @@ const ClinicSettings = () => {
                                 </label>
                                 <input
                                     type="text"
-                                    value={clinicInfo.name[language]}
+                                    value={clinicInfo.name?.[language] || ''}
                                     onChange={(e) => setClinicInfo(prev => ({
                                         ...prev,
-                                        name: { ...prev.name, [language]: e.target.value }
+                                        name: { ...(prev.name || {}), [language]: e.target.value }
                                     }))}
                                     style={{ 
                                         width: '100%', 
@@ -465,10 +377,10 @@ const ClinicSettings = () => {
                                     {language === 'TH' ? 'รายละเอียด' : 'Description'}
                                 </label>
                                 <textarea
-                                    value={clinicInfo.description[language]}
+                                    value={clinicInfo.description?.[language] || ''}
                                     onChange={(e) => setClinicInfo(prev => ({
                                         ...prev,
-                                        description: { ...prev.description, [language]: e.target.value }
+                                        description: { ...(prev.description || {}), [language]: e.target.value }
                                     }))}
                                     rows={3}
                                     style={{ 
@@ -637,7 +549,7 @@ const ClinicSettings = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                                     <div>
                                         <h4 style={{ margin: 0, fontSize: '1.1rem' }}>
-                                            {branch.name[language]}
+                                            {branch.name?.[language] || branch.name?.['EN'] || ''}
                                         </h4>
                                         <p style={{ margin: '0.25rem 0', fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
                                             {branch.address}
@@ -697,114 +609,6 @@ const ClinicSettings = () => {
                 </div>
             )}
 
-            {/* Services Tab */}
-            {activeTab === 'services' && (
-                <div className="glass-panel" style={{ padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Stethoscope size={20} color="var(--primary-600)" />
-                            {language === 'TH' ? 'จัดการบริการ' : 'Service Management'}
-                        </h3>
-                        <button 
-                            onClick={addService}
-                            className="btn btn-primary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                        >
-                            <Plus size={18} />
-                            {language === 'TH' ? 'เพิ่มบริการ' : 'Add Service'}
-                        </button>
-                    </div>
-                    
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ background: 'var(--neutral-50)' }}>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'บริการ' : 'Service'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'หมวด' : 'Category'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'ราคา' : 'Price'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'ระยะเวลา' : 'Duration'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'สถานะ' : 'Status'}
-                                    </th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600 }}>
-                                        {language === 'TH' ? 'จัดการ' : 'Actions'}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {services.map(service => (
-                                    <tr key={service.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
-                                        <td style={{ padding: '1rem' }}>
-                                            <div>
-                                                <div style={{ fontWeight: 600 }}>{service.name[language]}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--neutral-600)', marginTop: '0.25rem' }}>
-                                                    {service.description[language]}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <span style={{
-                                                padding: '0.25rem 0.75rem',
-                                                borderRadius: '20px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600,
-                                                background: '#f3f4f6',
-                                                color: '#6b7280'
-                                            }}>
-                                                {serviceCategories[service.category]?.[language]}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>
-                                            ฿{service.price.toLocaleString()}
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                            {service.duration} {language === 'TH' ? 'นาที' : 'min'}
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            <span style={{
-                                                padding: '0.25rem 0.75rem',
-                                                borderRadius: '20px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600,
-                                                background: service.active ? '#dcfce7' : '#fee2e2',
-                                                color: service.active ? '#16a34a' : '#dc2626'
-                                            }}>
-                                                {service.active ? (language === 'TH' ? 'ใช้งาน' : 'Active') : (language === 'TH' ? 'ไม่ใช้งาน' : 'Inactive')}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                                                <button 
-                                                    onClick={() => updateService(service.id, { active: !service.active })}
-                                                    className="btn btn-secondary"
-                                                    style={{ padding: '0.25rem 0.5rem' }}
-                                                >
-                                                    {service.active ? '🔴' : '🟢'}
-                                                </button>
-                                                <button 
-                                                    onClick={() => deleteService(service.id)}
-                                                    className="btn btn-secondary"
-                                                    style={{ padding: '0.25rem 0.5rem' }}
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
 
             {/* Working Hours Tab */}
             {activeTab === 'hours' && (
@@ -940,10 +744,10 @@ const ClinicSettings = () => {
                                     />
                                     <input
                                         type="text"
-                                        value={holiday.name[language]}
+                                        value={holiday.name?.[language] || ''}
                                         onChange={(e) => {
                                             const updatedHolidays = [...workingHours.holidays];
-                                            updatedHolidays[index] = { ...holiday, name: { ...holiday.name, [language]: e.target.value } };
+                                            updatedHolidays[index] = { ...holiday, name: { ...(holiday.name || {}), [language]: e.target.value } };
                                             setWorkingHours(prev => ({ ...prev, holidays: updatedHolidays }));
                                         }}
                                         placeholder={language === 'TH' ? 'ชื่อวันหยุด' : 'Holiday name'}
@@ -982,10 +786,10 @@ const ClinicSettings = () => {
                                         <span style={{ fontSize: '2rem' }}>{method.icon}</span>
                                         <div>
                                             <h4 style={{ margin: 0, fontSize: '1.1rem' }}>
-                                                {method.name[language]}
+                                                {method.name?.[language] || method.name?.['EN'] || ''}
                                             </h4>
                                             <p style={{ margin: '0.25rem 0', fontSize: '0.875rem', color: 'var(--neutral-600)' }}>
-                                                {method.description[language]}
+                                                {method.description?.[language] || method.description?.['EN'] || ''}
                                             </p>
                                         </div>
                                     </div>
@@ -1040,7 +844,6 @@ const ClinicSettings = () => {
                                 </label>
                             </div>
                         </div>
-                        
                         <div>
                             <h4 style={{ marginBottom: '1rem' }}>
                                 <Info size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
@@ -1061,6 +864,52 @@ const ClinicSettings = () => {
                                 </label>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Danger Zone */}
+                    <div style={{ 
+                        marginTop: '3rem', 
+                        padding: '2rem', 
+                        borderRadius: '16px', 
+                        background: '#fff1f2', 
+                        border: '1px solid #fda4af'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+                            <AlertTriangle color="#e11d48" size={24} />
+                            <h4 style={{ margin: 0, color: '#9f1239', fontWeight: 800 }}>
+                                {language === 'TH' ? 'Danger Zone (ล้างระบบ)' : 'Danger Zone (System Wipe)'}
+                            </h4>
+                        </div>
+                        <p style={{ fontSize: '0.9rem', color: '#be123c', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                            {language === 'TH' 
+                                ? 'การล้างข้อมูลจะลบ คนไข้, นัดหมาย, รายการคลังสินค้า และข้อมูลการเงินออกทั้งหมด ทั้งในคอมพิวเตอร์เครื่องนี้และบน Server (Supabase) เพื่อเตรียมพร้อมสำหรับการเริ่มใช้งานจริง ข้อมูลบัญชีพนักงาน และการตั้งค่าคลินิกจะยังคงอยู่'
+                                : 'Wiping data will delete all Patients, Appointments, Inventory items, and Financial records from both this device and the Server (Supabase) to prepare for live usage. Staff accounts and Clinic Settings will be preserved.'}
+                        </p>
+                        <button 
+                            onClick={clearAllData}
+                            style={{
+                                background: '#e11d48',
+                                color: 'white',
+                                border: 'none',
+                                padding: '12px 24px',
+                                borderRadius: '12px',
+                                fontWeight: 800,
+                                fontSize: '0.9rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                boxShadow: '0 4px 6px -1px rgba(225, 29, 72, 0.2)'
+                            }}
+                            onMouseOver={(e) => e.target.style.background = '#be123c'}
+                            onMouseOut={(e) => e.target.style.background = '#e11d48'}
+                        >
+                            <Trash2 size={18} />
+                            {language === 'TH' ? 'ล้างข้อมูลระบบทั้งหมด' : 'Wipe All System Data'}
+                        </button>
                     </div>
                 </div>
             )}
