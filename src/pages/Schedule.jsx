@@ -197,11 +197,18 @@ const Schedule = () => {
     const renderRoomSelectionModal = () => {
         if (!isRoomSelectionModalOpen || !callingApt) return null;
 
-        const rooms = [
-            { id: 'Room 1', label: language === 'TH' ? 'ห้องตรวจ 1' : 'Exam Room 1', icon: '1️⃣' },
-            { id: 'Room 2', label: language === 'TH' ? 'ห้องตรวจ 2' : 'Exam Room 2', icon: '2️⃣' },
-            { id: 'Room 3', label: language === 'TH' ? 'ห้องตรวจ 3' : 'Exam Room 3', icon: '3️⃣' },
-        ];
+        const rooms = (settings.rooms && settings.rooms.length > 0) 
+            ? settings.rooms.map((r, idx) => ({
+                id: r.id,
+                label: r.name ? (r.name[language] || r.name.TH || r.name.EN) : `Room ${idx + 1}`,
+                icon: r.icon || (idx === 0 ? '1️⃣' : idx === 1 ? '2️⃣' : '3️⃣'),
+                status: r.status || 'available'
+            }))
+            : [
+                { id: 'Room 1', label: language === 'TH' ? 'ห้องตรวจ 1' : 'Exam Room 1', icon: '1️⃣', status: 'available' },
+                { id: 'Room 2', label: language === 'TH' ? 'ห้องตรวจ 2' : 'Exam Room 2', icon: '2️⃣', status: 'available' },
+                { id: 'Room 3', label: language === 'TH' ? 'ห้องตรวจ 3' : 'Exam Room 3', icon: '3️⃣', status: 'available' },
+            ];
 
         return (
             <div className="modal-overlay" style={{ zIndex: 2000 }}>
@@ -216,12 +223,12 @@ const Schedule = () => {
                         </button>
                     </div>
                     <div className="modal-body" style={{ padding: '1.5rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '60vh', overflowY: 'auto', paddingRight: '5px' }}>
                             {rooms.map((room) => (
                                 <button
                                     key={room.id}
                                     onClick={() => {
-                                        handleCallQueue(callingApt, room.id);
+                                        handleCallQueue(callingApt, room.label);
                                         setIsRoomSelectionModalOpen(false);
                                     }}
                                     style={{
@@ -230,29 +237,37 @@ const Schedule = () => {
                                         gap: '1.25rem',
                                         padding: '1.25rem',
                                         borderRadius: '16px',
-                                        background: 'linear-gradient(135deg, white, #f8fafc)',
+                                        background: room.status === 'maintenance' ? '#f1f5f9' : 'linear-gradient(135deg, white, #f8fafc)',
                                         border: '2px solid var(--neutral-100)',
-                                        cursor: 'pointer',
+                                        cursor: room.status === 'maintenance' ? 'not-allowed' : 'pointer',
                                         transition: 'all 0.2s',
-                                        textAlign: 'left'
+                                        textAlign: 'left',
+                                        opacity: room.status === 'maintenance' ? 0.6 : 1
                                     }}
+                                    disabled={room.status === 'maintenance'}
                                     onMouseEnter={e => {
-                                        e.currentTarget.style.borderColor = 'var(--primary-300)';
-                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                        e.currentTarget.style.boxShadow = '0 8px 15px -3px rgba(0,0,0,0.1)';
+                                        if (room.status !== 'maintenance') {
+                                            e.currentTarget.style.borderColor = 'var(--primary-300)';
+                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                            e.currentTarget.style.boxShadow = '0 8px 15px -3px rgba(0,0,0,0.1)';
+                                        }
                                     }}
                                     onMouseLeave={e => {
-                                        e.currentTarget.style.borderColor = 'var(--neutral-100)';
-                                        e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = 'none';
+                                        if (room.status !== 'maintenance') {
+                                            e.currentTarget.style.borderColor = 'var(--neutral-100)';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                            e.currentTarget.style.boxShadow = 'none';
+                                        }
                                     }}
                                 >
                                     <span style={{ fontSize: '1.75rem' }}>{room.icon}</span>
-                                    <div>
+                                    <div style={{ flex: 1 }}>
                                         <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--neutral-800)' }}>{room.label}</div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--neutral-500)' }}>{language === 'TH' ? 'พร้อมใช้งาน' : 'Available'}</div>
+                                        <div style={{ fontSize: '0.8rem', color: room.status === 'available' ? 'var(--success-600)' : 'var(--neutral-500)' }}>
+                                            {room.status === 'available' ? (language === 'TH' ? 'พร้อมใช้งาน' : 'Available') : (language === 'TH' ? 'ไม่พร้อมใช้งาน' : 'Not Available')}
+                                        </div>
                                     </div>
-                                    <ChevronRight size={20} style={{ marginLeft: 'auto', color: 'var(--neutral-300)' }} />
+                                    {room.status !== 'maintenance' && <ChevronRight size={20} style={{ color: 'var(--neutral-300)' }} />}
                                 </button>
                             ))}
                         </div>
