@@ -167,15 +167,8 @@ const QueueDisplay = () => {
                                 <h2 className="qd-patient-display">{currentQueue.patientName}</h2>
                                 <div className="qd-room-indicator">
                                     <Sparkles size={28} className="qd-decorator" />
-                                    <span>
-                                        {currentQueue.room ?
-                                            (language === 'TH' ?
-                                                (currentQueue.room === 'Room 1' ? 'ห้องตรวจ 1' :
-                                                    currentQueue.room === 'Room 2' ? 'ห้องตรวจ 2' :
-                                                        currentQueue.room === 'Room 3' ? 'ห้องตรวจ 3' : currentQueue.room) :
-                                                currentQueue.room) :
-                                            (language === 'TH' ? 'ห้องตรวจ' : 'Examination Room')
-                                        }
+                                    <span style={{ fontWeight: 900, fontSize: '2.5rem', color: 'var(--qd-gold)' }}>
+                                        {currentQueue.room || (language === 'TH' ? 'ห้องตรวจ' : 'Examination Room')}
                                     </span>
                                     <Sparkles size={28} className="qd-decorator" />
                                 </div>
