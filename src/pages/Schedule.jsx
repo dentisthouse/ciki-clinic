@@ -542,7 +542,6 @@ const Schedule = () => {
                                 <tr>
                                     <th>{t('sch_col_time')}</th>
                                     <th>{language === 'TH' ? 'ช่องทาง' : 'Source'}</th>
-                                    <th>{language === 'TH' ? 'คิว' : 'Queue'}</th>
                                     <th>{t('sch_col_patient')}</th>
                                     <th>{t('sch_col_procedure')}</th>
                                     <th>{language === 'TH' ? 'มาถึง' : 'Arrived'}</th>
@@ -601,18 +600,6 @@ const Schedule = () => {
                                                             <User size={12} />
                                                             {language === 'TH' ? 'Staff' : 'Staff'}
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>
-                                                        {apt.queueNumber || '-'}
-                                                    </span>
-                                                    {apt.queueStatus && apt.queueStatus !== 'Waiting' && (
-                                                        <span style={{ fontSize: '0.7rem', color: apt.queueStatus === 'In Progress' ? '#16a34a' : '#94a3b8' }}>
-                                                            {apt.queueStatus}
-                                                        </span>
                                                     )}
                                                 </div>
                                             </td>
