@@ -777,7 +777,8 @@ export const DataProvider = ({ children }) => {
 
     const updateQueueStatus = async (id, status) => {
         const updateData = { 
-            status: (status === 'In Progress' || status === 'Completed') ? status : 'Pending'
+            status: (status === 'In Progress' || status === 'Completed') ? status : 'Pending',
+            queue_status: status // Update the actual DB column
         };
         await persistAction('appointments',
             () => supabase.from('appointments').update(updateData).eq('id', id),
