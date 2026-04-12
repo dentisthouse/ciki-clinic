@@ -541,7 +541,7 @@
 .source-cell {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 .source-pill-line.mini { padding: 0.2rem 0.6rem; font-size: 0.65rem; }
