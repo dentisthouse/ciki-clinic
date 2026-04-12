@@ -111,29 +111,33 @@ const QueueDisplay = () => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 const voices = window.speechSynthesis.getVoices();
                 
-                // Try preferred voices first (specifically female ones)
-                const preferredNames = [
-                    'Microsoft Kanya Online (Natural)',
-                    'Microsoft Hemmala',
-                    'Microsoft Kanya',
+                // Expand preference list with more female names
+                const femalePreference = [
+                    'Premwadee',
+                    'Kanya',
+                    'Hemmala',
                     'Google ภาษาไทย',
-                    'Narisa'
+                    'Natural',
+                    'Narisa',
+                    'Female'
                 ];
+                
+                const maleBlocklist = ['Pattara', 'Male', 'Pattara Online'];
+                
                 let selectedVoice = null;
                 
                 if (voices.length > 0) {
-                    // Try to find by direct name preference
-                    for (const name of preferredNames) {
-                        selectedVoice = voices.find(v => v.name.includes(name));
+                    // 1. Try to find a Thai voice that is in our female preference list
+                    for (const name of femalePreference) {
+                        selectedVoice = voices.find(v => v.lang.startsWith('th') && v.name.includes(name));
                         if (selectedVoice) break;
                     }
                     
-                    // Fallback: If no preferred found, look for any Thai voice that isn't known to be male
+                    // 2. If still no voice, find ANY Thai voice that is NOT in the male blocklist
                     if (!selectedVoice) {
                         selectedVoice = voices.find(v => 
                             v.lang.startsWith('th') && 
-                            !v.name.includes('Pattara') && 
-                            !v.name.includes('Male')
+                            !maleBlocklist.some(m => v.name.includes(m))
                         );
                     }
                 }
@@ -144,7 +148,7 @@ const QueueDisplay = () => {
                 
                 utterance.lang = 'th-TH';
                 utterance.rate = 0.88;
-                utterance.pitch = 1.1; // Higher pitch for a clearer feminine tone
+                utterance.pitch = 1.3; // Very high pitch to guarantee a female/soft sound
                 
                 window.speechSynthesis.speak(utterance);
             }, 100);
