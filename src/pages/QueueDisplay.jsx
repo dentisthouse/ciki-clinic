@@ -83,7 +83,8 @@ const QueueDisplay = () => {
             'Lab': { TH: 'ห้องแล็บ', EN: 'Laboratory' }
         };
 
-        const roomInfo = roomMapping[data.payload?.room || data.room] || { TH: data.room || '', EN: data.room || '' };
+        const rValue = data.payload?.room || data.room || '';
+        const roomInfo = roomMapping[rValue] || { TH: rValue, EN: rValue };
         let text = '';
 
         if (data.type === 'assistant') {
