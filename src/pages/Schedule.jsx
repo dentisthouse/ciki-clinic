@@ -16,7 +16,7 @@ const Schedule = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, staff, permissions } = useAuth();
-    const { patients, appointments, addAppointment, updateAppointment, updateQueueStatus, syncData, broadcastAnnouncement } = useData();
+    const { patients, appointments, addAppointment, updateAppointment, updateQueueStatus, syncData, broadcastAnnouncement, settings } = useData();
     
     // Mapping for hardcoded doctors to filter match names
     const DOCTOR_MAP = {
