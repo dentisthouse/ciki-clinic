@@ -1246,8 +1246,8 @@ export const DataProvider = ({ children }) => {
         
         // Use localStorage as a simple message bus between tabs
         localStorage.setItem('clinic_announcement', JSON.stringify(announcement));
-        // Reset after a short delay so same event can be triggered again
-        setTimeout(() => localStorage.removeItem('clinic_announcement'), 1000);
+        // Reset after a longer delay to ensure other tab sees it
+        setTimeout(() => localStorage.removeItem('clinic_announcement'), 3000);
         
         console.log("📢 Broadcasted:", announcement);
         return announcement;

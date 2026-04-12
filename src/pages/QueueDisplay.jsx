@@ -42,17 +42,22 @@ const QueueDisplay = () => {
     // Announcement Logic
     useEffect(() => {
         const handleStorageChange = (e) => {
-            // Check both old and new keys for compatibility
-            const rawData = localStorage.getItem('clinic_announcement') || localStorage.getItem('lastQueueCall');
-            if (rawData) {
+            // Check both manual check and event
+            const raw = e?.newValue || localStorage.getItem('clinic_announcement');
+            if (raw) {
                 try {
-                    const data = JSON.parse(rawData);
+                    const data = JSON.parse(raw);
+                    console.log("📥 Received Announcement:", data);
+                    
                     const announcementTime = new Date(data.timestamp);
                     const now = new Date();
                     const diffSeconds = (now - announcementTime) / 1000;
 
                     // only process if fresh (within 5 seconds)
                     if (diffSeconds < 5 && (!lastAnnouncement || lastAnnouncement.id !== data.id)) {
+                        console.log("📢 Playing voice for:", data.payload?.patientName);
+                        // Diagnostic alert on the display side
+                        alert("📡 หน้าจอได้รับสัญญานเรียกคิว: " + (data.payload?.patientName || "ไม่ทราบชื่อ"));
                         setLastAnnouncement(data);
                         playVoiceAnnouncement(data);
                     }

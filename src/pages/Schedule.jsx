@@ -140,13 +140,15 @@ const Schedule = () => {
         // Get room from apt if available, otherwise default
         const roomStr = apt.room || (language === 'TH' ? 'ห้องตรวจ' : 'Examination Room');
         
+        console.log("🔊 Attempting Recall for:", apt.patientName, "to", roomStr);
+        // Temporary diagnostic alert to prove button is working
+        alert(`กำลังเรียกซ้ำ: คุณ${apt.patientName || apt.patient} เข้าที่ ${roomStr}`);
+
         broadcastAnnouncement('queue', {
             patientName: apt.patientName || apt.patient,
             queueNumber: apt.queueNumber,
             room: roomStr
         });
-        
-        // Visual feedback would be nice, but broadcast handles UI
     }, [broadcastAnnouncement, language]);
 
     const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
