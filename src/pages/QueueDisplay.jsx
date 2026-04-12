@@ -111,13 +111,12 @@ const QueueDisplay = () => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 const voices = window.speechSynthesis.getVoices();
                 
-                // Expand preference list with more female names
                 const femalePreference = [
-                    'Premwadee',
+                    'Google ภาษาไทย',
+                    'Online (Natural)',
                     'Kanya',
                     'Hemmala',
-                    'Google ภาษาไทย',
-                    'Natural',
+                    'Premwadee',
                     'Narisa',
                     'Female'
                 ];
@@ -127,18 +126,21 @@ const QueueDisplay = () => {
                 let selectedVoice = null;
                 
                 if (voices.length > 0) {
-                    // 1. Try to find a Thai voice that is in our female preference list
+                    // 1. Try to find by name from our female preference list
                     for (const name of femalePreference) {
                         selectedVoice = voices.find(v => v.lang.startsWith('th') && v.name.includes(name));
                         if (selectedVoice) break;
                     }
                     
-                    // 2. If still no voice, find ANY Thai voice that is NOT in the male blocklist
+                    // 2. If STILL no voice, list all Thai voices and pick the SECOND one (if available)
+                    // because the 1st one is almost always the default male 'Pattara'
                     if (!selectedVoice) {
-                        selectedVoice = voices.find(v => 
-                            v.lang.startsWith('th') && 
-                            !maleBlocklist.some(m => v.name.includes(m))
-                        );
+                        const thaiVoices = voices.filter(v => v.lang.startsWith('th') && !maleBlocklist.some(m => v.name.includes(m)));
+                        if (thaiVoices.length > 1) {
+                            selectedVoice = thaiVoices[1]; // Pick second one
+                        } else if (thaiVoices.length > 0) {
+                            selectedVoice = thaiVoices[0];
+                        }
                     }
                 }
                 
@@ -148,7 +150,7 @@ const QueueDisplay = () => {
                 
                 utterance.lang = 'th-TH';
                 utterance.rate = 0.88;
-                utterance.pitch = 1.3; // Very high pitch to guarantee a female/soft sound
+                utterance.pitch = 1.35; // Extra high pitch
                 
                 window.speechSynthesis.speak(utterance);
             }, 100);
