@@ -290,7 +290,7 @@
 .queue-tab-btn.active.completed { color: var(--secondary); }
 .queue-tab-btn.active.completed::after { background: var(--secondary); }
 
-.tab-badge {
+.queue-tab-badge {
     background: var(--neutral-200);
     color: white;
     padding: 2px 8px;
@@ -305,9 +305,9 @@
     min-width: 20px;
 }
 
-.queue-tab-btn.active.today .tab-badge { background: var(--info-light); color: var(--info); }
-.queue-tab-btn.active.inprogress .tab-badge { background: var(--success-light); color: var(--success); }
-.queue-tab-btn.active.completed .tab-badge { background: var(--secondary-light); color: var(--secondary); }
+.queue-tab-btn.active.today .queue-tab-badge { background: var(--info-light); color: var(--info); }
+.queue-tab-btn.active.inprogress .queue-tab-badge { background: var(--success-light); color: var(--success); }
+.queue-tab-btn.active.completed .queue-tab-badge { background: var(--secondary-light); color: var(--secondary); }
 
 /* Table Section */
 .schedule-table-card {

@@ -494,7 +494,7 @@ const Schedule = () => {
                                         >
                                             <CalendarIcon size={18} /> 
                                             <span>{language === 'TH' ? 'นัดหมายวันนี้' : 'Today'}</span>
-                                            <span className="tab-badge">{countToday}</span>
+                                            <span className="queue-tab-badge">{countToday}</span>
                                         </button>
                                         <button 
                                             onClick={() => setActiveQueueTab('inprogress')}
@@ -502,7 +502,7 @@ const Schedule = () => {
                                         >
                                             <Stethoscope size={18} /> 
                                             <span>{language === 'TH' ? 'กำลังรับบริการ' : 'In Progress'}</span>
-                                            <span className="tab-badge">{countInProgress}</span>
+                                            <span className="queue-tab-badge">{countInProgress}</span>
                                         </button>
                                         <button 
                                             onClick={() => setActiveQueueTab('completed')}
@@ -510,7 +510,7 @@ const Schedule = () => {
                                         >
                                             <CheckCircle size={18} /> 
                                             <span>{language === 'TH' ? 'เสร็จแล้ว' : 'Completed'}</span>
-                                            <span className="tab-badge">{countCompleted}</span>
+                                            <span className="queue-tab-badge">{countCompleted}</span>
                                         </button>
                                     </>
                                 );
