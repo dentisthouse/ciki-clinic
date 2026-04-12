@@ -94,7 +94,9 @@ const QueueDisplay = () => {
         } else {
             // Default: Queue call
             const pName = data.payload?.patientName || data.patientName;
-            text = `ขอเชิญคุณ ${pName} ค่ะ.`;
+            const rName = roomInfo.TH;
+            // More direct pattern: "คุณ... เชิญที่... ค่ะ"
+            text = `ขอเชิญคุณ ${pName} ที่ ${rName} ค่ะ.`;
         }
 
         // Simple speech call
@@ -159,10 +161,32 @@ const QueueDisplay = () => {
                     <div className="qd-main-card glass-panel-premium">
                         {currentQueue ? (
                             <div className="qd-caller-content">
-                                <div className="qd-number-badge animate-pop-in" style={{ fontSize: '6rem' }}>
-                                    <User size={120} />
+                                <div className="qd-number-badge animate-pop-in" style={{ fontSize: '4rem', marginBottom: '1rem', color: '#64748b' }}>
+                                    {language === 'TH' ? 'ห้องตรวจ' : 'ROOM'}
                                 </div>
-                                <h2 className="qd-patient-display">{currentQueue.patientName}</h2>
+                                <div style={{ 
+                                    fontSize: '12rem', 
+                                    fontWeight: 1000, 
+                                    color: 'var(--qd-teal)', 
+                                    lineHeight: 1, 
+                                    margin: '-1rem 0 2rem 0',
+                                    background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    textShadow: '0 20px 40px rgba(13, 148, 136, 0.2)'
+                                }}>
+                                    {(() => {
+                                        const r = lastAnnouncement?.payload?.room || lastAnnouncement?.room || '';
+                                        const num = r.replace(/[^0-9]/g, '');
+                                        return num || r.charAt(0).toUpperCase() || '1';
+                                    })()}
+                                </div>
+                                <h2 className="qd-patient-display" style={{ fontSize: '3.5rem', marginTop: '0' }}>{currentQueue.patientName}</h2>
+                                <div className="qd-room-indicator" style={{ background: 'rgba(13, 148, 136, 0.05)', padding: '1rem 3rem', borderRadius: '20px', border: '1px solid rgba(13, 148, 136, 0.1)' }}>
+                                    <span style={{ fontWeight: 800, fontSize: '2rem', color: 'var(--qd-teal)' }}>
+                                        {lastAnnouncement?.payload?.room || lastAnnouncement?.room || (language === 'TH' ? 'ห้องตรวจหลัก' : 'Main Room')}
+                                    </span>
+                                </div>
                             </div>
                         ) : (
                             <div className="qd-empty-display">
