@@ -111,27 +111,40 @@ const QueueDisplay = () => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 const voices = window.speechSynthesis.getVoices();
                 
-                // Try preferred voices first
-                const preferredNames = ['Microsoft Kanya', 'Google ภาษาไทย', 'Natural', 'Female'];
+                // Try preferred voices first (specifically female ones)
+                const preferredNames = [
+                    'Microsoft Kanya Online (Natural)',
+                    'Microsoft Hemmala',
+                    'Microsoft Kanya',
+                    'Google ภาษาไทย',
+                    'Narisa'
+                ];
                 let selectedVoice = null;
                 
-                // Only attempt voice selection if voices are loaded
                 if (voices.length > 0) {
-                    // Try to find by name from preference list
+                    // Try to find by direct name preference
                     for (const name of preferredNames) {
-                        selectedVoice = voices.find(v => (v.name.includes(name) || v.lang === 'th-TH') && v.lang.startsWith('th'));
+                        selectedVoice = voices.find(v => v.name.includes(name));
                         if (selectedVoice) break;
+                    }
+                    
+                    // Fallback: If no preferred found, look for any Thai voice that isn't known to be male
+                    if (!selectedVoice) {
+                        selectedVoice = voices.find(v => 
+                            v.lang.startsWith('th') && 
+                            !v.name.includes('Pattara') && 
+                            !v.name.includes('Male')
+                        );
                     }
                 }
                 
-                // If we found a preferred one, use it. Otherwise, use system default (more reliable)
                 if (selectedVoice) {
                     utterance.voice = selectedVoice;
                 }
                 
                 utterance.lang = 'th-TH';
-                utterance.rate = 0.85;
-                utterance.pitch = 1.0; 
+                utterance.rate = 0.88;
+                utterance.pitch = 1.1; // Higher pitch for a clearer feminine tone
                 
                 window.speechSynthesis.speak(utterance);
             }, 100);
