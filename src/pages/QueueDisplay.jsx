@@ -160,33 +160,45 @@ const QueueDisplay = () => {
 
                     <div className="qd-main-card glass-panel-premium">
                         {currentQueue ? (
-                            <div className="qd-caller-content">
-                                <div className="qd-number-badge animate-pop-in" style={{ fontSize: '4rem', marginBottom: '1rem', color: '#64748b' }}>
+                            <div className="qd-caller-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
+                                <div className="qd-number-badge animate-pop-in" style={{ fontSize: '3.5rem', marginBottom: '0.5rem', color: '#64748b', fontWeight: 700 }}>
                                     {language === 'TH' ? 'ห้องตรวจ' : 'ROOM'}
                                 </div>
                                 <div style={{ 
-                                    fontSize: '12rem', 
+                                    fontSize: '14rem', 
                                     fontWeight: 1000, 
                                     color: 'var(--qd-teal)', 
-                                    lineHeight: 1, 
-                                    margin: '-1rem 0 2rem 0',
+                                    lineHeight: 1.1, 
+                                    margin: '0',
                                     background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)',
                                     WebkitBackgroundClip: 'text',
                                     WebkitTextFillColor: 'transparent',
-                                    textShadow: '0 20px 40px rgba(13, 148, 136, 0.2)'
+                                    filter: 'drop-shadow(0 15px 30px rgba(13, 148, 136, 0.2))',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    width: '100%'
                                 }}>
                                     {(() => {
                                         const r = lastAnnouncement?.payload?.room || lastAnnouncement?.room || '';
                                         const numMatch = r.match(/\d+/);
                                         if (numMatch) return numMatch[0];
-                                        // If it's the generic "Examination Room" or starts with "ห้องตรวจ", default to 1
                                         if (r.includes('ห้องตรวจ') || r.includes('Room')) return '1';
                                         return r.charAt(0).toUpperCase() || '1';
                                     })()}
                                 </div>
-                                <h2 className="qd-patient-display" style={{ fontSize: '3.5rem', marginTop: '0' }}>{currentQueue.patientName}</h2>
-                                <div className="qd-room-indicator" style={{ background: 'rgba(13, 148, 136, 0.05)', padding: '1rem 3rem', borderRadius: '20px', border: '1px solid rgba(13, 148, 136, 0.1)' }}>
-                                    <span style={{ fontWeight: 800, fontSize: '2rem', color: 'var(--qd-teal)' }}>
+                                <h1 className="qd-patient-display" style={{ fontSize: '4.5rem', fontWeight: 900, margin: '1rem 0 2rem 0', color: '#1e293b' }}>
+                                    {currentQueue.patientName}
+                                </h1>
+                                <div className="qd-room-indicator" style={{ 
+                                    background: 'rgba(13, 148, 136, 0.08)', 
+                                    padding: '0.8rem 3rem', 
+                                    borderRadius: '50px', 
+                                    border: '1px solid rgba(13, 148, 136, 0.2)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '1rem'
+                                }}>
+                                    <span style={{ fontWeight: 800, fontSize: '1.8rem', color: 'var(--qd-teal)' }}>
                                         {lastAnnouncement?.payload?.room || lastAnnouncement?.room || (language === 'TH' ? 'ห้องตรวจหลัก' : 'Main Room')}
                                     </span>
                                 </div>
