@@ -764,32 +764,6 @@ const Schedule = () => {
                                                                 </div>
                                                                 {language === 'TH' ? 'ห้องตรวจ' : 'Treatment'}
                                                             </button>
-
-                                                            <button
-                                                                onClick={() => handleRecallAnnouncement(apt)}
-                                                                title={language === 'TH' ? 'เรียกซ้ำ' : 'Recall'}
-                                                                style={{
-                                                                    background: '#f8fafc',
-                                                                    color: '#64748b',
-                                                                    border: '1px solid #e2e8f0',
-                                                                    padding: '0.6rem',
-                                                                    borderRadius: '12px',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center',
-                                                                    cursor: 'pointer',
-                                                                    transition: 'all 0.2s'
-                                                                }}
-                                                                onMouseEnter={e => {
-                                                                    e.currentTarget.style.background = '#f1f5f9';
-                                                                    e.currentTarget.style.color = 'var(--primary-600)';
-                                                                }}
-                                                                onMouseLeave={e => {
-                                                                    e.currentTarget.style.background = '#f8fafc';
-                                                                    e.currentTarget.style.color = '#64748b';
-                                                                }}
-                                                            >
-                                                                <Volume2 size={20} />
                                                             </button>
                                                         </div>
                                                     )}
