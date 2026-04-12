@@ -104,17 +104,16 @@ const QueueDisplay = () => {
         }
 
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'th-TH';
+        utterance.lang = language === 'TH' ? 'th-TH' : 'en-US';
         utterance.rate = 0.9;
-        utterance.pitch = 1.05;
 
-        // Find a female voice if possible
-        const voices = window.speechSynthesis.getVoices();
-        const thaiVoice = voices.find(v => v.lang.includes('th'));
-        if (thaiVoice) utterance.voice = thaiVoice;
-
+        // CRITICAL: Cancel ongoing speech and wait for reset
         window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
+        
+        setTimeout(() => {
+            console.log("🗣️ Speaking text:", text);
+            window.speechSynthesis.speak(utterance);
+        }, 100);
     };
 
     const currentQueue = queueList.find(q => q.queueStatus === 'In Progress');

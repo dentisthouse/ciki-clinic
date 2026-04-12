@@ -1238,7 +1238,7 @@ export const DataProvider = ({ children }) => {
 
     const broadcastAnnouncement = useCallback((type, payload) => {
         const announcement = {
-            id: `ANN-${Date.now()}`,
+            id: `ANN-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
             type, // 'queue', 'assistant', 'payment'
             payload,
             timestamp: new Date().toISOString()
