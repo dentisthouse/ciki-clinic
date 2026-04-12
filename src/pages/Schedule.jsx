@@ -764,7 +764,6 @@ const Schedule = () => {
                                                                 </div>
                                                                 {language === 'TH' ? 'ห้องตรวจ' : 'Treatment'}
                                                             </button>
-                                                            </button>
                                                         </div>
                                                     )}
                                                 </div>
