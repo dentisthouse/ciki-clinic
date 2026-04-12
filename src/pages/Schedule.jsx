@@ -476,8 +476,27 @@ const Schedule = () => {
                                             }
                                             return true;
                                         })
-                                        .sort((a, b) => a.time.localeCompare(b.time));
-                                })().map((apt, index) => (
+                                        .sort((a, b) => {
+                                            // 1. Prioritize people who have arrived (checked-in)
+                                            if (a.checkInTime && !b.checkInTime) return -1;
+                                            if (!a.checkInTime && b.checkInTime) return 1;
+                                            
+                                            // 2. Both arrived: sort by check-in time (who came first)
+                                            if (a.checkInTime && b.checkInTime) {
+                                                return new Date(a.checkInTime) - new Date(b.checkInTime);
+                                            }
+                                            
+                                            // 3. Neither arrived: sort by appointment time
+                                            return a.time.localeCompare(b.time);
+                                        });
+                                })().map((apt, index) => {
+                                    // Clean up notes for display (remove technical tags)
+                                    const displayNotes = (apt.notes || '')
+                                        .replace(/📱 \[LINE\]\s?/g, '')
+                                        .replace(/\[Walk-in\]\s?/g, '')
+                                        .trim();
+
+                                    return (
                                         <tr key={index} className="hover:bg-neutral-50 transition-colors">
                                             <td style={{ fontWeight: 600, color: 'var(--primary-600)' }}>{apt.time}</td>
                                             <td>
@@ -511,22 +530,22 @@ const Schedule = () => {
                                             <td>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                                     <span style={{ fontWeight: 500 }}>{apt.treatment || apt.procedure}</span>
-                                                    {apt.notes && apt.notes.includes('เลื่อนนัดมาจาก') && (
+                                                    {displayNotes && (
                                                         <div style={{ 
                                                             display: 'inline-flex', 
                                                             alignItems: 'center', 
                                                             gap: '0.25rem', 
                                                             padding: '0.15rem 0.5rem', 
-                                                            background: '#FFF7ED', 
-                                                            color: '#C2410C', 
-                                                            border: '1px solid #FFEDD5',
+                                                            background: displayNotes.includes('เลื่อนนัด') ? '#FFF7ED' : '#F1F5F9', 
+                                                            color: displayNotes.includes('เลื่อนนัด') ? '#C2410C' : '#475569', 
+                                                            border: displayNotes.includes('เลื่อนนัด') ? '1px solid #FFEDD5' : '1px solid #E2E8F0',
                                                             borderRadius: '4px',
                                                             fontSize: '0.65rem',
                                                             fontWeight: 700,
                                                             width: 'fit-content'
                                                         }}>
-                                                            <span>🔄</span>
-                                                            {apt.notes}
+                                                            {displayNotes.includes('เลื่อนนัด') && <span>🔄</span>}
+                                                            {displayNotes}
                                                         </div>
                                                     )}
                                                 </div>
