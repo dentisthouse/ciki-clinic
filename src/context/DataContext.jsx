@@ -734,7 +734,7 @@ export const DataProvider = ({ children }) => {
         if (updates.time) supabaseUpdates.time = updates.time;
         if (updates.treatment) supabaseUpdates.treatment = updates.treatment;
         if (updates.queueNumber) supabaseUpdates.queue_number = updates.queueNumber;
-        if (updates.room) supabaseUpdates.room = updates.room;
+        // if (updates.room) supabaseUpdates.room = updates.room; // Column missing in DB
         if (updates.dentist) supabaseUpdates.dentist = updates.dentist;
         if (updates.phone) supabaseUpdates.phone = updates.phone;
         if (updates.checkInTime) supabaseUpdates.check_in_time = updates.checkInTime;
@@ -781,12 +781,12 @@ export const DataProvider = ({ children }) => {
             queue_status: status // Update the actual DB column
         };
         
-        // If room is provided, add it to the update
-        if (room) updateData.room = room;
-
+        // We cannot save 'room' to DB yet because the column is missing in Supabase.
+        // But we still process it for the optimistic update and broadcast.
+        
         await persistAction('appointments',
             () => supabase.from('appointments').update(updateData).eq('id', id),
-            'update', { queueStatus: status, ...updateData }, id
+            'update', { queueStatus: status, room, ...updateData }, id
         );
         addLog({ action: 'update_status', module: 'appointments', details: `เปลี่ยนสถานะบัตรคิว: ${id} เป็น ${status}${room ? ' (Room: ' + room + ')' : ''}`, severity: 'low' });
     };
