@@ -124,12 +124,12 @@ const Schedule = () => {
             room: room
         });
 
-        // Auto-navigate to Treatment Plan page for this patient
+        // Auto-navigate to Patient Profile -> Treatment Plan tab
         if (apt.patientId) {
-            navigate(`/treatment-plan?id=${apt.patientId}`);
+            navigate(`/patients/${apt.patientId}?tab=plans`);
         } else {
-            // Fallback to simple navigation if no patientId linked (e.g. legacy data)
-            navigate('/treatment-plan');
+            // Fallback to simple navigation
+            navigate('/patients');
         }
     }, [selectedRoom, updateQueueStatus, broadcastAnnouncement, navigate]);
 

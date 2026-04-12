@@ -267,7 +267,7 @@ const PatientProfile = () => {
     const canViewBilling = isAdmin || permissions?.billing?.view || false;
 
     const [activeTab, setActiveTab] = useState(
-        searchParams.get('tab') || (canViewClinical ? 'history' : 'billing')
+        searchParams.get('tab') || (canViewClinical ? 'plans' : 'history')
     );
 
     // Sync tab when URL params change
