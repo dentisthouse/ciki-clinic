@@ -102,34 +102,39 @@ const QueueDisplay = () => {
             text = `ขอเชิญคุณ ${pName} ที่ห้องตรวจ หมายเลข ${num} ค่ะ.`;
         }
 
-        // Enhanced speech call with strict female voice selection
+        // Robust speech call with fallbacks
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
             
-            // Re-fetch voices (some browsers need this)
-            const voices = window.speechSynthesis.getVoices();
-            
-            // Filter only Thai voices and prioritize female/soft ones
-            const thaiVoices = voices.filter(v => v.lang.startsWith('th'));
-            
-            // Search order: Online Natural -> Google -> Kanya -> Any Female
-            let selectedVoice = 
-                thaiVoices.find(v => v.name.includes('Natural') || v.name.includes('Online')) ||
-                thaiVoices.find(v => v.name.includes('Google')) ||
-                thaiVoices.find(v => v.name.includes('Kanya')) ||
-                thaiVoices.find(v => v.name.toLowerCase().includes('female')) ||
-                thaiVoices[0]; // fallback to first Thai voice if none above match
-            
-            const utterance = new SpeechSynthesisUtterance(text);
-            if (selectedVoice) utterance.voice = selectedVoice;
-            
-            utterance.lang = 'th-TH';
-            utterance.rate = 0.85;
-            utterance.pitch = 1.1; // Slightly higher for clear female tone
-            
+            // Wait a tiny bit for the system to clear
             setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                const voices = window.speechSynthesis.getVoices();
+                
+                // Try preferred voices first
+                const preferredNames = ['Microsoft Kanya', 'Google ภาษาไทย', 'Natural', 'Female'];
+                let selectedVoice = null;
+                
+                // Only attempt voice selection if voices are loaded
+                if (voices.length > 0) {
+                    // Try to find by name from preference list
+                    for (const name of preferredNames) {
+                        selectedVoice = voices.find(v => (v.name.includes(name) || v.lang === 'th-TH') && v.lang.startsWith('th'));
+                        if (selectedVoice) break;
+                    }
+                }
+                
+                // If we found a preferred one, use it. Otherwise, use system default (more reliable)
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                }
+                
+                utterance.lang = 'th-TH';
+                utterance.rate = 0.85;
+                utterance.pitch = 1.0; 
+                
                 window.speechSynthesis.speak(utterance);
-            }, 50);
+            }, 100);
         }
     };
 
