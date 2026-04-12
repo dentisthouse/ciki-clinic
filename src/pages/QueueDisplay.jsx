@@ -177,8 +177,11 @@ const QueueDisplay = () => {
                                 }}>
                                     {(() => {
                                         const r = lastAnnouncement?.payload?.room || lastAnnouncement?.room || '';
-                                        const num = r.replace(/[^0-9]/g, '');
-                                        return num || r.charAt(0).toUpperCase() || '1';
+                                        const numMatch = r.match(/\d+/);
+                                        if (numMatch) return numMatch[0];
+                                        // If it's the generic "Examination Room" or starts with "ห้องตรวจ", default to 1
+                                        if (r.includes('ห้องตรวจ') || r.includes('Room')) return '1';
+                                        return r.charAt(0).toUpperCase() || '1';
                                     })()}
                                 </div>
                                 <h2 className="qd-patient-display" style={{ fontSize: '3.5rem', marginTop: '0' }}>{currentQueue.patientName}</h2>
