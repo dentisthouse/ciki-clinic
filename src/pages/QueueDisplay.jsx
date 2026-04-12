@@ -47,15 +47,12 @@ const QueueDisplay = () => {
             if (raw) {
                 try {
                     const data = JSON.parse(raw);
-                    console.log("📥 Received Announcement:", data);
-                    
                     const announcementTime = new Date(data.timestamp);
                     const now = new Date();
                     const diffSeconds = (now - announcementTime) / 1000;
 
                     // only process if fresh (within 5 seconds)
                     if (diffSeconds < 5 && (!lastAnnouncement || lastAnnouncement.id !== data.id)) {
-                        console.log("📢 Playing voice for:", data.payload?.patientName);
                         setLastAnnouncement(data);
                         playVoiceAnnouncement(data);
                     }
@@ -107,7 +104,9 @@ const QueueDisplay = () => {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'th-TH';
             utterance.rate = 0.9;
-            window.speechSynthesis.speak(utterance);
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance);
+            }, 100);
         }
     };
 
@@ -590,23 +589,6 @@ const QueueDisplay = () => {
                     .qd-patient-display { font-size: 3rem; }
                 }
             `}</style>
-            {/* Floating Announcement Log for Debugging */}
-            <div style={{
-                position: 'fixed',
-                bottom: '1rem',
-                left: '1rem',
-                background: 'rgba(0,0,0,0.8)',
-                color: '#00ff00',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                fontFamily: 'monospace',
-                zIndex: 9999,
-                pointerEvents: 'none',
-                opacity: lastAnnouncement ? 0.9 : 0
-            }}>
-                [LOG] Last: {lastAnnouncement?.payload?.patientName || lastAnnouncement?.patientName} - {lastAnnouncement?.payload?.room || lastAnnouncement?.room}
-            </div>
         </div>
     );
 };

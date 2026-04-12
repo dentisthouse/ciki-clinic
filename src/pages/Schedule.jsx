@@ -140,8 +140,6 @@ const Schedule = () => {
         // Get room from apt if available, otherwise default
         const roomStr = apt.room || (language === 'TH' ? 'ห้องตรวจ' : 'Examination Room');
         
-        console.log("🔊 Attempting Recall for:", apt.patientName, "to", roomStr);
-        
         broadcastAnnouncement('queue', {
             patientName: apt.patientName || apt.patient,
             queueNumber: apt.queueNumber,
