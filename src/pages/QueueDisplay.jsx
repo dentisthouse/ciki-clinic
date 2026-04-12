@@ -102,12 +102,36 @@ const QueueDisplay = () => {
             text = `ขอเชิญคุณ ${pName} ที่ห้องตรวจ หมายเลข ${num} ค่ะ.`;
         }
 
-        // Simple speech call
+        // Enhanced speech call with better voice selection
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Get all available voices
+            const voices = window.speechSynthesis.getVoices();
+            
+            // Try to find a high-quality Thai female voice
+            // Order of preference: Microsoft Online (Natural) > Google > Microsoft Kanya > Any Thai
+            const preferredVoices = [
+                'Microsoft Kanya Online (Natural)',
+                'Google ภาษาไทย',
+                'Microsoft Kanya',
+                'Narisa',
+                'Thai'
+            ];
+            
+            let selectedVoice = null;
+            for (const name of preferredVoices) {
+                selectedVoice = voices.find(v => v.name.includes(name) || v.lang === 'th-TH');
+                if (selectedVoice) break;
+            }
+            
+            if (selectedVoice) utterance.voice = selectedVoice;
+            
             utterance.lang = 'th-TH';
-            utterance.rate = 0.9;
+            utterance.rate = 0.85; // Slightly slower for a more natural, gentle feel
+            utterance.pitch = 1.05; // Slightly higher pitch for a friendly female tone
+            
             setTimeout(() => {
                 window.speechSynthesis.speak(utterance);
             }, 100);
