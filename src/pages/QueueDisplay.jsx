@@ -94,9 +94,12 @@ const QueueDisplay = () => {
         } else {
             // Default: Queue call
             const pName = data.payload?.patientName || data.patientName;
-            const rName = roomInfo.TH;
-            // More direct pattern: "คุณ... เชิญที่... ค่ะ"
-            text = `ขอเชิญคุณ ${pName} ที่ ${rName} ค่ะ.`;
+            const rRoom = data.payload?.room || data.room || '';
+            const numMatch = rRoom.match(/\d+/);
+            const num = numMatch ? numMatch[0] : '1';
+            
+            // New pattern: "ขอเชิญคุณ... ที่ห้องตรวจ หมายเลข... ค่ะ"
+            text = `ขอเชิญคุณ ${pName} ที่ห้องตรวจ หมายเลข ${num} ค่ะ.`;
         }
 
         // Simple speech call
