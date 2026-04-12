@@ -493,7 +493,7 @@ const Schedule = () => {
                                             className={`queue-tab-btn today ${activeQueueTab === 'today' ? 'active' : ''}`}
                                         >
                                             <CalendarIcon size={18} /> 
-                                            {language === 'TH' ? 'นัดหมายวันนี้' : 'Today'}
+                                            <span>{language === 'TH' ? 'นัดหมายวันนี้' : 'Today'}</span>
                                             <span className="tab-badge">{countToday}</span>
                                         </button>
                                         <button 
@@ -501,7 +501,7 @@ const Schedule = () => {
                                             className={`queue-tab-btn inprogress ${activeQueueTab === 'inprogress' ? 'active' : ''}`}
                                         >
                                             <Stethoscope size={18} /> 
-                                            {language === 'TH' ? 'กำลังรับบริการ' : 'In Progress'}
+                                            <span>{language === 'TH' ? 'กำลังรับบริการ' : 'In Progress'}</span>
                                             <span className="tab-badge">{countInProgress}</span>
                                         </button>
                                         <button 
@@ -509,7 +509,7 @@ const Schedule = () => {
                                             className={`queue-tab-btn completed ${activeQueueTab === 'completed' ? 'active' : ''}`}
                                         >
                                             <CheckCircle size={18} /> 
-                                            {language === 'TH' ? 'เสร็จแล้ว' : 'Completed'}
+                                            <span>{language === 'TH' ? 'เสร็จแล้ว' : 'Completed'}</span>
                                             <span className="tab-badge">{countCompleted}</span>
                                         </button>
                                     </>
