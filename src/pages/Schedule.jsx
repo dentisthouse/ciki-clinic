@@ -673,7 +673,8 @@ const Schedule = () => {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
