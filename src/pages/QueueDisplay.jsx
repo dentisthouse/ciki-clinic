@@ -56,8 +56,6 @@ const QueueDisplay = () => {
                     // only process if fresh (within 5 seconds)
                     if (diffSeconds < 5 && (!lastAnnouncement || lastAnnouncement.id !== data.id)) {
                         console.log("📢 Playing voice for:", data.payload?.patientName);
-                        // Diagnostic alert on the display side
-                        alert("📡 หน้าจอได้รับสัญญานเรียกคิว: " + (data.payload?.patientName || "ไม่ทราบชื่อ"));
                         setLastAnnouncement(data);
                         playVoiceAnnouncement(data);
                     }

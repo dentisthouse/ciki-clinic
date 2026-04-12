@@ -141,9 +141,7 @@ const Schedule = () => {
         const roomStr = apt.room || (language === 'TH' ? 'ห้องตรวจ' : 'Examination Room');
         
         console.log("🔊 Attempting Recall for:", apt.patientName, "to", roomStr);
-        // Temporary diagnostic alert to prove button is working
-        alert(`กำลังเรียกซ้ำ: คุณ${apt.patientName || apt.patient} เข้าที่ ${roomStr}`);
-
+        
         broadcastAnnouncement('queue', {
             patientName: apt.patientName || apt.patient,
             queueNumber: apt.queueNumber,
