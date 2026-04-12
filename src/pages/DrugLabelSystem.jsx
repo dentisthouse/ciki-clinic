@@ -149,7 +149,7 @@ const DrugLabelSystem = () => {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '9px' }}>
                     <span><strong>ชื่อ:</strong> {labelData.patientName || '___________'}</span>
-                    <span><strong>HN:</strong> {labelData.hn || '______'}</span>
+                    <span><strong>CN:</strong> {labelData.hn || '______'}</span>
                 </div>
 
                 <div style={{ fontWeight: 900, fontSize: '13px', marginBottom: '2px', color: '#1a1a1a' }}>
@@ -253,9 +253,9 @@ const DrugLabelSystem = () => {
                                 />
                             </div>
                             <div>
-                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.4rem', display: 'block' }}>HN</label>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.4rem', display: 'block' }}>CN</label>
                                 <input type="text" value={labelData.hn} onChange={e => setLabelData(p => ({ ...p, hn: e.target.value }))}
-                                    placeholder="HN-XXXX"
+                                    placeholder="CN-XXXX"
                                     style={{ width: '100%', padding: '0.75rem 1rem', border: '1.5px solid var(--neutral-200)', borderRadius: '10px', fontSize: '0.9rem' }}
                                 />
                             </div>

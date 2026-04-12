@@ -19,7 +19,6 @@ import AnalyticsDashboard from './components/Analytics/AnalyticsDashboard';
 import AdvancedAnalyticsDashboard from './components/Analytics/AdvancedAnalyticsDashboard';
 import LinePortal from './pages/LinePortal';
 import Attendance from './pages/Attendance';
-import Staff from './pages/Staff';
 import Expenses from './pages/Expenses';
 import DrugLabelSystem from './pages/DrugLabelSystem';
 import MedicalCertificateSystem from './pages/MedicalCertificateSystem';
@@ -28,11 +27,6 @@ import CouponManagement from './pages/CouponManagement';
 import EClaimSystem from './pages/EClaimSystem';
 import OnlinePaymentSystem from './pages/OnlinePaymentSystem';
 import ReportsHub from './pages/ReportsHub';
-import ClinicSettings from './pages/ClinicSettings';
-import StaffManagement from './pages/StaffManagement';
-import SecurityAudit from './pages/SecurityAudit';
-import RoleSettings from './pages/RoleSettings';
-import NotificationSettings from './pages/NotificationSettings';
 import TreatmentPlan from './pages/TreatmentPlan';
 
 import HelpCenter from './pages/HelpCenter';
@@ -90,7 +84,7 @@ function App() {
                         <Route path="analytics" element={<AnalyticsDashboard />} />
                         <Route path="advanced-analytics" element={<AdvancedAnalyticsDashboard />} />
                         <Route path="attendance" element={<Attendance />} />
-                        <Route path="staff" element={<Staff />} />
+                        <Route path="staff" element={<Navigate to="/management/staff" replace />} />
                         <Route path="floor" element={<FloorManagement />} />
                         <Route path="daily-report" element={<DailyReport />} />
                         <Route path="expenses" element={<Expenses />} />

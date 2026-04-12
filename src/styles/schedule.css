@@ -370,46 +370,82 @@
 }
 
 /* Modal Styling */
+.modal-container-mini {
+    background: white;
+    width: 100%;
+    max-width: 480px;
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-2xl);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
 .status-grid-modal {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .status-check-pill {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1.5rem;
-    border-radius: 20px;
+    gap: 0.85rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-btn);
     border: 2px solid var(--neutral-100);
     background: white;
     cursor: pointer;
-    transition: all var(--transition-spring);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    font-weight: 850;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
 }
 
 .status-check-pill:hover {
     border-color: var(--primary-200);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
+    background: var(--primary-50);
 }
 
 .status-check-pill.selected {
     background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
-    color: white;
+    color: white !important;
     border-color: var(--primary-700);
-    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 10px 20px -5px rgba(20, 184, 166, 0.4);
+}
+
+.status-grid-modal *:last-child:nth-child(odd) {
+    grid-column: span 2;
+}
+
+.header-info h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--neutral-900);
+    letter-spacing: -0.02em;
+}
+
+.header-desc {
+    margin: 0.25rem 0 0;
+    color: var(--neutral-500);
+    font-weight: 700;
+    font-size: 0.95rem;
 }
 
 .status-dot-active {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    border-radius: var(--radius-full);
     background: currentColor;
-    border: 2px solid rgba(255,255,255,0.3);
+    border: 3px solid rgba(255,255,255,0.4);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
 }
 
 /* Table Action Cells */

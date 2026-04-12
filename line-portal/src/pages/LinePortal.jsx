@@ -445,7 +445,7 @@ const LinePortal = () => {
                         time: bookingTime,
                         branch: bookingBranch,
                         status: 'Confirmed', // Reset status to Confirmed
-                        notes: `📅 เลื่อนนัดมาจากวันที่ ${oldDate}` // บันทึกให้เห็นหน้า Schedule
+                        notes: `📱 [LINE] 📅 เลื่อนนัดมาจากวันที่ ${oldDate}` // บันทึกให้เห็นหน้า Schedule
                     })
                     .eq('id', rescheduleId);
 

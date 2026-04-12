@@ -239,7 +239,7 @@ const MedicalCertificateSystem = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {[
                             { key: 'patientName', label: 'ชื่อ-สกุล', placeholder: 'ชื่อ-นามสกุล' },
-                            { key: 'hn', label: 'HN', placeholder: 'HN-XXXX' },
+                            { key: 'hn', label: 'CN', placeholder: 'CN-XXXX' },
                             { key: 'age', label: 'อายุ', placeholder: 'เช่น 35 ปี' },
                             { key: 'idCard', label: 'เลขบัตรประชาชน', placeholder: 'X-XXXX-XXXXX-XX-X' },
                         ].map(field => (

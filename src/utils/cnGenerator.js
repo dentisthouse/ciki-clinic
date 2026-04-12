@@ -30,21 +30,21 @@ export const getNameCode = (text) => {
 };
 
 /**
- * Generates the HN prefix (4 digits).
+ * Generates the CN prefix (4 digits).
  */
-export const generateHNPrefix = (firstName, lastName) => {
+export const generateCNPrefix = (firstName, lastName) => {
     const fCode = getNameCode(firstName);
     const lCode = getNameCode(lastName);
     return `${fCode}${lCode}`;
 };
 
 /**
- * Generates the full HN by checking against existing patients.
+ * Generates the full CN by checking against existing patients.
  * Format: [4-digit prefix]-[running number]
  * Example: 8642-001
  */
-export const generateFullHN = (firstName, lastName, existingPatients = []) => {
-    const prefix = generateHNPrefix(firstName, lastName);
+export const generateFullCN = (firstName, lastName, existingPatients = []) => {
+    const prefix = generateCNPrefix(firstName, lastName);
     
     // Find all patients with the same prefix
     const matchingPatients = existingPatients.filter(p => p.hn && p.hn.startsWith(prefix));

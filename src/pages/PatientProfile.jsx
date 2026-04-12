@@ -391,7 +391,7 @@ const PatientProfile = () => {
                         <div>
                             <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.35rem', color: 'var(--neutral-900)', letterSpacing: '-0.04em' }}>{patient.name}</h1>
                             <div style={{ display: 'flex', gap: '1rem', fontSize: '1rem', color: 'var(--neutral-500)', fontWeight: 600 }}>
-                                <span style={{ color: 'var(--primary-600)', fontWeight: 800 }}>HN: {patient.hn || 'NEW'}</span>
+                                <span style={{ color: 'var(--primary-600)', fontWeight: 800 }}>CN: {patient.hn || 'NEW'}</span>
                                 <span>•</span>
                                 <span>{patient.gender === 'Male' ? (language === 'TH' ? 'ชาย' : 'Male') : (language === 'TH' ? 'หญิง' : 'Female')}</span>
                                 <span>•</span>

@@ -116,7 +116,7 @@ const TreatmentPlan = () => {
                                     <div>
                                         <h4 style={{ margin: 0 }}>{patient.name}</h4>
                                         <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--neutral-500)' }}>
-                                            HN: {patient.hn || 'N/A'} • {patient.age} {language === 'TH' ? 'ปี' : 'y/o'}
+                                            CN: {patient.hn || 'N/A'} • {patient.age} {language === 'TH' ? 'ปี' : 'y/o'}
                                         </p>
                                     </div>
                                 </div>

@@ -145,7 +145,8 @@ const Schedule = () => {
         return APPOINTMENT_STATUSES.find(s => s.id === status) || APPOINTMENT_STATUSES[APPOINTMENT_STATUSES.length - 1];
     };
 
-    const StatusModal = () => {
+    // Simplified inline-render instead of sub-component to prevent unmount/remount flickering
+    const renderStatusModal = () => {
         if (!isStatusModalOpen || !statusUpdatingApt) return null;
 
         return (
@@ -270,7 +271,7 @@ const Schedule = () => {
 
     return (
         <div className="animate-slide-up">
-            <StatusModal />
+            {renderStatusModal()}
             <AppointmentModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}

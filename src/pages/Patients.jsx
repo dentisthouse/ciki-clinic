@@ -98,7 +98,7 @@ const Patients = () => {
                             <Search size={48} strokeWidth={2.5} />
                         </div>
                         <h2>{langT('ค้นหาผู้ป่วย', 'Find a Patient')}</h2>
-                        <p>{langT('พิมพ์ชื่อ หรือ รหัสผู้ป่วยเพื่อค้นหา หรือค้นหาจาก HN เพื่อดึงข้อมูลประวัติการรักษาทั้งหมด', 'Enter name, ID, or HN to retrieve full clinical records and visit history.')}</p>
+                        <p>{langT('พิมพ์ชื่อ หรือ รหัสผู้ป่วยเพื่อค้นหา หรือค้นหาจาก CN เพื่อดึงข้อมูลประวัติการรักษาทั้งหมด', 'Enter name, ID, or CN to retrieve full clinical records and visit history.')}</p>
                     </div>
                 )}
 
@@ -239,7 +239,7 @@ const Patients = () => {
                                                     <div>
                                                         <div style={{ fontWeight: 800, color: 'var(--neutral-800)' }}>{patient.name}</div>
                                                         <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 600 }}>
-                                                            {patient.hn && patient.hn.length < 20 ? `HN: ${patient.hn}` : langT('ยังไม่ได้ออก HN', 'No HN Assigned')}
+                                                            {patient.hn && patient.hn.length < 20 ? `CN: ${patient.hn}` : langT('ยังไม่ได้ออก CN', 'No CN Assigned')}
                                                         </div>
                                                     </div>
                                                 </div>

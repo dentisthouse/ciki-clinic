@@ -67,10 +67,10 @@ const EClaimSystem = () => {
     const [showICD10, setShowICD10] = useState(false);
     
     const [claims, setClaims] = useState([
-        { id: 1, claimNo: 'EC-2569-0001', patientName: 'นายสมชาย ใจดี', hn: 'HN-0001', right: 'sso', icd10: 'K02.1', procedures: ['2302', '2304'], totalAmount: 2200, claimAmount: 1800, status: 'approved', submittedAt: '2026-04-01', approvedAt: '2026-04-05' },
-        { id: 2, claimNo: 'EC-2569-0002', patientName: 'นางสาวมาลี สวยงาม', hn: 'HN-0015', right: 'uc', icd10: 'K05.1', procedures: ['2301', '2302'], totalAmount: 1500, claimAmount: 1200, status: 'pending', submittedAt: '2026-04-05' },
-        { id: 3, claimNo: 'EC-2569-0003', patientName: 'เด็กชายธนกร เก่งมาก', hn: 'HN-0032', right: 'cs', icd10: 'K04.0', procedures: ['2307'], totalAmount: 5000, claimAmount: 5000, status: 'submitted', submittedAt: '2026-04-06' },
-        { id: 4, claimNo: 'EC-2569-0004', patientName: 'นางสุดา รักดี', hn: 'HN-0008', right: 'sso', icd10: 'K02.0', procedures: ['2304'], totalAmount: 1200, claimAmount: 900, status: 'rejected', submittedAt: '2026-03-28', rejectedReason: 'รหัสหัตถการไม่ตรงกับการวินิจฉัย' },
+        { id: 1, claimNo: 'EC-2569-0001', patientName: 'นายสมชาย ใจดี', hn: 'CN-0001', right: 'sso', icd10: 'K02.1', procedures: ['2302', '2304'], totalAmount: 2200, claimAmount: 1800, status: 'approved', submittedAt: '2026-04-01', approvedAt: '2026-04-05' },
+        { id: 2, claimNo: 'EC-2569-0002', patientName: 'นางสาวมาลี สวยงาม', hn: 'CN-0015', right: 'uc', icd10: 'K05.1', procedures: ['2301', '2302'], totalAmount: 1500, claimAmount: 1200, status: 'pending', submittedAt: '2026-04-05' },
+        { id: 3, claimNo: 'EC-2569-0003', patientName: 'เด็กชายธนกร เก่งมาก', hn: 'CN-0032', right: 'cs', icd10: 'K04.0', procedures: ['2307'], totalAmount: 5000, claimAmount: 5000, status: 'submitted', submittedAt: '2026-04-06' },
+        { id: 4, claimNo: 'EC-2569-0004', patientName: 'นางสุดา รักดี', hn: 'CN-0008', right: 'sso', icd10: 'K02.0', procedures: ['2304'], totalAmount: 1200, claimAmount: 900, status: 'rejected', submittedAt: '2026-03-28', rejectedReason: 'รหัสหัตถการไม่ตรงกับการวินิจฉัย' },
     ]);
 
     const [newClaim, setNewClaim] = useState({
@@ -198,9 +198,9 @@ const EClaimSystem = () => {
                                         placeholder="ชื่อผู้ป่วย" style={{ width: '100%', padding: '0.7rem 1rem', border: '1.5px solid var(--neutral-200)', borderRadius: '10px', fontSize: '0.9rem' }} />
                                 </div>
                                 <div>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.3rem', display: 'block' }}>HN</label>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--neutral-500)', marginBottom: '0.3rem', display: 'block' }}>CN</label>
                                     <input type="text" value={newClaim.hn} onChange={e => setNewClaim(p => ({ ...p, hn: e.target.value }))}
-                                        placeholder="HN-XXXX" style={{ width: '100%', padding: '0.7rem 1rem', border: '1.5px solid var(--neutral-200)', borderRadius: '10px', fontSize: '0.9rem' }} />
+                                        placeholder="CN-XXXX" style={{ width: '100%', padding: '0.7rem 1rem', border: '1.5px solid var(--neutral-200)', borderRadius: '10px', fontSize: '0.9rem' }} />
                                 </div>
                             </div>
 

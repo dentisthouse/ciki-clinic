@@ -206,7 +206,7 @@ const WalkInModal = ({ isOpen, onClose, onSave }) => {
                                             <div>
                                                 <div style={{ fontWeight: 700, color: 'var(--neutral-900)' }}>{p.name}</div>
                                                 <div style={{ fontSize: '0.85rem', color: 'var(--neutral-500)', fontWeight: 600 }}>
-                                                    {p.hn && p.hn.length < 20 ? `HN: ${p.hn}` : (language === 'TH' ? 'ยังไม่ได้ออก HN' : 'No HN')} • {p.phone || '-'}
+                                                    {p.hn && p.hn.length < 20 ? `CN: ${p.hn}` : (language === 'TH' ? 'ยังไม่ได้ออก CN' : 'No CN')} • {p.phone || '-'}
                                                 </div>
                                             </div>
                                             {selectedPatient?.id === p.id && <div style={{ color: 'var(--primary-600)', fontWeight: 900 }}>✓</div>}

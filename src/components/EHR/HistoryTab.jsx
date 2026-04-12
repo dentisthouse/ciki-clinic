@@ -450,7 +450,7 @@ const HistoryTab = ({ patient, treatmentHistory }) => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
                                 <div>
                                     <p><strong>{language === 'TH' ? 'ชื่อคนไข้' : 'Patient Name'}:</strong> {patient.name}</p>
-                                    <p><strong>{language === 'TH' ? 'HN' : 'Patient ID'}:</strong> {patient.id}</p>
+                                    <p><strong>{language === 'TH' ? 'CN' : 'Clinic Number'}:</strong> {patient.hn || patient.id}</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                     <p><strong>{language === 'TH' ? 'วันที่พิมพ์' : 'Date Printed'}:</strong> {new Date().toLocaleDateString()}</p>

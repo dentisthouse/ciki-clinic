@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from '../supabase';
 import { useAuth } from './AuthContext';
 import { db } from '../db';
-import { generateFullHN } from '../utils/hnGenerator';
+import { generateFullCN } from '../utils/cnGenerator';
 import { useToast } from './ToastContext';
 import { useLanguage } from './LanguageContext';
 
@@ -193,8 +193,10 @@ export const DataProvider = ({ children }) => {
                                 ...a, 
                                 patientId: a.patient_id, 
                                 patientName: a.patient_name,
-                                procedure: a.treatment,
+                                procedure: a.treatment || a.procedure,
                                 queueNumber: a.queue_number,
+                                queueStatus: a.queue_status || a.queueStatus,
+                                checkInTime: a.check_in_time || a.checkInTime
                             }));
                         } else if (table === 'invoices') {
                             return records.map(inv => ({
@@ -370,13 +372,27 @@ export const DataProvider = ({ children }) => {
                             }));
                         }
                         if (table === 'appointments') {
-                            return records.map(a => ({
-                                ...a,
-                                patientId: a.patient_id || a.patientId,
-                                patientName: a.patient_name || a.patientName,
-                                procedure: a.treatment || a.procedure,
-                                queueNumber: a.queue_number || a.queueNumber,
-                            }));
+                            return records.map(a => {
+                                // Extract type from notes if present (Workaround for missing 'type' column in DB)
+                                let inferredType = 'Staff Appointment';
+                                const notes = a.notes || '';
+                                if (notes.includes('[LINE]') || notes.includes('📱 [LINE]')) {
+                                    inferredType = 'LINE Booking';
+                                } else if (notes.includes('[Walk-in]')) {
+                                    inferredType = 'Walk-in';
+                                }
+
+                                return {
+                                    ...a,
+                                    patientId: a.patient_id || a.patientId,
+                                    patientName: a.patient_name || a.patientName,
+                                    procedure: a.treatment || a.procedure,
+                                    queueNumber: a.queue_number || a.queueNumber,
+                                    queueStatus: a.queue_status || a.queueStatus,
+                                    checkInTime: a.check_in_time || a.checkInTime,
+                                    type: a.type || inferredType
+                                };
+                            });
                         }
                         if (table === 'inventory') {
                             return records.map(item => ({
@@ -578,12 +594,12 @@ export const DataProvider = ({ children }) => {
 
     // Patients
     const addPatient = async (patient) => {
-        // Split name into first and last name for HN generation
+        // Split name into first and last name for CN generation
         const [firstName, ...lastNameParts] = (patient.name || '').trim().split(/\s+/);
         const lastName = lastNameParts.join(' ');
         
-        // Generate automatic HN based on name code + running sequence
-        const hn = generateFullHN(firstName, lastName, patients);
+        // Generate automatic CN based on name code + running sequence
+        const hn = generateFullCN(firstName, lastName, patients);
 
         // Generate a standard UUID to match Supabase's column requirements
         const id = generateUUID();
@@ -611,7 +627,7 @@ export const DataProvider = ({ children }) => {
             }, 
             'insert', newPatient
         );
-        addLog({ action: 'create_patient', module: 'patients', details: `ลงทะเบียนคนไข้ใหม่: ${newPatient.name} (${newPatient.hn})`, severity: 'low' });
+        addLog({ action: 'create_patient', module: 'patients', details: `ลงทะเบียนคนไข้ใหม่: ${newPatient.name} (CN: ${newPatient.hn})`, severity: 'low' });
     };
 
     const updatePatient = async (id, updates) => {
@@ -672,7 +688,11 @@ export const DataProvider = ({ children }) => {
             time: newApt.time,
             treatment: newApt.treatment || newApt.procedure,
             status: newApt.status || 'Pending',
-            notes: newApt.notes || ''
+            // Prepend type indicator to notes for persistence workaround
+            notes: newApt.type === 'LINE Booking' 
+                ? `📱 [LINE] ${newApt.notes || ''}`.trim() 
+                : (newApt.type === 'Walk-in' ? `[Walk-in] ${newApt.notes || ''}`.trim() : (newApt.notes || '')),
+            queue_status: newApt.queueStatus || 'Waiting'
         };
 
         await persistAction('appointments',
@@ -688,7 +708,16 @@ export const DataProvider = ({ children }) => {
         if (updates.patientId) supabaseUpdates.patient_id = updates.patientId;
         if (updates.patientName) supabaseUpdates.patient_name = updates.patientName;
         if (updates.status) supabaseUpdates.status = updates.status;
-        if (updates.notes) supabaseUpdates.notes = updates.notes;
+        
+        // Handle notes with type prefix workaround
+        if (updates.type) {
+            supabaseUpdates.notes = updates.type === 'LINE Booking'
+                ? `📱 [LINE] ${updates.notes || ''}`.trim()
+                : (updates.type === 'Walk-in' ? `[Walk-in] ${updates.notes || ''}`.trim() : (updates.notes || ''));
+        } else if (updates.notes !== undefined) {
+            supabaseUpdates.notes = updates.notes;
+        }
+
         if (updates.date) supabaseUpdates.date = updates.date;
         if (updates.time) supabaseUpdates.time = updates.time;
         if (updates.treatment) supabaseUpdates.treatment = updates.treatment;
@@ -696,6 +725,8 @@ export const DataProvider = ({ children }) => {
         if (updates.room) supabaseUpdates.room = updates.room;
         if (updates.dentist) supabaseUpdates.dentist = updates.dentist;
         if (updates.phone) supabaseUpdates.phone = updates.phone;
+        if (updates.checkInTime) supabaseUpdates.check_in_time = updates.checkInTime;
+        if (updates.queueStatus) supabaseUpdates.queue_status = updates.queueStatus;
 
         if (updates.vitals) {
             const apt = appointments.find(a => a.id === id);
@@ -1205,7 +1236,7 @@ export const DataProvider = ({ children }) => {
         return announcement;
     }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         patients, addPatient, updatePatient, deletePatient, restorePatient, updateToothChart, addTreatment,
         appointments, addAppointment, updateAppointment, deleteAppointment, updateQueueStatus,
         inventory, addInventoryItem, bulkAddInventoryItems, updateInventory, deleteInventoryItem, updateInventoryStock,
@@ -1220,7 +1251,11 @@ export const DataProvider = ({ children }) => {
         clearAlert: (id) => setAlerts(alerts.filter(a => a.id !== id)),
         updateLocation, getDailySummary, clearAllData, syncData: syncWithSupabase,
         logs, addLog, broadcastAnnouncement
-    };
+    }), [
+        patients, appointments, inventory, invoices, expenses, staff, attendanceRecords, 
+        ssoClaims, labOrders, settings, isLoading, isSyncing, lastSyncTime, alerts, 
+        logs, syncWithSupabase, addLog, broadcastAnnouncement
+    ]);
 
     return (
         <DataContext.Provider value={value}>

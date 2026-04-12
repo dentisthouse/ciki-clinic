@@ -262,7 +262,7 @@ const BillingTab = ({ patient }) => {
                         <h1 style={{ fontSize: '2.25rem', fontWeight: 950, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
                             {language === 'TH' ? 'ระบบชำระเงิน' : t('bill_title')}
                         </h1>
-                        <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '1rem', fontWeight: 600 }}>{patient?.full_name} • HN: {patient?.hn}</p>
+                        <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '1rem', fontWeight: 600 }}>{patient?.full_name} • CN: {patient?.hn}</p>
                     </div>
                 </div>
             </div>

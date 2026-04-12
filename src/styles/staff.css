@@ -95,7 +95,7 @@
     flex: 1;
     padding: 0.95rem;
     border: none;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     font-size: 0.875rem;
     font-weight: 850;
     cursor: pointer;
@@ -289,7 +289,7 @@
     padding: 1.15rem 1.15rem 1.15rem 3.5rem;
     background: var(--neutral-50);
     border: 2px solid transparent;
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     font-size: 1rem;
     font-weight: 700;
     color: var(--neutral-900);

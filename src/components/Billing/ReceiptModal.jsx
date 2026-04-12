@@ -69,7 +69,7 @@ const ReceiptModal = ({ isOpen, onClose, data }) => {
                                 <span style={{ fontWeight: 800, fontSize: '1rem' }}>{patientName}</span>
                             </div>
                             <div>
-                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Patient HN / เลขประจำตัว</label>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 800, display: 'block', textTransform: 'uppercase', marginBottom: '2px' }}>Patient CN / เลขประจำตัว</label>
                                 <span style={{ fontWeight: 600 }}>{patientId}</span>
                             </div>
                         </div>

@@ -372,7 +372,7 @@ const LinePortal = () => {
 
         try {
             console.log('🆕 Registering new user via DataContext:', newUser);
-            // Use addPatient from DataContext to ensure local sync and HN generation
+            // Use addPatient from DataContext to ensure local sync and CN generation
             const addResult = await addPatient(newUser);
 
             // The addPatient method doesn't return the patient directly currently, 
@@ -813,7 +813,7 @@ const LinePortal = () => {
                                 <h3 className="lp-user-name-v2">
                                     {pt('greeting_prefix')}{currentUser?.name || pt('guest_user')}
                                 </h3>
-                                <p className="lp-hn-label-v2">{pt('hn_label')} {currentUser?.hn || '6225-001'}</p>
+                                <p className="lp-cn-label-v2">{pt('hn_label')} {currentUser?.hn || '6225-001'}</p>
                             </div>
                         </div>
 

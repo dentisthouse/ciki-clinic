@@ -407,7 +407,7 @@ const Billing = () => {
                     <Search size={18} className="search-icon-billing" />
                     <input 
                         type="text" 
-                        placeholder={langT('ค้นหาด้วยชื่อ หรือ HN...', 'Search name or HN...')}
+                        placeholder={langT('ค้นหาด้วยชื่อ หรือ CN...', 'Search name or CN...')}
                         className="search-input-billing"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -465,7 +465,7 @@ const Billing = () => {
                                         <div className="patient-meta">
                                             <div className="name-line">
                                                 <h4>{patient.name}</h4>
-                                                <span className="hn-pill">CN: {patient.hn || patient.id.slice(0, 8)}</span>
+                                                <span className="cn-pill">CN: {patient.hn || patient.id.slice(0, 8)}</span>
                                                 <span className="treatment-date-pill">{todayStr}</span>
                                             </div>
                                             <div className="doctor-time-line">
@@ -607,7 +607,7 @@ const Billing = () => {
                                         <div className="patient-meta">
                                             <div className="name-line">
                                                 <h4>{inv.patientName}</h4>
-                                                <span className="hn-pill">CN: {inv.patientId?.slice(0, 8)}</span>
+                                                <span className="cn-pill">CN: {inv.patientId?.slice(0, 8)}</span>
                                                 <span className="treatment-date-pill">{inv.date}</span>
                                                 <span className="status-tag danger">{langT('ค้างชำระ', 'Overdue')}</span>
                                             </div>

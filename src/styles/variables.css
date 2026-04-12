@@ -79,6 +79,7 @@
   --radius-3xl: 48px;
   --radius-full: 9999px;
   --radius-premium: 32px;
+  --radius-btn: 32px; /* Standard premium button radius */
 
   /* ===== TRANSITIONS ===== */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);

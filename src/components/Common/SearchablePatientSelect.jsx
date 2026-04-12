@@ -65,7 +65,7 @@ const SearchablePatientSelect = ({ patients, value, onChange, placeholder }) => 
                         color: 'var(--neutral-900)',
                         background: 'transparent'
                     }}
-                    placeholder={selectedPatient ? selectedPatient.name : (placeholder || (language === 'TH' ? 'ค้นหาชื่อคนไข้หรือ HN...' : 'Search patient name or HN...'))}
+                    placeholder={selectedPatient ? selectedPatient.name : (placeholder || (language === 'TH' ? 'ค้นหาชื่อคนไข้หรือ CN...' : 'Search patient name or CN...'))}
                     value={searchTerm}
                     onChange={(e) => {
                         setSearchTerm(e.target.value);
@@ -141,7 +141,7 @@ const SearchablePatientSelect = ({ patients, value, onChange, placeholder }) => 
                                     <div>
                                         <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--neutral-900)' }}>{p.name}</div>
                                         <div style={{ fontSize: '0.75rem', color: 'var(--neutral-400)', fontWeight: 500 }}>
-                                            HN: {p.hn} • {p.phone || (language === 'TH' ? 'ไม่มีเบอร์' : 'No phone')}
+                                            CN: {p.hn} • {p.phone || (language === 'TH' ? 'ไม่มีเบอร์' : 'No phone')}
                                         </div>
                                     </div>
                                 </div>

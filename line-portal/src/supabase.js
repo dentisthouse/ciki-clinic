@@ -138,6 +138,8 @@ export const userService = {
           time: appointmentData.time,
           branch: appointmentData.branch,
           status: 'Pending',
+          // Prepend type indicator to notes for persistence workaround in main app
+          notes: `📱 [LINE] ${appointmentData.notes || ''}`.trim(),
           created_at: new Date().toISOString()
         }])
         .select()

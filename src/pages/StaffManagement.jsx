@@ -200,7 +200,7 @@ const StaffManagement = () => {
             </div>
 
             {employee.role === 'dentist' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: '#7c3aed', fontWeight: 900, background: '#f5f3ff', padding: '6px 12px', borderRadius: '12px', width: 'fit-content', marginTop: '1.25rem', fontSize: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: '#7c3aed', fontWeight: 900, background: '#f5f3ff', padding: '6px 12px', borderRadius: 'var(--radius-md)', width: 'fit-content', marginTop: '1.25rem', fontSize: '0.75rem' }}>
                     <PieChart size={14} />
                     <span>Commission: {employee.commissionRate || 50}%</span>
                 </div>
@@ -283,7 +283,7 @@ const StaffManagement = () => {
                                         <div style={{
                                             width: '36px',
                                             height: '36px',
-                                            borderRadius: '12px',
+                                            borderRadius: 'var(--radius-md)',
                                             background: `linear-gradient(135deg, ${employee.avatar || '#7c3aed'} 0%, var(--neutral-900) 100%)`,
                                             display: 'flex',
                                             alignItems: 'center',
@@ -340,7 +340,7 @@ const StaffManagement = () => {
                     <button 
                         onClick={() => { setEditingStaff(null); setShowAddStaff(true); }}
                         className="btn-billing primary"
-                        style={{ border: 'none', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
+                        style={{ border: 'none' }}
                     >
                         <UserPlus size={18} />
                         {language === 'TH' ? 'เพิ่มพนักงาน' : 'Enroll Staff'}
@@ -388,7 +388,7 @@ const StaffManagement = () => {
                                 value={selectedDepartment}
                                 onChange={(e) => setSelectedDepartment(e.target.value)}
                                 className="btn-billing secondary"
-                                style={{ width: '220px', padding: '1.15rem', borderRadius: '20px', border: '1.5px solid var(--neutral-100)', fontWeight: 800 }}
+                                style={{ width: '220px', padding: '1.15rem', borderRadius: 'var(--radius-xl)', border: '1.5px solid var(--neutral-100)', fontWeight: 800 }}
                             >
                                 {departments.map(dept => (
                                     <option key={dept.id} value={dept.id}>
@@ -504,7 +504,7 @@ const StaffManagement = () => {
                     </h3>
                     
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ padding: '1.5rem', border: '1px solid var(--neutral-100)', borderRadius: '16px' }}>
+                        <div style={{ padding: '1.5rem', border: '1px solid var(--neutral-100)', borderRadius: 'var(--radius-xl)' }}>
                             <h4 style={{ margin: '0 0 1rem 0' }}>{language === 'TH' ? 'เวลาทำงานมาตรฐาน' : 'Standard Working Hours'}</h4>
                             <div style={{ display: 'grid', gap: '1rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -517,7 +517,7 @@ const StaffManagement = () => {
                                 </div>
                             </div>
                         </div>
-                        <div style={{ padding: '1.5rem', border: '1px solid var(--neutral-100)', borderRadius: '16px' }}>
+                        <div style={{ padding: '1.5rem', border: '1px solid var(--neutral-100)', borderRadius: 'var(--radius-xl)' }}>
                             <h4 style={{ margin: '0 0 1rem 0' }}>{language === 'TH' ? 'นโยบายเงินเดือน' : 'Payroll Policy'}</h4>
                             <div style={{ display: 'grid', gap: '1rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>

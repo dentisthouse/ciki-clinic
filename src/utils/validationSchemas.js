@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 // Patient validation schema
 export const patientSchema = z.object({
-    hn: z.string().min(1, 'กรุณาระบุ HN'),
+    hn: z.string().min(1, 'กรุณาระบุ CN'),
     firstName: z.string().min(1, 'กรุณาระบุชื่อ').max(100, 'ชื่อยาวเกินไป'),
     lastName: z.string().min(1, 'กรุณาระบุนามสกุล').max(100, 'นามสกุลยาวเกินไป'),
     phone: z.string().regex(/^0\d{8,9}$/, 'เบอร์โทรไม่ถูกต้อง (เช่น 0812345678)'),
