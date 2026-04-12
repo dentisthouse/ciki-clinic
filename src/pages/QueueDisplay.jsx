@@ -102,58 +102,27 @@ const QueueDisplay = () => {
             text = `ขอเชิญคุณ ${pName} ที่ห้องตรวจ หมายเลข ${num} ค่ะ.`;
         }
 
-        // Robust speech call with fallbacks
+        // Simple speech call with natural voice selection
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
             
-            // Wait a tiny bit for the system to clear
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Find the best Thai voice (Google or Premium versions sound better)
+            const voices = window.speechSynthesis.getVoices();
+            const thaiVoice = voices.find(v => v.lang.includes('th') && (v.name.includes('Google') || v.name.includes('Premium') || v.name.includes('Natural'))) 
+                           || voices.find(v => v.lang.includes('th'));
+            
+            if (thaiVoice) utterance.voice = thaiVoice;
+            
+            utterance.lang = 'th-TH';
+            utterance.rate = 0.88;  // Slightly slower for softness
+            utterance.pitch = 1.05; // Slightly higher but soft tone
+            utterance.volume = 1;
+
             setTimeout(() => {
-                const utterance = new SpeechSynthesisUtterance(text);
-                const voices = window.speechSynthesis.getVoices();
-                
-                const femalePreference = [
-                    'Google ภาษาไทย',
-                    'Online (Natural)',
-                    'Kanya',
-                    'Hemmala',
-                    'Premwadee',
-                    'Narisa',
-                    'Female'
-                ];
-                
-                const maleBlocklist = ['Pattara', 'Male', 'Pattara Online'];
-                
-                let selectedVoice = null;
-                
-                if (voices.length > 0) {
-                    // 1. Try to find by name from our female preference list
-                    for (const name of femalePreference) {
-                        selectedVoice = voices.find(v => v.lang.startsWith('th') && v.name.includes(name));
-                        if (selectedVoice) break;
-                    }
-                    
-                    // 2. If STILL no voice, list all Thai voices and pick the SECOND one (if available)
-                    // because the 1st one is almost always the default male 'Pattara'
-                    if (!selectedVoice) {
-                        const thaiVoices = voices.filter(v => v.lang.startsWith('th') && !maleBlocklist.some(m => v.name.includes(m)));
-                        if (thaiVoices.length > 1) {
-                            selectedVoice = thaiVoices[1]; // Pick second one
-                        } else if (thaiVoices.length > 0) {
-                            selectedVoice = thaiVoices[0];
-                        }
-                    }
-                }
-                
-                if (selectedVoice) {
-                    utterance.voice = selectedVoice;
-                }
-                
-                utterance.lang = 'th-TH';
-                utterance.rate = 0.88;
-                utterance.pitch = 1.35; // Extra high pitch
-                
                 window.speechSynthesis.speak(utterance);
-            }, 100);
+            }, 150);
         }
     };
 
