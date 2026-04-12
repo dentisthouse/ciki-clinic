@@ -101,17 +101,14 @@ const QueueDisplay = () => {
             text = `ขอเชิญคุณ ${pName} กรุณาเข้ารับบริการที่ ${rName} ค่ะ.`;
         }
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = language === 'TH' ? 'th-TH' : 'en-US';
-        utterance.rate = 0.9;
-
-        // CRITICAL: Cancel ongoing speech and wait for reset
-        window.speechSynthesis.cancel();
-        
-        setTimeout(() => {
-            console.log("🗣️ Speaking text:", text);
+        // Simple speech call
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH';
+            utterance.rate = 0.9;
             window.speechSynthesis.speak(utterance);
-        }, 100);
+        }
     };
 
     const currentQueue = queueList.find(q => q.queueStatus === 'In Progress');
@@ -593,6 +590,23 @@ const QueueDisplay = () => {
                     .qd-patient-display { font-size: 3rem; }
                 }
             `}</style>
+            {/* Floating Announcement Log for Debugging */}
+            <div style={{
+                position: 'fixed',
+                bottom: '1rem',
+                left: '1rem',
+                background: 'rgba(0,0,0,0.8)',
+                color: '#00ff00',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                fontSize: '0.8rem',
+                fontFamily: 'monospace',
+                zIndex: 9999,
+                pointerEvents: 'none',
+                opacity: lastAnnouncement ? 0.9 : 0
+            }}>
+                [LOG] Last: {lastAnnouncement?.payload?.patientName || lastAnnouncement?.patientName} - {lastAnnouncement?.payload?.room || lastAnnouncement?.room}
+            </div>
         </div>
     );
 };
