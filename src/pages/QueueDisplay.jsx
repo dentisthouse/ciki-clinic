@@ -93,9 +93,8 @@ const QueueDisplay = () => {
         } else {
             // Default: Queue call
             const pName = data.payload?.patientName || data.patientName;
-            const qNum = data.payload?.queueNumber || data.queueNumber || '';
             const rName = roomInfo.TH;
-            text = `ขอเชิญคุณ ${pName} ${qNum ? `หมายเลขคิว ${qNum}` : ''} กรุณาเข้ารับบริการที่ ${rName} ค่ะ.`;
+            text = `ขอเชิญคุณ ${pName} กรุณาเข้ารับบริการที่ ${rName} ค่ะ.`;
         }
 
         const utterance = new SpeechSynthesisUtterance(text);
@@ -162,8 +161,8 @@ const QueueDisplay = () => {
                     <div className="qd-main-card glass-panel-premium">
                         {currentQueue ? (
                             <div className="qd-caller-content">
-                                <div className="qd-number-badge animate-pop-in">
-                                    {currentQueue.queueNumber}
+                                <div className="qd-number-badge animate-pop-in" style={{ fontSize: '6rem' }}>
+                                    <User size={120} />
                                 </div>
                                 <h2 className="qd-patient-display">{currentQueue.patientName}</h2>
                                 <div className="qd-room-indicator">
@@ -209,7 +208,7 @@ const QueueDisplay = () => {
                         {nextQueues.length > 0 ? (
                             nextQueues.map((q, idx) => (
                                 <div key={idx} className="qd-waiting-card animate-slide-right" style={{ animationDelay: `${idx * 100}ms` }}>
-                                    <div className="qd-waiting-num">{q.queueNumber}</div>
+                                    <div className="qd-waiting-num" style={{ width: '40px' }}><User size={24} /></div>
                                     <div className="qd-waiting-info">
                                         <div className="qd-waiting-name">{q.patientName}</div>
                                         <div className="qd-waiting-type">{q.treatment || q.procedure || '-'}</div>
