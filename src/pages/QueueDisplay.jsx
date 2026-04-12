@@ -94,8 +94,7 @@ const QueueDisplay = () => {
         } else {
             // Default: Queue call
             const pName = data.payload?.patientName || data.patientName;
-            const rName = roomInfo.TH;
-            text = `ขอเชิญคุณ ${pName} กรุณาเข้ารับบริการที่ ${rName} ค่ะ.`;
+            text = `ขอเชิญคุณ ${pName} ค่ะ.`;
         }
 
         // Simple speech call
@@ -164,13 +163,6 @@ const QueueDisplay = () => {
                                     <User size={120} />
                                 </div>
                                 <h2 className="qd-patient-display">{currentQueue.patientName}</h2>
-                                <div className="qd-room-indicator">
-                                    <Sparkles size={28} className="qd-decorator" />
-                                    <span style={{ fontWeight: 900, fontSize: '2.5rem', color: 'var(--qd-gold)' }}>
-                                        {currentQueue.room || (language === 'TH' ? 'ห้องตรวจ' : 'Examination Room')}
-                                    </span>
-                                    <Sparkles size={28} className="qd-decorator" />
-                                </div>
                             </div>
                         ) : (
                             <div className="qd-empty-display">
