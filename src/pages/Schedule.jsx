@@ -80,6 +80,8 @@ const Schedule = () => {
     const [activeQueueTab, setActiveQueueTab] = useState('today'); // today, inprogress, completed
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [statusUpdatingApt, setStatusUpdatingApt] = useState(null);
+    const [isRoomSelectionModalOpen, setIsRoomSelectionModalOpen] = useState(false);
+    const [callingApt, setCallingApt] = useState(null);
 
     // Filter appointments for dentists on load
     useEffect(() => {
@@ -183,6 +185,74 @@ const Schedule = () => {
                                 >
                                     <div className="status-dot-active" />
                                     <span className="status-label-modal">{status.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderRoomSelectionModal = () => {
+        if (!isRoomSelectionModalOpen || !callingApt) return null;
+
+        const rooms = [
+            { id: 'Room 1', label: language === 'TH' ? 'ห้องตรวจ 1' : 'Exam Room 1', icon: '1️⃣' },
+            { id: 'Room 2', label: language === 'TH' ? 'ห้องตรวจ 2' : 'Exam Room 2', icon: '2️⃣' },
+            { id: 'Room 3', label: language === 'TH' ? 'ห้องตรวจ 3' : 'Exam Room 3', icon: '3️⃣' },
+        ];
+
+        return (
+            <div className="modal-overlay" style={{ zIndex: 2000 }}>
+                <div className="modal-container-mini animate-scale-in" style={{ maxWidth: '400px' }}>
+                    <div className="modal-header" style={{ borderBottom: 'none', paddingBottom: '0.5rem' }}>
+                        <div className="header-info">
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 900 }}>{language === 'TH' ? 'เลือกห้องเข้าตรวจ' : 'Select Exam Room'}</h3>
+                            <p className="header-desc" style={{ fontSize: '1rem', color: 'var(--primary-600)', fontWeight: 700 }}>{callingApt.patientName || callingApt.patient}</p>
+                        </div>
+                        <button onClick={() => setIsRoomSelectionModalOpen(false)} className="modal-close">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="modal-body" style={{ padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {rooms.map((room) => (
+                                <button
+                                    key={room.id}
+                                    onClick={() => {
+                                        handleCallQueue(callingApt, room.id);
+                                        setIsRoomSelectionModalOpen(false);
+                                    }}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '1.25rem',
+                                        padding: '1.25rem',
+                                        borderRadius: '16px',
+                                        background: 'linear-gradient(135deg, white, #f8fafc)',
+                                        border: '2px solid var(--neutral-100)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        textAlign: 'left'
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.borderColor = 'var(--primary-300)';
+                                        e.currentTarget.style.transform = 'translateY(-2px)';
+                                        e.currentTarget.style.boxShadow = '0 8px 15px -3px rgba(0,0,0,0.1)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.borderColor = 'var(--neutral-100)';
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = 'none';
+                                    }}
+                                >
+                                    <span style={{ fontSize: '1.75rem' }}>{room.icon}</span>
+                                    <div>
+                                        <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--neutral-800)' }}>{room.label}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--neutral-500)' }}>{language === 'TH' ? 'พร้อมใช้งาน' : 'Available'}</div>
+                                    </div>
+                                    <ChevronRight size={20} style={{ marginLeft: 'auto', color: 'var(--neutral-300)' }} />
                                 </button>
                             ))}
                         </div>
@@ -625,7 +695,10 @@ const Schedule = () => {
                                                     {/* Enter exam room button */}
                                                     {activeQueueTab !== 'inprogress' && activeQueueTab !== 'completed' && (
                                                         <button
-                                                            onClick={() => handleCallQueue(apt)}
+                                                            onClick={() => {
+                                                                setCallingApt(apt);
+                                                                setIsRoomSelectionModalOpen(true);
+                                                            }}
                                                             style={{
                                                                 background: 'var(--gradient-primary)',
                                                                 color: 'white',
@@ -651,7 +724,8 @@ const Schedule = () => {
                                                     {activeQueueTab === 'inprogress' && (
                                                         <button
                                                             onClick={() => {
-                                                                navigate(`/patients/${apt.patientId || apt.patient_id || ''}`);
+                                                                setCallingApt(apt);
+                                                                setIsRoomSelectionModalOpen(true);
                                                             }}
                                                             style={{
                                                                 background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
@@ -685,6 +759,9 @@ const Schedule = () => {
                     </div>
                 </>
             )}
+
+            {renderStatusModal()}
+            {renderRoomSelectionModal()}
         </div>
     );
 };
