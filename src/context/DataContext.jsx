@@ -189,15 +189,27 @@ export const DataProvider = ({ children }) => {
                                 linePictureUrl: p.line_picture_url
                             }));
                         } else if (table === 'appointments') {
-                            return records.map(a => ({ 
-                                ...a, 
-                                patientId: a.patient_id, 
-                                patientName: a.patient_name,
-                                procedure: a.treatment || a.procedure,
-                                queueNumber: a.queue_number,
-                                queueStatus: a.queue_status || a.queueStatus,
-                                checkInTime: a.check_in_time || a.checkInTime
-                            }));
+                            return records.map(a => {
+                                // Extract type from notes if present (Workaround for missing 'type' column in DB)
+                                let inferredType = 'Staff Appointment';
+                                const notes = a.notes || '';
+                                if (notes.includes('[LINE]') || notes.includes('📱 [LINE]')) {
+                                    inferredType = 'LINE Booking';
+                                } else if (notes.includes('[Walk-in]')) {
+                                    inferredType = 'Walk-in';
+                                }
+                                
+                                return { 
+                                    ...a, 
+                                    patientId: a.patient_id, 
+                                    patientName: a.patient_name,
+                                    procedure: a.treatment || a.procedure,
+                                    queueNumber: a.queue_number,
+                                    queueStatus: a.queue_status || a.queueStatus,
+                                    checkInTime: a.check_in_time || a.checkInTime,
+                                    type: a.type || inferredType
+                                };
+                            });
                         } else if (table === 'invoices') {
                             return records.map(inv => ({
                                 ...inv,
