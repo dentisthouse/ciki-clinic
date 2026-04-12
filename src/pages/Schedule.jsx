@@ -472,24 +472,6 @@ const Schedule = () => {
 
             {viewMode === 'calendar' ? renderCalendar() : (
                 <>
-                    {/* Stats Grid */}
-                    <div className="schedule-stats-grid">
-                        <div className="stat-card-premium animate-slide-up delay-100">
-                            <div className="floating-icon primary">
-                                <CalendarIcon size={28} />
-                            </div>
-                            <div className="stat-content">
-                                <div className="stat-label">{t('dash_appointments')}</div>
-                                <div className="stat-value">
-                                    {(() => {
-                                        const userIsClinical = staff?.role?.toLowerCase() === 'dentist' || staff?.role?.toLowerCase() === 'doctor';
-                                        const effectiveFilter = userIsClinical ? (DOCTOR_MAP[user?.email?.toLowerCase()] || staff?.name) : doctorFilter;
-                                        return appointments.filter(apt => (effectiveFilter === 'All' || apt.dentist === effectiveFilter) && isSameDay(new Date(apt.date), currentDate)).length;
-                                    })()} <span>{t('sch_today_count_label')}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Schedule Queue Section */}
                     <div className="schedule-table-card">
@@ -512,6 +494,7 @@ const Schedule = () => {
                                         >
                                             <CalendarIcon size={18} /> 
                                             {language === 'TH' ? 'นัดหมายวันนี้' : 'Today'}
+                                            <span className="tab-badge">{countToday}</span>
                                         </button>
                                         <button 
                                             onClick={() => setActiveQueueTab('inprogress')}
@@ -519,6 +502,7 @@ const Schedule = () => {
                                         >
                                             <Stethoscope size={18} /> 
                                             {language === 'TH' ? 'กำลังรับบริการ' : 'In Progress'}
+                                            <span className="tab-badge">{countInProgress}</span>
                                         </button>
                                         <button 
                                             onClick={() => setActiveQueueTab('completed')}
@@ -526,6 +510,7 @@ const Schedule = () => {
                                         >
                                             <CheckCircle size={18} /> 
                                             {language === 'TH' ? 'เสร็จแล้ว' : 'Completed'}
+                                            <span className="tab-badge">{countCompleted}</span>
                                         </button>
                                     </>
                                 );
