@@ -14,6 +14,15 @@ const TreatmentPlan = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredPatients, setFilteredPatients] = useState([]);
 
+    // Auto-select patient from URL if provided
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const idFromUrl = params.get('id') || params.get('patientId');
+        if (idFromUrl) {
+            setSelectedPatientId(idFromUrl);
+        }
+    }, [patients]);
+
     useEffect(() => {
         if (patients) {
             const filtered = patients.filter(patient =>

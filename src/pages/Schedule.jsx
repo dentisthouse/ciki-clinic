@@ -124,9 +124,14 @@ const Schedule = () => {
             room: room
         });
 
-        // Show a brief notification (optional since we have voice, but good for feedback)
-        // addLog({ action: 'call_queue', module: 'appointments', details: `เรียกคิว: ${apt.patientName} (${apt.queueNumber}) ไปที่ ${room}`, severity: 'low' });
-    }, [selectedRoom, updateQueueStatus, broadcastAnnouncement]);
+        // Auto-navigate to Treatment Plan page for this patient
+        if (apt.patientId) {
+            navigate(`/treatment-plan?id=${apt.patientId}`);
+        } else {
+            // Fallback to simple navigation if no patientId linked (e.g. legacy data)
+            navigate('/treatment-plan');
+        }
+    }, [selectedRoom, updateQueueStatus, broadcastAnnouncement, navigate]);
 
     const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
     const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
