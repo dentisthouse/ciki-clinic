@@ -5,6 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 const PatientModal = ({ isOpen, onClose, onSave, patient }) => {
     const { t, language } = useLanguage();
     const [formData, setFormData] = useState({
+        prefix: '',
         name: '',
         age: '',
         gender: 'Male',
@@ -22,7 +23,13 @@ const PatientModal = ({ isOpen, onClose, onSave, patient }) => {
     useEffect(() => {
         if (patient) {
             setFormData({
-                ...patient,
+                prefix: patient.prefix || '',
+                name: patient.name || '',
+                age: patient.age || '',
+                gender: patient.gender || 'Male',
+                phone: patient.phone || '',
+                email: patient.email || '',
+                address: patient.address || '',
                 medicalHistory: Array.isArray(patient.medicalHistory) ? patient.medicalHistory.join(', ') : patient.medicalHistory || '',
                 idCard: patient.idCard || '',
                 photo: patient.photo || null,
@@ -35,6 +42,7 @@ const PatientModal = ({ isOpen, onClose, onSave, patient }) => {
             });
         } else {
             setFormData({
+                prefix: '',
                 name: '',
                 age: '',
                 gender: 'Male',
@@ -238,7 +246,22 @@ const PatientModal = ({ isOpen, onClose, onSave, patient }) => {
                                     {language === 'TH' ? 'ข้อมูลส่วนตัว' : 'Personal Details'}
                                 </div>
                                 
-                                <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr 1.25fr', gap: '1.5rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 0.8fr 1.2fr', gap: '1rem' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">{language === 'TH' ? 'คำนำหน้า' : 'Prefix'}</label>
+                                        <select
+                                            className="form-select"
+                                            value={formData.prefix}
+                                            onChange={e => setFormData({ ...formData, prefix: e.target.value })}
+                                        >
+                                            <option value="">-</option>
+                                            <option value="นาย">นาย (Mr.)</option>
+                                            <option value="นาง">นาง (Mrs.)</option>
+                                            <option value="น.ส.">น.ส. (Ms.)</option>
+                                            <option value="ด.ช.">ด.ช. (Master)</option>
+                                            <option value="ด.ญ.">ด.ญ. (Miss)</option>
+                                        </select>
+                                    </div>
                                     <div className="form-group">
                                         <label className="form-label">{t('pat_form_name')} <span style={{ color: 'var(--danger)' }}>*</span></label>
                                         <input
@@ -247,6 +270,7 @@ const PatientModal = ({ isOpen, onClose, onSave, patient }) => {
                                             value={formData.name}
                                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                                             required
+                                            placeholder={language === 'TH' ? 'ชื่อ-นามสกุล' : 'Full Name'}
                                         />
                                     </div>
                                     <div className="form-group">
