@@ -775,16 +775,20 @@ export const DataProvider = ({ children }) => {
         );
     };
 
-    const updateQueueStatus = async (id, status) => {
+    const updateQueueStatus = async (id, status, room) => {
         const updateData = { 
             status: (status === 'In Progress' || status === 'Completed') ? status : 'Pending',
             queue_status: status // Update the actual DB column
         };
+        
+        // If room is provided, add it to the update
+        if (room) updateData.room = room;
+
         await persistAction('appointments',
             () => supabase.from('appointments').update(updateData).eq('id', id),
             'update', { queueStatus: status, ...updateData }, id
         );
-        addLog({ action: 'update_status', module: 'appointments', details: `เปลี่ยนสถานะบัตรคิว: ${id} เป็น ${status}`, severity: 'low' });
+        addLog({ action: 'update_status', module: 'appointments', details: `เปลี่ยนสถานะบัตรคิว: ${id} เป็น ${status}${room ? ' (Room: ' + room + ')' : ''}`, severity: 'low' });
     };
 
     // Inventory, Expenses, Invoices (Generic Persist)

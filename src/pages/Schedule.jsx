@@ -115,7 +115,7 @@ const Schedule = () => {
     };
 
     // Handle calling queue with voice announcement
-    const handleCallQueue = useCallback((apt, room = selectedRoom) => {
+    const handleCallQueue = useCallback((apt, room) => {
         // Update queue status to In Progress with room
         updateQueueStatus(apt.id, 'In Progress', room);
         
@@ -133,7 +133,21 @@ const Schedule = () => {
             // Fallback to simple navigation
             navigate('/patients');
         }
-    }, [selectedRoom, updateQueueStatus, broadcastAnnouncement, navigate]);
+    }, [updateQueueStatus, broadcastAnnouncement, navigate]);
+
+    // Recall / Repeat Announcement
+    const handleRecallAnnouncement = useCallback((apt) => {
+        // Get room from apt if available, otherwise default
+        const roomStr = apt.room || (language === 'TH' ? 'ห้องตรวจ' : 'Examination Room');
+        
+        broadcastAnnouncement('queue', {
+            patientName: apt.patientName || apt.patient,
+            queueNumber: apt.queueNumber,
+            room: roomStr
+        });
+        
+        // Visual feedback would be nice, but broadcast handles UI
+    }, [broadcastAnnouncement, language]);
 
     const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
     const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -694,8 +708,8 @@ const Schedule = () => {
                                                         </button>
                                                     </div>
 
-                                                    {/* Enter exam room button */}
-                                                    {activeQueueTab !== 'inprogress' && activeQueueTab !== 'completed' && (
+                                                    {/* Row specific actions based on status */}
+                                                    {apt.queueStatus !== 'In Progress' && apt.queueStatus !== 'Completed' && (
                                                         <button
                                                             onClick={() => {
                                                                 setCallingApt(apt);
@@ -723,33 +737,63 @@ const Schedule = () => {
                                                             {language === 'TH' ? 'เข้าห้องตรวจ' : 'Enter Exam'}
                                                         </button>
                                                     )}
-                                                    {activeQueueTab === 'inprogress' && (
-                                                        <button
-                                                            onClick={() => {
-                                                                setCallingApt(apt);
-                                                                setIsRoomSelectionModalOpen(true);
-                                                            }}
-                                                            style={{
-                                                                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                                                                color: 'white',
-                                                                border: 'none',
-                                                                padding: '0.6rem 1.25rem',
-                                                                borderRadius: '12px',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '0.5rem',
-                                                                fontWeight: 800,
-                                                                fontSize: '0.95rem',
-                                                                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)',
-                                                                cursor: 'pointer',
-                                                                minWidth: '140px'
-                                                            }}
-                                                        >
-                                                            <div style={{ padding: '0.2rem', background: 'rgba(255,255,255,0.2)', borderRadius: '6px' }}>
-                                                                <Stethoscope size={16} />
-                                                            </div>
-                                                            {language === 'TH' ? 'ห้องตรวจ' : 'Treatment'}
-                                                        </button>
+                                                    
+                                                    {apt.queueStatus === 'In Progress' && (
+                                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setCallingApt(apt);
+                                                                    setIsRoomSelectionModalOpen(true);
+                                                                }}
+                                                                style={{
+                                                                    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                                                                    color: 'white',
+                                                                    border: 'none',
+                                                                    padding: '0.6rem 1.25rem',
+                                                                    borderRadius: '12px',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '0.5rem',
+                                                                    fontWeight: 800,
+                                                                    fontSize: '0.95rem',
+                                                                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)',
+                                                                    cursor: 'pointer',
+                                                                    minWidth: '140px'
+                                                                }}
+                                                            >
+                                                                <div style={{ padding: '0.2rem', background: 'rgba(255,255,255,0.2)', borderRadius: '6px' }}>
+                                                                    <Stethoscope size={16} />
+                                                                </div>
+                                                                {language === 'TH' ? 'ห้องตรวจ' : 'Treatment'}
+                                                            </button>
+
+                                                            <button
+                                                                onClick={() => handleRecallAnnouncement(apt)}
+                                                                title={language === 'TH' ? 'เรียกซ้ำ' : 'Recall'}
+                                                                style={{
+                                                                    background: '#f8fafc',
+                                                                    color: '#64748b',
+                                                                    border: '1px solid #e2e8f0',
+                                                                    padding: '0.6rem',
+                                                                    borderRadius: '12px',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.2s'
+                                                                }}
+                                                                onMouseEnter={e => {
+                                                                    e.currentTarget.style.background = '#f1f5f9';
+                                                                    e.currentTarget.style.color = 'var(--primary-600)';
+                                                                }}
+                                                                onMouseLeave={e => {
+                                                                    e.currentTarget.style.background = '#f8fafc';
+                                                                    e.currentTarget.style.color = '#64748b';
+                                                                }}
+                                                            >
+                                                                <Volume2 size={20} />
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </td>
