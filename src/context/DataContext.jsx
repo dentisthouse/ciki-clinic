@@ -684,7 +684,9 @@ export const DataProvider = ({ children }) => {
         await persistAction('patients', 
             () => {
                 const supabaseData = toSupabasePatient(newPatient);
-                return supabaseLocal.from('patients').insert([supabaseData]);
+                // If it's a LINE registration, push to Cloud so clinic can pull it later
+                const client = newPatient.lineUserId ? supabase : supabaseLocal;
+                return client.from('patients').insert([supabaseData]);
             }, 
             'insert', newPatient
         );
@@ -757,7 +759,11 @@ export const DataProvider = ({ children }) => {
         };
 
         await persistAction('appointments',
-            () => supabaseLocal.from('appointments').insert([dbRecord]),
+            () => {
+                // LINE Bookings go to Cloud; Staff/Walk-ins go to Local Clinic Server
+                const client = newApt.type === 'LINE Booking' ? supabase : supabaseLocal;
+                return client.from('appointments').insert([dbRecord]);
+            },
             'insert', newApt
         );
         addLog({ action: 'create_appointment', module: 'appointments', details: `นัดหมายใหม่: ${newApt.patientName} (${newApt.time})`, severity: 'low' });
