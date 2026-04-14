@@ -1,0 +1,49 @@
+# Supabase Local Docker Compose
+# สำหรับรัน Supabase ภายในคลินิก (เครื่องแม่ข่าย)
+# ข้อมูลทั้งหมดจะถูกเก็บไว้ในเครื่องนี้ 100% ไม่จำกัดลิมิต
+
+# version: '3.8' (obsolete)
+
+services:
+  db:
+    container_name: supabase-db
+    image: postgres:15.1-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: your-super-secret-db-password
+    volumes:
+      - supabase_db:/var/lib/postgresql/data
+
+  # ให้บริการ API แบบเดียวกับ Supabase Cloud
+  rest:
+    container_name: supabase-rest
+    image: postgrest/postgrest:v10.1.2
+    ports:
+      - "3000:3000"
+    environment:
+      PGRST_DB_URI: postgres://postgres:your-super-secret-db-password@db:5432/postgres
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: your-jwt-secret-at-least-32-chars-long
+    depends_on:
+      - db
+
+  # ส่วนจัดการ Realtime (สำหรับเชื่อมต่อ 10 เครื่อง)
+  realtime:
+    container_name: supabase-realtime
+    image: supabase/realtime:v2.10.2
+    ports:
+      - "4000:4000"
+    environment:
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: your-super-secret-db-password
+      PORT: 4000
+      JWT_SECRET: your-jwt-secret-at-least-32-chars-long
+    depends_on:
+      - db
+
+volumes:
+  supabase_db:

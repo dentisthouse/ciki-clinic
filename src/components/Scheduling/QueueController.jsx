@@ -8,7 +8,7 @@ const QueueController = () => {
     const { appointments, updateQueueStatus } = useData();
 
     // Filter for today's active queue
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toLocaleDateString('sv-SE');
     const queueItems = appointments
         .filter(a => a.date.startsWith(todayStr) && a.status !== 'Cancelled')
         .sort((a, b) => {

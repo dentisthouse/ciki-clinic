@@ -79,7 +79,7 @@ const LinePortal = () => {
     // Booking state
     const [bookingService, setBookingService] = useState('');
     const [bookingBranch, setBookingBranch] = useState(getBranches(pt)[0]);
-    const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+    const [bookingDate, setBookingDate] = useState(new Date().toLocaleDateString('sv-SE'));
     const [bookingTime, setBookingTime] = useState('');
     const [isBooking, setIsBooking] = useState(false); // Add this to prevent double booking
     const [userAppointments, setUserAppointments] = useState([]);
@@ -978,7 +978,7 @@ const LinePortal = () => {
                             <label className="lp-booking-label-v2">{pt('sel_date')}</label>
                             <div className="lp-date-scroll-v3">
                                 {bookingDates.map((date, idx) => {
-                                    const dateStr = date.toISOString().split('T')[0];
+                                    const dateStr = date.toLocaleDateString('sv-SE');
                                     const isSelected = bookingDate === dateStr;
                                     const dayName = date.toLocaleDateString(language === 'TH' ? 'th-TH' : 'en-US', { weekday: 'short' });
                                     const dateDay = date.getDate();

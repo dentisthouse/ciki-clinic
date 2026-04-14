@@ -9,7 +9,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
     const { patients } = useData();
     const [formData, setFormData] = useState({
         patientId: '',
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toLocaleDateString('sv-SE'),
         time: '09:00',
         duration: 30,
         type: 'General Checkup',
@@ -84,7 +84,7 @@ const AppointmentModal = ({ isOpen, onClose, onSave }) => {
                                         onClick={() => {
                                             const date = new Date();
                                             date.setDate(date.getDate() + 28); // +4 Weeks
-                                            setFormData({ ...formData, date: date.toISOString().split('T')[0] });
+                                            setFormData({ ...formData, date: date.toLocaleDateString('sv-SE') });
                                         }}
                                         title="+4 Weeks (Ortho Recall)"
                                     >

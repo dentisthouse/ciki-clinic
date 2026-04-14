@@ -28,10 +28,10 @@ const Billing = () => {
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toLocaleDateString('sv-SE');
     const isThai = language === 'TH';
     const langT = (th, en) => isThai ? th : en;
-    const todayISO = new Date().toISOString().split('T')[0];
+    const todayISO = new Date().toLocaleDateString('sv-SE');
     const todayLocale = new Date().toLocaleDateString();
     const matchesToday = (d) => d === todayISO || d === todayLocale;
 
@@ -67,13 +67,13 @@ const Billing = () => {
                 });
                 const latestTRT = sorted[0];
 
-                const todayISO = new Date().toISOString().split('T')[0];
+                const todayISO = new Date().toLocaleDateString('sv-SE');
                 const todayTRT = unpaid.find(t => t.date?.startsWith(todayISO) && t.recorder);
 
                 // Find today's appointment if any to get doctor and time
                 const todayApt = appointments.find(a => 
                     a.patientId === patient.id && 
-                    (a.date === todayStr || a.date?.startsWith(new Date().toISOString().split('T')[0]))
+                    (a.date === todayStr || a.date?.startsWith(new Date().toLocaleDateString('sv-SE')))
                 );
 
                 return {
@@ -238,7 +238,7 @@ const Billing = () => {
             description: expenseForm.description,
             amount: parseFloat(expenseForm.amount),
             type: expenseForm.type,
-            date: new Date().toISOString()
+            date: new Date().toLocaleDateString('sv-SE')
         });
         setExpenseForm({ description: '', amount: '', type: 'expense' });
         setIsExpenseModalOpen(false);

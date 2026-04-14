@@ -44,7 +44,7 @@ const LinePortal = () => {
     // Booking state
     const [bookingService, setBookingService] = useState('');
     const [bookingBranch, setBookingBranch] = useState(BRANCHES[0]);
-    const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+    const [bookingDate, setBookingDate] = useState(new Date().toLocaleDateString('sv-SE'));
     const [bookingTime, setBookingTime] = useState('');
     const [userAppointments, setUserAppointments] = useState([]);
 
@@ -1074,7 +1074,7 @@ const LinePortal = () => {
                             type="date"
                             value={bookingDate}
                             onChange={e => setBookingDate(e.target.value)}
-                            min={new Date().toISOString().split('T')[0]}
+                            min={new Date().toLocaleDateString('sv-SE')}
                             style={{
                                 width: '100%',
                                 height: '3.5rem',

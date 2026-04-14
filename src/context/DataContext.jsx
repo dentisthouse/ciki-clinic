@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '../supabase';
+import { supabase, supabaseLocal } from '../supabase';
 import { useAuth } from './AuthContext';
 import { db } from '../db';
 import { generateFullCN } from '../utils/cnGenerator';
@@ -38,8 +38,9 @@ export const DataProvider = ({ children }) => {
     // --- SETTINGS STATE ---
     const [settings, setSettings] = useState({
         clinicInfo: {
-            name: { TH: 'คลินิกทันตกรรม CIKI', EN: 'CIKI Dental Clinic' },
-            description: { TH: 'คลินิกทันตกรรมครบวงจร', EN: 'Comprehensive dental clinic' }
+            name: { TH: 'คลินิกทันตกรรม บ้านหมอฟัน', EN: 'Baan Mor Fun Dental Clinic' },
+            description: { TH: 'DENTAL HOME CLINIC', EN: 'DENTAL HOME CLINIC' },
+            logoUrl: '/clinic-logo-baan-mor-fun.png'
         },
         services: [
             // General & Diagnostic
@@ -148,15 +149,47 @@ export const DataProvider = ({ children }) => {
         }
     }, []);
 
-    // --- SUPABASE SYNC (Optimized Egress) ---
+    // --- SUPABASE CLOUD SYNC (Pull bookings from Vercel) ---
+    const syncCloudBookings = useCallback(async () => {
+        if (!user) return;
+        console.log("☁️ Pulling online bookings from Cloud Supabase...");
+        
+        try {
+            // ดึงเฉพาะนัดหมายที่มีการจองเข้ามาผ่านเว็บบน Cloud
+            const { data: cloudApts, error } = await supabase.from('appointments').select('*').limit(50);
+            
+            if (error) throw error;
+            if (cloudApts && cloudApts.length > 0) {
+                for (const apt of cloudApts) {
+                    // บันทึกลง Local Database
+                    await db.appointments.put({
+                        ...apt,
+                        patientId: apt.patient_id,
+                        patientName: apt.patient_name,
+                        type: 'LINE Booking' // มาร์คว่าเป็นรายการจองจาก Cloud
+                    });
+                    
+                    // หลังจากดึงมาแล้ว สามารถลบออกจาก Cloud หรือมาร์คว่าดึงแล้วได้
+                    // ในที่นี้เราจะแค่บันทึกลง Local และอัปเดต State
+                }
+                const allApts = await db.appointments.toArray();
+                setAppointments(allApts);
+                console.log(`✅ Synced ${cloudApts.length} bookings from Cloud`);
+            }
+        } catch (err) {
+            console.warn("Could not sync cloud bookings:", err);
+        }
+    }, [user]);
+
+    // --- SUPABASE LOCAL SYNC (In-Clinic Server) ---
     const syncWithSupabase = useCallback(async (tableNames) => {
         if (syncInProgressRef.current) return;
         syncInProgressRef.current = true;
         setIsSyncing(true);
-        console.log("🔄 Background Syncing with Supabase...");
+        console.log("🏠 Syncing with Local Clinic Server...");
         
         // Log the sync event
-        addLog({ action: 'sync_data', module: 'system', details: 'Manual sync with server' });
+        addLog({ action: 'sync_data', module: 'system', details: 'Sync with Local Server' });
 
         const tablesToSync = tableNames || [
             'patients', 'appointments', 'inventory', 'invoices', 
@@ -165,7 +198,7 @@ export const DataProvider = ({ children }) => {
 
         try {
             const results = await Promise.allSettled(
-                tablesToSync.map(table => supabase.from(table).select('*'))
+                tablesToSync.map(table => supabaseLocal.from(table).select('*'))
             );
 
             for (let i = 0; i < tablesToSync.length; i++) {
@@ -305,47 +338,63 @@ export const DataProvider = ({ children }) => {
             const runAutoSync = async () => {
                 const localData = await initFromLocalDB();
                 
-                // If local data is empty or it's been too long, sync
+                // If local data is empty or it's been too long, sync with Local Server
                 const overallMeta = await db.sync_metadata.get('overall');
                 const lastSync = overallMeta?.lastSyncTime || 0;
                 const timeDiff = Date.now() - lastSync;
                 
-                // If never synced or more than 2 hours ago (to save egress)
-                if (timeDiff > 7200000 || (localData && localData.patients.length === 0)) {
-                    await syncWithSupabase();
-                } else {
-                    setIsLoading(false);
-                }
+                // Sync with Local Clinic Server (192.168.1.50)
+                await syncWithSupabase();
                 
+                // Also pull online bookings from Cloud
+                await syncCloudBookings();
+
                 // Load Settings from LocalStorage first for instant UI
                 const savedSettings = localStorage.getItem('ciki_settings');
                 if (savedSettings) {
                     try {
-                        setSettings(JSON.parse(savedSettings));
-                    } catch(e) {}
+                        const parsed = JSON.parse(savedSettings);
+                        if (parsed.clinicInfo) {
+                            if (!parsed.clinicInfo.logoUrl) {
+                                parsed.clinicInfo.logoUrl = '/clinic-logo-baan-mor-fun.png';
+                            }
+                            if (parsed.clinicInfo.name?.TH === 'คลินิกทันตกรรม CIKI') {
+                                parsed.clinicInfo.name = {
+                                    TH: 'คลินิกทันตกรรม บ้านหมอฟัน',
+                                    EN: 'Baan Mor Fun Dental Clinic'
+                                };
+                                parsed.clinicInfo.description = {
+                                    TH: 'DENTAL HOME CLINIC',
+                                    EN: 'DENTAL HOME CLINIC'
+                                };
+                            }
+                        }
+                        setSettings(parsed);
+                        localStorage.setItem('ciki_settings', JSON.stringify(parsed));
+                    } catch (e) { /* ignore */ }
                 }
 
-                // Try to get fresh settings from Supabase
+                // Try to get fresh settings from Local Server
                 try {
-                    const { data: remoteSettings, error: settingsError } = await supabase.from('settings').select('*').eq('id', 'global').single();
+                    const { data: remoteSettings, error: settingsError } = await supabaseLocal.from('settings').select('*').eq('id', 'global').single();
                     if (remoteSettings && remoteSettings.data) {
                         setSettings(remoteSettings.data);
                         localStorage.setItem('ciki_settings', JSON.stringify(remoteSettings.data));
                     }
                 } catch (e) {
-                    console.warn("Could not load remote settings:", e);
+                    console.warn("Could not load remote settings from local server:", e);
                 }
             };
 
             runAutoSync();
 
-            // --- OPTIMIZED REAL-TIME SUBSCRIPTION ---
-            // Instead of refetching everything, we update the local DB and State with the payload
-            const dataChannels = supabase
-                .channel('db-changes')
+            // --- OPTIMIZED REAL-TIME SUBSCRIPTION (Local Server) ---
+            // เชื่อมต่อ Realtime กับเครื่องแม่ในคลินิก เพื่อให้ทั้ง 10 เครื่องเห็นข้อมูลตรงกัน
+            const dataChannels = supabaseLocal
+                .channel('db-changes-local')
                 .on('postgres_changes', { event: '*', schema: 'public' }, async (payload) => {
                     const { table, eventType, new: newRecord, old: oldRecord } = payload;
-                    console.log(`🔔 Remote ${eventType} on [${table}]`);
+                    console.log(`🔔 Local Server ${eventType} on [${table}]`);
 
                     // Update Local Storage
                     if (eventType === 'DELETE') {
@@ -635,7 +684,7 @@ export const DataProvider = ({ children }) => {
         await persistAction('patients', 
             () => {
                 const supabaseData = toSupabasePatient(newPatient);
-                return supabase.from('patients').insert([supabaseData]);
+                return supabaseLocal.from('patients').insert([supabaseData]);
             }, 
             'insert', newPatient
         );
@@ -646,7 +695,7 @@ export const DataProvider = ({ children }) => {
         await persistAction('patients',
             () => {
                 const supabaseUpdates = toSupabasePatient(updates);
-                return supabase.from('patients').update(supabaseUpdates).eq('id', id);
+                return supabaseLocal.from('patients').update(supabaseUpdates).eq('id', id);
             },
             'update', updates, id
         );
@@ -654,7 +703,7 @@ export const DataProvider = ({ children }) => {
 
     const deletePatient = async (id) => {
         await persistAction('patients',
-            () => supabase.from('patients').update({ active: false }).eq('id', id),
+            () => supabaseLocal.from('patients').update({ active: false }).eq('id', id),
             'update', { active: false }, id
         );
         addLog({ action: 'delete_patient', module: 'patients', details: `ย้ายคนไข้เข้าถังขยะ: ${id}`, severity: 'medium' });
@@ -662,21 +711,21 @@ export const DataProvider = ({ children }) => {
 
     const restorePatient = async (id) => {
         await persistAction('patients',
-            () => supabase.from('patients').update({ active: true }).eq('id', id),
+            () => supabaseLocal.from('patients').update({ active: true }).eq('id', id),
             'update', { active: true }, id
         );
     };
 
     const updateToothChart = async (patientId, chartData) => {
         await persistAction('patients',
-            () => supabase.from('patients').update({ tooth_chart: chartData }).eq('id', patientId),
+            () => supabaseLocal.from('patients').update({ tooth_chart: chartData }).eq('id', patientId),
             'update', { toothChart: chartData }, patientId
         );
     };
 
     // Appointments
     const addAppointment = async (appointment) => {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = new Date().toLocaleDateString('sv-SE');
         const count = appointments.filter(a => a.date && a.date.startsWith(todayStr)).length + 1;
         const qNum = `${appointment.type === 'Walk-in' ? 'W' : 'A'}-${String(count).padStart(2, '0')}`;
         const newAptId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `APT-${Date.now()}`;
@@ -708,7 +757,7 @@ export const DataProvider = ({ children }) => {
         };
 
         await persistAction('appointments',
-            () => supabase.from('appointments').insert([dbRecord]),
+            () => supabaseLocal.from('appointments').insert([dbRecord]),
             'insert', newApt
         );
         addLog({ action: 'create_appointment', module: 'appointments', details: `นัดหมายใหม่: ${newApt.patientName} (${newApt.time})`, severity: 'low' });
@@ -747,7 +796,7 @@ export const DataProvider = ({ children }) => {
         }
 
         await persistAction('appointments',
-            () => supabase.from('appointments').update(supabaseUpdates).eq('id', id),
+            () => supabaseLocal.from('appointments').update(supabaseUpdates).eq('id', id),
             'update', updates, id
         );
 
@@ -770,7 +819,7 @@ export const DataProvider = ({ children }) => {
 
     const deleteAppointment = async (id) => {
         await persistAction('appointments',
-            () => supabase.from('appointments').delete().eq('id', id),
+            () => supabaseLocal.from('appointments').delete().eq('id', id),
             'delete', null, id
         );
     };
@@ -785,7 +834,7 @@ export const DataProvider = ({ children }) => {
         // But we still process it for the optimistic update and broadcast.
         
         await persistAction('appointments',
-            () => supabase.from('appointments').update(updateData).eq('id', id),
+            () => supabaseLocal.from('appointments').update(updateData).eq('id', id),
             'update', { queueStatus: status, room, ...updateData }, id
         );
         addLog({ action: 'update_status', module: 'appointments', details: `เปลี่ยนสถานะบัตรคิว: ${id} เป็น ${status}${room ? ' (Room: ' + room + ')' : ''}`, severity: 'low' });
@@ -800,7 +849,7 @@ export const DataProvider = ({ children }) => {
         await persistAction('inventory', 
             () => {
                 const supabaseData = toSupabaseInventory(newItem);
-                return supabase.from('inventory').insert([supabaseData]);
+                return supabaseLocal.from('inventory').insert([supabaseData]);
             }, 
             'insert', newItem
         );
@@ -819,7 +868,7 @@ export const DataProvider = ({ children }) => {
         await persistAction('inventory',
             () => {
                 const supabaseData = newItems.map(item => toSupabaseInventory(item));
-                return supabase.from('inventory').insert(supabaseData);
+                return supabaseLocal.from('inventory').insert(supabaseData);
             },
             'bulk_insert', newItems
         );
@@ -829,10 +878,24 @@ export const DataProvider = ({ children }) => {
         await persistAction('inventory', 
             () => {
                 const supabaseUpdates = toSupabaseInventory(updates);
-                return supabase.from('inventory').update(supabaseUpdates).eq('id', id);
+                return supabaseLocal.from('inventory').update(supabaseUpdates).eq('id', id);
             }, 
             'update', updates, id
         );
+    };
+
+    const deductStockForTreatment = async (procedureName) => {
+        if (!procedureName) return;
+        // Search in inventory for a matching name
+        const item = inventory.find(i => 
+            (i.name && i.name.toLowerCase() === procedureName.toLowerCase()) || 
+            (i.item_name && i.item_name.toLowerCase() === procedureName.toLowerCase())
+        );
+        
+        if (item) {
+            console.log(`📦 Auto-deducting stock for: ${procedureName}`);
+            await updateInventoryStock(item.id, -1);
+        }
     };
 
     const updateInventoryStock = async (id, amount) => {
@@ -854,7 +917,7 @@ export const DataProvider = ({ children }) => {
         setInventory(prev => prev.filter(item => item.id !== id));
         
         await persistAction('inventory', 
-            () => supabase.from('inventory').delete().eq('id', id), 
+            () => supabaseLocal.from('inventory').delete().eq('id', id), 
             'delete', null, id
         );
     };
@@ -865,7 +928,7 @@ export const DataProvider = ({ children }) => {
         await persistAction('invoices', 
             () => {
                 const supabaseData = toSupabaseInvoice(newInvoice);
-                return supabase.from('invoices').insert([supabaseData]);
+                return supabaseLocal.from('invoices').insert([supabaseData]);
             }, 
             'insert', newInvoice
         );
@@ -875,12 +938,12 @@ export const DataProvider = ({ children }) => {
     const addExpense = async (expense) => {
         const id = generateUUID();
         const newExpense = { ...expense, id };
-        await persistAction('expenses', () => supabase.from('expenses').insert([newExpense]), 'insert', newExpense);
+        await persistAction('expenses', () => supabaseLocal.from('expenses').insert([newExpense]), 'insert', newExpense);
         addLog({ action: 'create_expense', module: 'expenses', details: `บันทึกค่าใช้จ่าย: ${newExpense.description} ยอด ฿${newExpense.amount?.toLocaleString()}`, severity: 'low' });
     };
 
     const deleteExpense = async (id) => {
-        await persistAction('expenses', () => supabase.from('expenses').delete().eq('id', id), 'delete', null, id);
+        await persistAction('expenses', () => supabaseLocal.from('expenses').delete().eq('id', id), 'delete', null, id);
     };
 
     const addStaff = async (staffMember) => {
@@ -895,7 +958,7 @@ export const DataProvider = ({ children }) => {
                     id: newStaff.id,
                     ...toSupabaseStaff(newStaff) 
                 };
-                return supabase.from('staff').insert([dbRecord]);
+                return supabaseLocal.from('staff').insert([dbRecord]);
             }, 
             'insert', newStaff
         );
@@ -906,14 +969,14 @@ export const DataProvider = ({ children }) => {
         await persistAction('staff', 
             () => {
                 const supabaseUpdates = toSupabaseStaff(updates);
-                return supabase.from('staff').update(supabaseUpdates).eq('id', id);
+                return supabaseLocal.from('staff').update(supabaseUpdates).eq('id', id);
             }, 
             'update', updates, id
         );
     };
 
     const deleteStaff = async (id) => {
-        await persistAction('staff', () => supabase.from('staff').delete().eq('id', id), 'delete', null, id);
+        await persistAction('staff', () => supabaseLocal.from('staff').delete().eq('id', id), 'delete', null, id);
         addLog({ action: 'delete_staff', module: 'staff', details: `ลบพนักงาน ID: ${id}`, severity: 'high' });
     };
 
@@ -922,14 +985,14 @@ export const DataProvider = ({ children }) => {
         const newRecord = { ...record, id, timestamp: new Date().toISOString() };
         
         await persistAction('attendance_records', 
-            () => supabase.from('attendance_records').insert([toSupabaseAttendance(newRecord)]), 
+            () => supabaseLocal.from('attendance_records').insert([toSupabaseAttendance(newRecord)]), 
             'add', newRecord
         );
     };
 
     // ... continue mapping other actions if needed
     const updateLocation = async (id, room) => {
-        await persistAction('appointments', () => supabase.from('appointments').update({ room }).eq('id', id), 'update', { room }, id);
+        await persistAction('appointments', () => supabaseLocal.from('appointments').update({ room }).eq('id', id), 'update', { room }, id);
     };
 
     const clearAllData = async () => {
@@ -951,8 +1014,7 @@ export const DataProvider = ({ children }) => {
             setLabOrders([]);
             setLogs([]);
 
-            // 2. Wipe Supabase SEQUENTIALLY to handle foreign key constraints
-            // Order is important: Invoices -> Appointments -> Patients
+            // 2. Wipe Local Supabase SEQUENTIALLY to handle foreign key constraints
             const tablesToClear = [
                 'invoices',
                 'lab_orders', 
@@ -967,19 +1029,18 @@ export const DataProvider = ({ children }) => {
             ];
 
             const wipeErrors = [];
-            console.log("🚀 Starting System Wipe...");
+            console.log("🚀 Starting System Wipe on Local Server...");
 
             for (const table of tablesToClear) {
                 try {
-                    console.log(`🧹 Clearing table: ${table}...`);
-                    // Use a more aggressive filter that matches everything but satisfies PostgREST requirement
-                    const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                    console.log(`🧹 Clearing local table: ${table}...`);
+                    const { error } = await supabaseLocal.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
                     
                     if (error) {
                         console.error(`❌ Error clearing [${table}]:`, error);
                         wipeErrors.push(`${table}: ${error.message}`);
                     } else {
-                        console.log(`✅ Table [${table}] cleared successfully`);
+                        console.log(`✅ Table [${table}] cleared successfully on local server`);
                     }
                 } catch (e) {
                     console.error(`💥 Critical failure on [${table}]:`, e);
@@ -1006,7 +1067,7 @@ export const DataProvider = ({ children }) => {
             window.localStorage.clear();
             window.sessionStorage.clear();
             
-            // Re-set initial language preference to prevent defaulting to something else on reload
+            // Re-set initial language preference
             localStorage.setItem('language', isThai ? 'TH' : 'EN');
             
             // 5. Final Report & Refresh
@@ -1032,7 +1093,7 @@ export const DataProvider = ({ children }) => {
     };
 
     const getDailySummary = () => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toLocaleDateString('sv-SE');
         const todaysApts = appointments.filter(a => a.date === today);
         const todaysInvoices = invoices.filter(inv => inv.date === today);
         const totalRevenue = todaysInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
@@ -1072,21 +1133,21 @@ export const DataProvider = ({ children }) => {
         setSettings(newSettings);
         localStorage.setItem('ciki_settings', JSON.stringify(newSettings));
         
-        // Sync to Supabase - using a catch-all 'settings' table or generic kv store
+        // Sync to Local Server
         try {
-            await supabase.from('settings').upsert({ id: 'global', data: newSettings });
+            await supabaseLocal.from('settings').upsert({ id: 'global', data: newSettings });
         } catch (e) {
-            console.warn("Failed to sync settings to Supabase:", e);
+            console.warn("Failed to sync settings to local server:", e);
         }
     };
 
-    // Lab & SSO Claims (Missing in prev chunk)
+    // Lab & SSO Claims
     const addLabOrder = async (order) => {
         const id = generateUUID();
         const newOrder = { 
             ...order, 
             id,
-            orderDate: order.orderDate || order.sent || new Date().toISOString().split('T')[0],
+            orderDate: order.orderDate || order.sent || new Date().toLocaleDateString('sv-SE'),
             dueDate: order.dueDate || order.due,
             clinicName: order.clinicName || order.lab,
             items: order.items || order.work
@@ -1095,7 +1156,7 @@ export const DataProvider = ({ children }) => {
         await persistAction('lab_orders', 
             () => {
                 const supabaseData = toSupabaseLabOrder(newOrder);
-                return supabase.from('lab_orders').insert([supabaseData]);
+                return supabaseLocal.from('lab_orders').insert([supabaseData]);
             }, 
             'insert', newOrder
         );
@@ -1119,9 +1180,9 @@ export const DataProvider = ({ children }) => {
             targetPatients = updatedPatients;
         }
 
-        const today = new Date().toISOString().split('T')[0];
-        const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
-        const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+        const today = new Date().toLocaleDateString('sv-SE');
+        const nextWeek = new Date(Date.now() + 7 * 86400000).toLocaleDateString('sv-SE');
+        const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString('sv-SE');
 
         const demoOrders = [
             {
@@ -1262,6 +1323,7 @@ export const DataProvider = ({ children }) => {
         staff, addStaff, updateStaff, deleteStaff,
         attendanceRecords, addAttendanceRecord,
         ssoClaims, addSSOClaim, labOrders, addLabOrder, updateLabOrder, deleteLabOrder, seedLabOrders,
+        deductStockForTreatment,
         settings, updateSettings,
         isLoading, isSyncing, lastSyncTime,
         alerts, addAlert: (a) => setAlerts([a, ...alerts]),

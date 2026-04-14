@@ -1,0 +1,229 @@
+/* expenses.css - Premium Clinic Expense & Finance Tracking UI */
+
+.expenses-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Page Header */
+.expenses-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.expenses-title-group h1 {
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: var(--neutral-900);
+    letter-spacing: -0.04em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.expenses-icon-box {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 8px 20px -5px rgba(217, 119, 6, 0.4);
+}
+
+/* P&L Grid */
+.pl-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.pl-stat-card {
+    background: white;
+    border-radius: 28px;
+    padding: 1.5rem;
+    border: 1.5px solid var(--neutral-100);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.pl-stat-card.profit { background: #f0fdf4; border-color: #bbf7d0; }
+.pl-stat-card.loss { background: #fef2f2; border-color: #fecaca; }
+
+.pl-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--neutral-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pl-value {
+    font-size: 1.75rem;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+}
+
+.pl-trend-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Category Filter Rail */
+.category-filter-rail {
+    display: flex;
+    gap: 0.65rem;
+    padding-bottom: 0.75rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.category-filter-rail::-webkit-scrollbar { display: none; }
+
+.cat-filter-btn {
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+    border: 1.5px solid var(--neutral-100);
+    background: white;
+    color: var(--neutral-500);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.cat-filter-btn.active {
+    border-color: var(--primary-500);
+    background: var(--primary-50);
+    color: var(--primary-700);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.1);
+}
+
+/* Expense Cards */
+.expense-item-card {
+    background: white;
+    border-radius: 24px;
+    padding: 1.25rem 1.75rem;
+    border: 1.5px solid var(--neutral-100);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: all 0.3s;
+}
+
+.expense-item-card:hover {
+    transform: translateX(4px);
+    border-color: var(--primary-200);
+    box-shadow: var(--shadow-md);
+}
+
+.expense-cat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.expense-main-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.expense-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.expense-desc {
+    font-weight: 900;
+    color: var(--neutral-900);
+    font-size: 1.1rem;
+}
+
+.expense-amount {
+    font-weight: 950;
+    color: #ef4444;
+    font-size: 1.1rem;
+}
+
+.expense-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.expense-tag {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.expense-date {
+    font-size: 0.75rem;
+    color: var(--neutral-400);
+    font-weight: 600;
+}
+
+/* Category Breakdown */
+.cat-breakdown-card {
+    background: white;
+    border-radius: 24px;
+    padding: 1.25rem;
+    border: 1.5px solid var(--neutral-100);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.breakdown-progress-container {
+    flex: 1;
+}
+
+.breakdown-label-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.progress-bar-bg {
+    height: 8px;
+    background: var(--neutral-100);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}

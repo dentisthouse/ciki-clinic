@@ -1,0 +1,9 @@
+@echo off
+echo Adding changes...
+git add .
+echo Committing changes...
+git commit -m "fix: resolve systemic timezone-related date shift and Line Portal booking mismatch"
+echo Pushing to GitHub...
+git push
+echo Done!
+pause
